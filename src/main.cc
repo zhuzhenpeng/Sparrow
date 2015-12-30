@@ -1,13 +1,13 @@
 #include <iostream>
-#include <string>
-#include <sstream>
+#include <memory>
+#include "lexer_imp.h"
 
 int main() {
-  std::string s = "hello\nworld";
-  std::istringstream is(s);
+  std::unique_ptr<Lexer> lexer(new LexerImp());
+  lexer->parseFile("./src.txt");
 
-  std::string line;
-  while (std::getline(is, line)) {
-    std::cout << line << std::endl;
+  auto token = lexer->read();
+  while (token->getKind() != TokenKind::TK_EOF) {
+    std::cout << token->getText() << std::endl;
   }
 }
