@@ -1,5 +1,7 @@
 #include "token.h"
 
+#include <algorithm>
+
 /*********************Token********************************/
 
 Token::Token(int lineNumber, const std::string &fileName, const std::string &text): 
@@ -37,7 +39,7 @@ int IntToken::getValue() const {
 
 StrToken::StrToken(int lineNumber, const std::string &fileName, const std::string &text):
   Token(lineNumber, fileName, text) {
-  //TODO
+  content_ = polish(text);
   kind_ = TokenKind::TK_STR; 
 }
 
@@ -72,8 +74,14 @@ std::string StrToken::polish(const std::string &srcStr) {
 
 IdToken::IdToken(int lineNumber, const std::string &fileName, const std::string &text):
   Token(lineNumber, fileName, text) {
-  id_ = text;
-  kind_ = TokenKind::TK_STR;
+  //去掉左侧的空白符
+  id_.assign(
+        std::find_if(text.begin(), text.end(), 
+          [](const char &c){
+          return c != ' ';
+          }),
+        text.end());
+  kind_ = TokenKind::TK_ID;
 }
 
 std::string IdToken::getId() const {

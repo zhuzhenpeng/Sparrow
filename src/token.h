@@ -6,10 +6,10 @@
 
 //Token类型
 enum class TokenKind {
-  TK_ID, 
-  TK_INT, 
-  TK_STR, 
-  TK_EOF
+  TK_ID = 1, 
+  TK_INT = 2, 
+  TK_STR = 3, 
+  TK_EOF = -1
 };
 
 

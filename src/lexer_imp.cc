@@ -5,8 +5,13 @@
 
 LexerImp::LexerImp(): is_(nullptr) {
   std::string patternStr = \
-  "\\s*((//.*)|([0-9]+)|(\"(\\\\\"|\\\\\\\\|\\\\n|[^\"])*\")"
-  "|[A-Z_a-z][A-Z_a-z0-9]*|==|<=|>=|&&|\\|\\||[[:punct:]])?";
+  "\\s*"
+  "("
+  "(//.*)"
+  "|([0-9]+)"
+  "|(\"(\\\\\"|\\\\\\\\|\\\\n|[^\"])*\")"
+  "|[A-Z_a-z][A-Z_a-z0-9]*|==|<=|>=|&&|\\|\\||[[:punct:]]"
+  ")?";
 
   try {
     parsePattern_ = std::regex(patternStr, std::regex::optimize);
@@ -96,9 +101,9 @@ void LexerImp::parseNextLine() {
       it != endIt; ++it) {
     const std::smatch &results = *it;
     const std::string &matchStr = it->str();
-    std::cout << "match: " << matchStr << std::endl;
+    //std::cout << "match: " << matchStr << std::endl;
 
-    if (results[1].matched)    //空格
+    if (!results[1].matched)    //空格
       continue;
     if (results[2].matched)   //注释
       continue;
@@ -116,6 +121,7 @@ void LexerImp::parseNextLine() {
     else {  //匹配ID
       IdTokenPtr tp = std::make_shared<IdToken>(lineNumber_, 
           fileName_, matchStr);
+      tokenQueue_.push_back(tp);
     }
   }
 
