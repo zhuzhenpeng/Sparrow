@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <exception>
 
 /*
  * AST迭代器接口
@@ -13,7 +14,7 @@ public:
   virtual void first() = 0;
   virtual void next() = 0;
   virtual bool hasNext() const = 0;
-  virtual Item current() const = 0;
+  virtual Item& current() const = 0;
 };
 
 /*
@@ -35,6 +36,20 @@ public:
 
   //获取该节点的信息
   virtual std::string info() = 0;
+};
+
+
+/*
+ * AST相关的异常
+ */
+class ASTException: public std::exception {
+public:
+  ASTException(const std::string &msg): errMsg_(msg) {}
+  const char* what() const noexcept override {
+    return errMsg_.c_str();
+  }
+private:
+  std::string errMsg_;
 };
 
 

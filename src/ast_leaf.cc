@@ -10,3 +10,11 @@ int ASTLeaf::numChildren() {
   return 0;
 }
 
+Itertor<ASTreePtr> ASTLeaf::children() {
+  return ASTLeafIterator<ASTreePtr>();
+}
+
+std::string ASTLeaf::info() {
+  return "";
+}
+
