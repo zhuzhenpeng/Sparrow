@@ -9,7 +9,8 @@ enum class TokenKind {
   TK_ID = 1, 
   TK_INT = 2, 
   TK_STR = 3, 
-  TK_EOF = -1
+  TK_EOF = -1,
+  TK_EOL = -2
 };
 
 
@@ -80,6 +81,19 @@ private:
     EOFToken(int lineNumber, const std::string &fileName, const std::string &text);
 private:
   static EOFTokenPtr eof_;
+};
+
+/*******************EOLToken***************************/
+class EOLToken;
+using EOLTokenPtr = std::shared_ptr<EOLToken>;
+
+class EOLToken: public Token {
+public:
+  static EOLTokenPtr getInstance();
+private:
+  EOLToken(int lineNumber, const std::string &fileName, const std::string &text);
+private:
+  static EOLTokenPtr eol_;
 };
 
 #endif

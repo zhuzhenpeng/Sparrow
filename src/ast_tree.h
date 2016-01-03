@@ -9,7 +9,7 @@
  * AST迭代器接口
  */
 template <typename Item>
-class Itertor {
+class Iterator {
 public:
   virtual void first() = 0;
   virtual void next() = 0;
@@ -32,7 +32,7 @@ public:
   virtual int numChildren() = 0;
 
   //返回子节点集合的迭代器
-  virtual Itertor<ASTreePtr> children() = 0;
+  virtual Iterator<ASTreePtr> children() = 0;
 
   //获取该节点的信息
   virtual std::string info() = 0;

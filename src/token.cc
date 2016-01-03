@@ -103,3 +103,19 @@ EOFTokenPtr EOFToken::getInstance() {
   }
   return eof_;
 }
+
+/*******************EOLToken***************************/
+
+EOLTokenPtr EOLToken::eol_ = nullptr;
+
+EOLToken::EOLToken(int lineNumber, const std::string &fileName, const std::string &text):
+  Token(lineNumber, fileName, text) {
+    kind_ = TokenKind::TK_EOL;
+}
+
+EOLTokenPtr EOLToken::getInstance() {
+  if (eol_ == nullptr) {
+    eol_.reset(new EOLToken(-1, "", ""));
+  }
+  return eol_;
+}

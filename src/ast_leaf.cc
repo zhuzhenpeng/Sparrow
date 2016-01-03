@@ -10,11 +10,17 @@ int ASTLeaf::numChildren() {
   return 0;
 }
 
-Itertor<ASTreePtr> ASTLeaf::children() {
-  return ASTLeafIterator<ASTreePtr>();
+Iterator<ASTreePtr> ASTLeaf::children() {
+  throw ASTException("error call: no children for AST leaf");
 }
 
 std::string ASTLeaf::info() {
-  return "";
+  std::string result = std::string("file: ") + token_->getFileName() + 
+    ", line: " + std::to_string(token_->getLineNumber()) +
+    ", raw text: " + token_->getText();
+  return result;
 }
 
+TokenPtr ASTLeaf::getToken() const {
+  return token_;
+}
