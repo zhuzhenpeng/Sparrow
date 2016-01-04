@@ -14,7 +14,7 @@ public:
   virtual void first() = 0;
   virtual void next() = 0;
   virtual bool hasNext() const = 0;
-  virtual Item& current() const = 0;
+  virtual Item current() const = 0;
 };
 
 /*

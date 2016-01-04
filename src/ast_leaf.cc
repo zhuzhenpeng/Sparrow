@@ -1,5 +1,7 @@
 #include "ast_leaf.h"
 
+/************************AST叶节点，没有子节点**************************/
+
 ASTLeaf::ASTLeaf(TokenPtr token): token_(token) {}
 
 ASTreePtr ASTLeaf::child(__attribute__((unused)) int i) {
@@ -23,4 +25,20 @@ std::string ASTLeaf::info() {
 
 TokenPtr ASTLeaf::getToken() const {
   return token_;
+}
+
+/*********************IntToken对应的叶子节点***************************/
+
+IntTokenAST::IntTokenAST(TokenPtr token): ASTLeaf(token) {}
+
+int IntTokenAST::getValue() const {
+  return reinterpret_cast<IntToken*>(token_.get())->getValue();
+}
+
+/*********************IdToken对应的叶子节点***************************/
+
+IdTokenAST::IdTokenAST(TokenPtr token): ASTLeaf(token) {}
+
+std::string IdTokenAST::getId() const {
+  return reinterpret_cast<IdToken*>(token_.get())->getId();
 }

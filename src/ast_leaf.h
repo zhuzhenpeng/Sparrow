@@ -4,9 +4,7 @@
 #include "ast_tree.h"
 #include "token.h"
 
-/*
- * AST叶节点，没有子节点
- */
+/************************AST叶节点，没有子节点**************************/
 
 class ASTLeaf: public ASTree {
 public:
@@ -28,4 +26,21 @@ public:
 protected:
   TokenPtr token_;
 };
+
+/*********************IntToken对应的叶子节点***************************/
+
+class IntTokenAST: public ASTLeaf {
+public:
+  IntTokenAST(TokenPtr token); 
+  int getValue() const;
+};
+
+/*********************IdToken对应的叶子节点***************************/
+
+class IdTokenAST: public ASTLeaf {
+public:
+  IdTokenAST(TokenPtr token);
+  std::string getId() const;
+};
+
 #endif
