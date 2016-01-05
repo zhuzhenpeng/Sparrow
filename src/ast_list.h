@@ -6,9 +6,13 @@
 
 /**************************AST内部（非叶子）节点******************************/
 
+enum class ASTListKind {
+  
+};
+
 class ASTList: public ASTree {
 
-  //迭代器实现
+  /*****************内部迭代器类********************/
   template <typename Item>
   class ASTListIterator: public Iterator<Item> {
   public:

@@ -5,9 +5,7 @@
 #include <string>
 #include <exception>
 
-/*
- * AST迭代器接口
- */
+/******************************AST迭代器接口*****************************/
 template <typename Item>
 class Iterator {
 public:
@@ -17,9 +15,18 @@ public:
   virtual Item current() const = 0;
 };
 
-/*
- * AST的基类，用于定义接口
- */
+/*****************************AST类型************************************/
+enum class ASTKind {
+  //用于标识自身身份,可用作元信息
+  INVALID = -1,
+
+  LEAF_COMMON = 1000, //普通叶子节点，如"{", "if", "while"这类
+  LEAF_INT = 1001,
+  LEAF_Id = 1002,
+  LEAF_STR = 1003,
+};
+
+/*********************AST的基类，用于定义接口****************************/
 class ASTree;
 using ASTreePtr = std::shared_ptr<ASTree>;
 
@@ -36,12 +43,13 @@ public:
 
   //获取该节点的信息
   virtual std::string info() = 0;
+
+public:
+  ASTKind kind_ = ASTKind::INVALID;
 };
 
 
-/*
- * AST相关的异常
- */
+/******************************AST相关的异常****************************/
 class ASTException: public std::exception {
 public:
   ASTException(const std::string &msg): errMsg_(msg) {}

@@ -13,7 +13,6 @@ enum class TokenKind {
   TK_EOL = -2
 };
 
-
 /*********************Token********************************/
 //Token基类，每个Token都记录着自己的行数、文本内容、类型
 class Token {
@@ -23,6 +22,12 @@ public:
   std::string getFileName() const;
   std::string getText() const;
   TokenKind getKind() const;
+
+  //返回token类型的文字信息
+  std::string kindInfo() const;
+
+  //返回token的综合信息
+  std::string info() const;
 
 protected:
   int lineNumber_;

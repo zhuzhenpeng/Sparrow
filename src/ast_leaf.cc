@@ -29,7 +29,9 @@ TokenPtr ASTLeaf::getToken() const {
 
 /*********************IntToken对应的叶子节点***************************/
 
-IntTokenAST::IntTokenAST(TokenPtr token): ASTLeaf(token) {}
+IntTokenAST::IntTokenAST(TokenPtr token): ASTLeaf(token) {
+  kind_ = ASTKind::LEAF_INT;
+}
 
 int IntTokenAST::getValue() const {
   return reinterpret_cast<IntToken*>(token_.get())->getValue();
@@ -37,7 +39,9 @@ int IntTokenAST::getValue() const {
 
 /*********************IdToken对应的叶子节点***************************/
 
-IdTokenAST::IdTokenAST(TokenPtr token): ASTLeaf(token) {}
+IdTokenAST::IdTokenAST(TokenPtr token): ASTLeaf(token) {
+  kind_ = ASTKind::LEAF_Id;
+}
 
 std::string IdTokenAST::getId() const {
   return reinterpret_cast<IdToken*>(token_.get())->getId();

@@ -23,6 +23,28 @@ TokenKind Token::getKind() const {
   return kind_;
 }
 
+std::string Token::kindInfo() const {
+  switch (kind_) {
+    case TokenKind::TK_ID:
+      return "ID token";
+    case TokenKind::TK_INT:
+      return "Int token";
+    case TokenKind::TK_STR:
+      return "string token";
+    case TokenKind::TK_EOF:
+      return "EOF token";
+    case TokenKind::TK_EOL:
+      return "EOL token";
+    default:
+      return "";
+  }
+}
+
+std::string Token::info() const {
+  std::string lineNumber = std::to_string(lineNumber_);
+  return "file name: " + fileName_ + ", line number: " + lineNumber + ", text: " + text_;
+}
+
 /********************IntToken*****************************/
 
 IntToken::IntToken(int lineNumber, const std::string &fileName, const std::string &text):
