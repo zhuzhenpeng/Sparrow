@@ -32,6 +32,8 @@ using ASTreePtr = std::shared_ptr<ASTree>;
 
 class ASTree {
 public:
+  ASTree(ASTKind astKind): kind_(astKind) {};
+
   //获取下标为i的子节点，
   virtual ASTreePtr child(int i) = 0;
 
@@ -45,7 +47,7 @@ public:
   virtual std::string info() = 0;
 
 public:
-  ASTKind kind_ = ASTKind::INVALID;
+  ASTKind kind_;
 };
 
 

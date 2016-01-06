@@ -1,7 +1,7 @@
 #include "parser_constructor.h"
 
 #include "ast_leaf.h"
-#include "ast_leaf.cc"
+#include "ast_list.h"
 
 /***************************生成各类AST的静态工厂******************************/
 ASTreePtr ASTFactory::getLeafInstance(ASTKind astKind, TokenPtr token) {
@@ -13,6 +13,11 @@ ASTreePtr ASTFactory::getLeafInstance(ASTKind astKind, TokenPtr token) {
     case ASTKind::LEAF_INT:
        result = std::make_shared<IntTokenAST>(token);
        break;
+    case ASTKind::LEAF_STR:
+       result = std::make_shared<StrTokenAST>(token);
+       break;
+    case ASTKind::LEAF_COMMON:
+       result = std::make_shared<ASTLeaf>(ASTKind::LEAF_COMMON, token);
     default:
        break;
   }
@@ -79,24 +84,6 @@ bool RepeatParsePR::match(Lexer &lexer) {
 
 /********************************匹配Token************************************/
 
-namespace {
-  //根据ASTKind返回它的含义
-  std::string getASTKindMeaning(ASTKind kind) {
-    switch (kind) {
-      case ASTKind::INVALID:
-        return "invalid";
-      case ASTKind::LEAF_INT:
-        return "int token";
-      case ASTKind::LEAF_Id:
-        return "id token";
-      case ASTKind::LEAF_STR:
-        return "string token";
-      default:
-        return "UNKNOWN";
-    }
-  }
-}
-
 MatchTokenPR::MatchTokenPR(ASTKind astKind): kind_(astKind) {};
 
 void MatchTokenPR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
@@ -106,12 +93,26 @@ void MatchTokenPR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
     ast.push_back(leaf);
   }
   else {
-    throw ParseException("parse error: " + lexer.peek(0)->info() + 
-        " , except: " + getASTKindMeaning(kind_));
+    std::string expect;
+    switch (kind_) {
+      case ASTKind::LEAF_INT:
+        expect = "int";
+        break;
+      case ASTKind::LEAF_Id:
+        expect = "id";
+        break;
+      case ASTKind::LEAF_STR:
+        expect = "str";
+        break;
+      default:
+        expect = "UNKNOWN";
+        break;
+    }
+    throw NotMatchingException(lexer.peek(0), expect);
   }
 }
 
-//id
+/////////////////////id
 IdMatcher::IdMatcher(std::set<std::string> &reserved):
   MatchTokenPR(ASTKind::LEAF_Id), reserved_(reserved) {}
 
@@ -121,7 +122,7 @@ bool IdMatcher::match(Lexer &lexer) {
     reserved_.find(reinterpret_cast<IdToken*>(token.get())->getId()) == reserved_.end();
 }
 
-//int
+/////////////////////int
 IntMatcher::IntMatcher(): MatchTokenPR(ASTKind::LEAF_INT) {}
 
 bool IntMatcher::match(Lexer &lexer) {
@@ -129,10 +130,57 @@ bool IntMatcher::match(Lexer &lexer) {
   return token->getKind() == TokenKind::TK_INT;
 }
 
-//string
+/////////////////////string
 StrMatcher::StrMatcher(): MatchTokenPR(ASTKind::LEAF_Id) {}
 
 bool StrMatcher::match(Lexer &lexer) {
   auto token = lexer.peek(0);
   return token->getKind() == TokenKind::TK_STR;
 }
+
+/*******************************自定义终结符**********************************/
+
+CustomTerminalSymbalPR::CustomTerminalSymbalPR(const std::string &pattern, bool skipFlag):
+  pattern_(pattern), skipFlag_(skipFlag) {}
+
+void CustomTerminalSymbalPR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
+  if (match(lexer)) {
+    if (!skipFlag_)
+      ast.push_back(ASTFactory::getLeafInstance(ASTKind::LEAF_COMMON, lexer.read()));
+  }
+  else {
+    throw NotMatchingException(lexer.peek(0), pattern_);
+  }
+}
+
+bool CustomTerminalSymbalPR::match(Lexer &lexer) {
+  auto token = lexer.peek(0);
+  if (token->getKind() == TokenKind::TK_ID) {
+    return reinterpret_cast<IdToken*>(token.get())->getId() == pattern_;
+  }
+  else {
+    return false;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+/********************************Parser类*************************************/
+
+ASTreePtr Parser::parse(Lexer &lexer) {
+  return nullptr;
+}
+
+bool Parser::match(Lexer &lexer) {
+  return false;
+}
+
+
+

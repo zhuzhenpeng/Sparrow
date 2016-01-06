@@ -40,7 +40,7 @@ class ASTList: public ASTree {
   };
 
 public:
-  ASTList();
+  ASTList(ASTKind kind);
 
   //返回第i个子节点
   ASTreePtr child(int i) override;

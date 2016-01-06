@@ -100,8 +100,23 @@ public:
 };
 
 /*******************************自定义终结符**********************************/
+//自定义指定字符串匹配的终结符，并根据情况判断是否把它放入语法树中
+//这些终结符对应的token类型必须是ID
+//生成的AST类型为LEAF_COMMON，由后续解释器决定如何处理
+
+class CustomTerminalSymbalPR: public ParseRule {
+public:
+  CustomTerminalSymbalPR(const std::string &pattern, bool skipFlag);
+  void parse(Lexer &lexer, std::vector<ASTreePtr> &ast) override;
+  bool match(Lexer &lexer) override;
+protected:
+  std::string pattern_;
+  bool skipFlag_; //如果为真，则不生成AST
+};
+
 
 /********************************Parser类*************************************/
+//Parser是一些列规则组合的载体，本身并不包含parse逻辑
 //外部通过调用Parser的一些接口可以构造出特性规则的Parser
 class Parser {
 public:
@@ -112,14 +127,24 @@ private:
 };
 
 /********************************异常类***************************************/
+
+//通用异常
 class ParseException: public std::exception {
 public:
   ParseException(const std::string &msg): errMsg_(msg) {};
   const char* what() const noexcept override {
     return errMsg_.c_str();
   }
-private:
+protected:
   std::string errMsg_;
 };
 
+//找不到期待的终结符发生的错误
+class NotMatchingException: public ParseException {
+public:
+  NotMatchingException(TokenPtr parsingToken, const std::string &expect): 
+    ParseException("") {
+    errMsg_ = "construct AST error: " + parsingToken->info() + ", except: " + expect;
+  }
+};
 #endif

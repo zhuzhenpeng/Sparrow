@@ -1,6 +1,6 @@
 #include "ast_list.h"
 
-ASTList::ASTList() = default;
+ASTList::ASTList(ASTKind kind): ASTree(kind) {}
 
 ASTreePtr ASTList::child(int i) {
   return children_[i];

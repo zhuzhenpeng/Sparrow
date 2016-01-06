@@ -2,7 +2,7 @@
 
 /************************AST叶节点，没有子节点**************************/
 
-ASTLeaf::ASTLeaf(TokenPtr token): token_(token) {}
+ASTLeaf::ASTLeaf(ASTKind kind, TokenPtr token): ASTree(kind), token_(token) {}
 
 ASTreePtr ASTLeaf::child(__attribute__((unused)) int i) {
   return nullptr;
@@ -29,9 +29,7 @@ TokenPtr ASTLeaf::getToken() const {
 
 /*********************IntToken对应的叶子节点***************************/
 
-IntTokenAST::IntTokenAST(TokenPtr token): ASTLeaf(token) {
-  kind_ = ASTKind::LEAF_INT;
-}
+IntTokenAST::IntTokenAST(TokenPtr token): ASTLeaf(ASTKind::LEAF_INT, token) {}
 
 int IntTokenAST::getValue() const {
   return reinterpret_cast<IntToken*>(token_.get())->getValue();
@@ -39,10 +37,16 @@ int IntTokenAST::getValue() const {
 
 /*********************IdToken对应的叶子节点***************************/
 
-IdTokenAST::IdTokenAST(TokenPtr token): ASTLeaf(token) {
-  kind_ = ASTKind::LEAF_Id;
-}
+IdTokenAST::IdTokenAST(TokenPtr token): ASTLeaf(ASTKind::LEAF_Id, token) {}
 
 std::string IdTokenAST::getId() const {
   return reinterpret_cast<IdToken*>(token_.get())->getId();
+}
+
+/*********************StrToken对应的叶子节点*************************/
+
+StrTokenAST::StrTokenAST(TokenPtr token): ASTLeaf(ASTKind::LEAF_STR, token) {}
+
+std::string StrTokenAST::getContent() const {
+  return reinterpret_cast<StrToken*>(token_.get())->getString();
 }

@@ -8,7 +8,7 @@
 
 class ASTLeaf: public ASTree {
 public:
-  ASTLeaf(TokenPtr token);
+  ASTLeaf(ASTKind kind, TokenPtr token);
 
   //由于叶节点没有子节点了，所以总是返回空指针
   ASTreePtr child(int i) override;
@@ -41,6 +41,13 @@ class IdTokenAST: public ASTLeaf {
 public:
   IdTokenAST(TokenPtr token);
   std::string getId() const;
+};
+
+/*********************StrToken对应的叶子节点*************************/
+class StrTokenAST: public ASTLeaf {
+public:
+  StrTokenAST(TokenPtr token);
+  std::string getContent() const;
 };
 
 #endif
