@@ -4,9 +4,9 @@
 #include "ast_list.h"
 
 /***************************生成各类AST的静态工厂******************************/
-ASTreePtr ASTFactory::getLeafInstance(ASTKind astKind, TokenPtr token) {
+ASTreePtr ASTFactory::getLeafInstance(ASTKind kind, TokenPtr token) {
   ASTreePtr result = nullptr;
-  switch (astKind) {
+  switch (kind) {
     case ASTKind::LEAF_Id:
        result = std::make_shared<IdTokenAST>(token);
        break;
@@ -24,8 +24,16 @@ ASTreePtr ASTFactory::getLeafInstance(ASTKind astKind, TokenPtr token) {
   return result;
 }
 
-ASTreePtr ASTFactory::getListInstance(ASTKind astKind) {
-  return nullptr;
+ASTreePtr ASTFactory::getListInstance(ASTKind kind) {
+  ASTreePtr result = nullptr;
+  switch (kind) {
+    case ASTKind::LIST_BINARY_EXPR:
+      result = std::make_shared<BinaryExprAST>();
+      break;
+    default:
+      break;
+  }
+  return result;
 }
 
 /***************************commom*****************************************/
@@ -84,7 +92,7 @@ bool RepeatParsePR::match(Lexer &lexer) {
 
 /********************************匹配Token************************************/
 
-MatchTokenPR::MatchTokenPR(ASTKind astKind): kind_(astKind) {};
+MatchTokenPR::MatchTokenPR(ASTKind kind): kind_(kind) {};
 
 void MatchTokenPR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
   if (match(lexer)) {
@@ -163,14 +171,72 @@ bool CustomTerminalSymbalPR::match(Lexer &lexer) {
   }
 }
 
+/******************************双目运算符*************************************/
 
+bool Precedence::LEFT = true;
+bool Precedence::RIGHT = false;
 
+BinaryExprPR::BinaryExprPR(const std::map<std::string, Precedence> &operators, 
+    ParserPtr parser): operators_(operators), parser_(parser) {}
 
+void BinaryExprPR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
+  ASTreePtr right = parser_->parse(lexer);  
+  Precedence prec = nextOperatorPrec(lexer);
+  while (prec.weight_ != -1) {
+    //下一个是运算符，需要构造一颗相应的二叉树，把上面解析出来的AST作为它的左节点
+    right = constructBinaryTree(right, prec, lexer);
+    prec = nextOperatorPrec(lexer);
+  }
+  ast.push_back(right);
+}
 
+bool BinaryExprPR::match(Lexer &lexer) {
+  return parser_->match(lexer); 
+}
 
+Precedence BinaryExprPR::nextOperatorPrec(Lexer &lexer) {
+  auto token = lexer.peek(0);
+  //符号被lexer解析时是被当作ID的
+  if (token->getKind() != TokenKind::TK_ID) {
+    return Precedence();
+  }
+  else {
+    const std::string &symbol = reinterpret_cast<IdToken*>(token.get())->getId();
+    auto prec = operators_.find(symbol);
+    if (prec == operators_.end())
+      return Precedence();
+    else
+      return prec->second;
+  }
+}
 
+ASTreePtr BinaryExprPR::constructBinaryTree(ASTreePtr leftFactor, const Precedence &opPrec, 
+    Lexer &lexer) {
+  ASTreePtr result = ASTFactory::getListInstance(ASTKind::LIST_BINARY_EXPR); 
+  BinaryExprAST *tmptr = reinterpret_cast<BinaryExprAST*>(result.get());
+  auto exprTree = tmptr->children();
 
+  exprTree.push_back(leftFactor);
+  exprTree.push_back(ASTFactory::getLeafInstance(ASTKind::LEAF_COMMON, lexer.read()));
+  auto rightFactor = parser_->parse(lexer);
 
+  //如果右侧的运算优先级高于左侧，则递归构造解析树
+  Precedence nextPrec = nextOperatorPrec(lexer);
+  while (nextPrec.weight_ != -1 && isRightHiger(opPrec, nextPrec)) {
+    rightFactor = constructBinaryTree(rightFactor, nextPrec, lexer);
+    nextPrec = nextOperatorPrec(lexer);
+  }
+  exprTree.push_back(rightFactor);
+  return result;
+}
+
+bool BinaryExprPR::isRightHiger(const Precedence &left, const Precedence &right) {
+  //如果下一个操作符是右结合性的，即使优先值相等也是右侧的优先级更高
+  if (right.leftAssoc_)
+    return left.weight_ < right.weight_;
+  else
+    return left.weight_ <= right.weight_;
+}
 
 /********************************Parser类*************************************/
 

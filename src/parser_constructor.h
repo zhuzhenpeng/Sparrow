@@ -7,6 +7,7 @@
 #include <exception>
 #include <string>
 #include <set>
+#include <map>
 #include "lexer.h"
 #include "ast_tree.h"
 
@@ -16,8 +17,8 @@ using ParserPtr = std::shared_ptr<Parser>;
 /***************************生成各类AST的静态工厂******************************/
 class ASTFactory {
 public:
-  static ASTreePtr getLeafInstance(ASTKind astKind, TokenPtr token);
-  static ASTreePtr getListInstance(ASTKind astKind);
+  static ASTreePtr getLeafInstance(ASTKind kind, TokenPtr token);
+  static ASTreePtr getListInstance(ASTKind kind);
 };
 
 /******************************操作规则接口************************************/
@@ -69,7 +70,7 @@ private:
 
 class MatchTokenPR: public ParseRule {
 public:
-  MatchTokenPR(ASTKind astKind);
+  MatchTokenPR(ASTKind kind);
   void parse(Lexer &lexer, std::vector<ASTreePtr> &ast) override;
   //没有实现match接口，由子类实现
 protected:
@@ -114,6 +115,36 @@ protected:
   bool skipFlag_; //如果为真，则不生成AST
 };
 
+/******************************双目运算符*************************************/
+
+//优先级
+struct Precedence {
+  int weight_ = -1;   //优先级数值，越大优先级越高, -1表示无效值
+  bool leftAssoc_ = true; //同一个运算符时，左相关标志
+
+  static bool LEFT;
+  static bool RIGHT;
+};
+
+class BinaryExprPR: public ParseRule {
+public:
+  BinaryExprPR(const std::map<std::string, Precedence> &operators, ParserPtr parser);
+  void parse(Lexer &lexer, std::vector<ASTreePtr> &ast) override;
+  bool match(Lexer &lexer) override;
+
+private:
+  //返回下一个运算符的优先级，如果下一个不是运算符，返回默认优先级
+  Precedence nextOperatorPrec(Lexer &lexer);
+
+  //构造双目符号的解析树，入参是左因子、运算符优先级
+  ASTreePtr constructBinaryTree(ASTreePtr leftFactor, const Precedence &opPrec, Lexer &lexer);
+
+  //比较右侧操作符优先级是否高于左侧
+  bool isRightHiger(const Precedence &left, const Precedence &right);
+private:
+  const std::map<std::string, Precedence> &operators_;  //运算符<名字，优先级>
+  ParserPtr parser_;
+};
 
 /********************************Parser类*************************************/
 //Parser是一些列规则组合的载体，本身并不包含parse逻辑
@@ -125,6 +156,7 @@ public:
 private:
   std::vector<ParseRulePtr> rulesCombination_;
 };
+
 
 /********************************异常类***************************************/
 

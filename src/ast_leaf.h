@@ -17,7 +17,7 @@ public:
   int numChildren() override;
 
   //抛出调用异常
-  Iterator<ASTreePtr> children() override;
+  Iterator<ASTreePtr> iterator() override;
 
   std::string info() override;
 

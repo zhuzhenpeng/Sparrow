@@ -12,7 +12,7 @@ int ASTLeaf::numChildren() {
   return 0;
 }
 
-Iterator<ASTreePtr> ASTLeaf::children() {
+Iterator<ASTreePtr> ASTLeaf::iterator() {
   throw ASTException("error call: no children for AST leaf");
 }
 

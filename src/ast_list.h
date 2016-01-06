@@ -1,5 +1,5 @@
-#ifndef SPARROW_AST_LEAF_H_
-#define SPARROW_AST_LEAF_H_
+#ifndef SPARROW_AST_LIST_H_
+#define SPARROW_AST_LIST_H_
 
 #include "ast_tree.h"
 #include <vector>
@@ -49,20 +49,27 @@ public:
   int numChildren() override;
 
   //返回子节点迭代器
-  Iterator<ASTreePtr> children() override;
+  Iterator<ASTreePtr> iterator() override;
 
   //返回该节点信息
   std::string info() override;
 
-private:
+  std::vector<ASTreePtr>& children();
+
+protected:
   std::vector<ASTreePtr> children_;
 };
 
 /***********************二元表达式******************************************/
 
-//class BinaryExprAST: public ASTList {
-//public:
-  
-//};
+class BinaryExprAST: public ASTList {
+public:
+  BinaryExprAST();
+  ASTreePtr leftFactor();
+  ASTreePtr rightFactor();
+  std::string getOperator();
+private:
+  void checkValid();
+};
 
 #endif

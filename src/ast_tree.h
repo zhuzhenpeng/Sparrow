@@ -24,6 +24,8 @@ enum class ASTKind {
   LEAF_INT = 1001,
   LEAF_Id = 1002,
   LEAF_STR = 1003,
+
+  LIST_BINARY_EXPR = 2001,
 };
 
 /*********************AST的基类，用于定义接口****************************/
@@ -41,7 +43,7 @@ public:
   virtual int numChildren() = 0;
 
   //返回子节点集合的迭代器
-  virtual Iterator<ASTreePtr> children() = 0;
+  virtual Iterator<ASTreePtr> iterator() = 0;
 
   //获取该节点的信息
   virtual std::string info() = 0;
