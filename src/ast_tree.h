@@ -25,6 +25,7 @@ enum class ASTKind {
   LEAF_Id = 1002,
   LEAF_STR = 1003,
 
+  LIST_COMMON = 2000, 
   LIST_BINARY_EXPR = 2001,
 };
 

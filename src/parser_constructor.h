@@ -128,6 +128,7 @@ struct Precedence {
 
 class BinaryExprPR: public ParseRule {
 public:
+  //参数parser是解析运算符左右因子（如果有）的解析器
   BinaryExprPR(const std::map<std::string, Precedence> &operators, ParserPtr parser);
   void parse(Lexer &lexer, std::vector<ASTreePtr> &ast) override;
   bool match(Lexer &lexer) override;
@@ -153,8 +154,46 @@ class Parser {
 public:
   ASTreePtr parse(Lexer &lexer);
   bool match(Lexer &lexer);
+
+  //返回一个规则组合，通过该规则parse后返回ASTList
+  static ParserPtr rule();
+
+  //返回一个规则组合，通过该规则parse后返回特定的ASTList子类
+  static ParserPtr rule(ASTKind kind);
+
+  //添加解析数字的规则，指定该规则返回的ASTree类型
+  Parser& number(ASTKind kind);
+
+  //添加解析ID的规则，指定该规则返回的ASTree类型，以及保留字
+  Parser& id(ASTKind kind, std::set<std::string> &reserved);
+
+  //添加解析字符串的规则，指定该规则返回的ASTree类型
+  Parser& str(ASTKind kind);
+
+  //添加自定义终结符，指定该符号解析后是否需要添加到AST中
+  Parser& custom(const std::string &patter, bool skipFlag);
+
+  //添加二元运算符
+  Parser& binaryExpr(const std::map<std::string, Precedence> &operators, ParserPtr factorPs);
+
+  //普通规则
+  Parser& commomPR(ParserPtr parser);
+
+  //或规则
+  Parser& orPR(ParserPtr parser);
+
+  //0..1规则
+  Parser& optionPR(ParserPtr parser);
+
+  //0..*规则
+  Parser& repeatPR(ParserPtr parser);
+
 private:
-  std::vector<ParseRulePtr> rulesCombination_;
+  Parser(ASTKind kind);
+
+private:
+  std::vector<ParseRulePtr> rulesCombination_;  //规则组合集合
+  ASTKind kind_;
 };
 
 

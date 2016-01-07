@@ -19,6 +19,7 @@ ASTreePtr ASTFactory::getLeafInstance(ASTKind kind, TokenPtr token) {
     case ASTKind::LEAF_COMMON:
        result = std::make_shared<ASTLeaf>(ASTKind::LEAF_COMMON, token);
     default:
+       throw ParseException("get null AST leaf intance");
        break;
   }
   return result;
@@ -27,10 +28,14 @@ ASTreePtr ASTFactory::getLeafInstance(ASTKind kind, TokenPtr token) {
 ASTreePtr ASTFactory::getListInstance(ASTKind kind) {
   ASTreePtr result = nullptr;
   switch (kind) {
+    case ASTKind::LIST_COMMON:
+      result = std::make_shared<ASTList>();
+      break;
     case ASTKind::LIST_BINARY_EXPR:
       result = std::make_shared<BinaryExprAST>();
       break;
     default:
+      throw ParseException("get null AST list instance");
       break;
   }
   return result;
@@ -214,7 +219,7 @@ ASTreePtr BinaryExprPR::constructBinaryTree(ASTreePtr leftFactor, const Preceden
     Lexer &lexer) {
   ASTreePtr result = ASTFactory::getListInstance(ASTKind::LIST_BINARY_EXPR); 
   BinaryExprAST *tmptr = reinterpret_cast<BinaryExprAST*>(result.get());
-  auto exprTree = tmptr->children();
+  auto &exprTree = tmptr->children();
 
   exprTree.push_back(leftFactor);
   exprTree.push_back(ASTFactory::getLeafInstance(ASTKind::LEAF_COMMON, lexer.read()));
@@ -240,13 +245,31 @@ bool BinaryExprPR::isRightHiger(const Precedence &left, const Precedence &right)
 
 /********************************Parser类*************************************/
 
+Parser::Parser(ASTKind kind): kind_(kind) {}
+
 ASTreePtr Parser::parse(Lexer &lexer) {
-  return nullptr;
+  ASTreePtr result = ASTFactory::getListInstance(kind_);
+  BinaryExprAST *tmptr = reinterpret_cast<BinaryExprAST*>(result.get());
+  auto &children = tmptr->children();
+
+  for (auto rule: rulesCombination_)
+    rule->parse(lexer, children);
+
+  return result;
 }
 
 bool Parser::match(Lexer &lexer) {
-  return false;
+  if (rulesCombination_.empty())
+    return true;
+  else 
+    return rulesCombination_[0]->match(lexer);
 }
 
+ParserPtr Parser::rule() {
+  return std::make_shared<Parser>(ASTKind::LIST_COMMON); 
+}
 
+ParserPtr Parser::rule(ASTKind kind) {
+  return std::make_shared<Parser>(kind); 
+}
 
