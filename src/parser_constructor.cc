@@ -1,5 +1,6 @@
 #include "parser_constructor.h"
 
+#include <iostream>
 #include "ast_leaf.h"
 #include "ast_list.h"
 
@@ -18,8 +19,10 @@ ASTreePtr ASTFactory::getLeafInstance(ASTKind kind, TokenPtr token) {
        break;
     case ASTKind::LEAF_COMMON:
        result = std::make_shared<ASTLeaf>(ASTKind::LEAF_COMMON, token);
+       break;
     default:
-       throw ParseException("get null AST leaf intance");
+       throw ParseException("get null AST leaf instance: " + 
+           std::to_string(static_cast<int>(kind)));
        break;
   }
   return result;
@@ -29,10 +32,28 @@ ASTreePtr ASTFactory::getListInstance(ASTKind kind) {
   ASTreePtr result = nullptr;
   switch (kind) {
     case ASTKind::LIST_COMMON:
-      result = std::make_shared<ASTList>();
+      result = std::make_shared<ASTList>(ASTKind::LIST_COMMON);
+      break;
+    case ASTKind::LIST_PRIMARY_EXPR:
+      result = std::make_shared<PrimaryExprAST>();
+      break;  
+    case ASTKind::LIST_NEGETIVE_EXPR:
+      result = std::make_shared<NegativeExprAST>();
       break;
     case ASTKind::LIST_BINARY_EXPR:
       result = std::make_shared<BinaryExprAST>();
+      break;
+    case ASTKind::LIST_BLOCK_STMNT:
+      result = std::make_shared<BlockStmntAST>();
+      break;
+    case ASTKind::LIST_IF_STMNT:
+      result = std::make_shared<IfStmntAST>();
+      break;
+    case ASTKind::LIST_WHILE_STMNT:
+      result = std::make_shared<WhileStmntAST>();
+      break;
+    case ASTKind::LIST_NULL_STMNT:
+      result = std::make_shared<NullStmntAST>();
       break;
     default:
       throw ParseException("get null AST list instance");
@@ -46,6 +67,7 @@ ASTreePtr ASTFactory::getListInstance(ASTKind kind) {
 CommonParsePR::CommonParsePR(ParserPtr parser): parser_(parser) {}
 
 void CommonParsePR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
+  std::cout << "common parse" << std::endl;
   ast.push_back(parser_->parse(lexer));
 }
 
@@ -58,6 +80,7 @@ bool CommonParsePR::match(Lexer &lexer) {
 OrParsePR::OrParsePR(const std::vector<ParserPtr> &parsers): parsers_(parsers) {}
 
 void OrParsePR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
+  std::cout << "or parse" << std::endl;
   ParserPtr parser = choosePs(lexer);
   if (parser == nullptr) 
     throw ParseException("or choose failed: " + lexer.peek(0)->info());
@@ -70,7 +93,7 @@ bool OrParsePR::match(Lexer &lexer) {
 }
 
 ParserPtr OrParsePR::choosePs(Lexer &lexer) {
-  for (auto &pptr: parsers_) {
+  for (auto pptr: parsers_) {
     if (pptr->match(lexer))
       return pptr;
   }
@@ -83,6 +106,7 @@ RepeatParsePR::RepeatParsePR(ParserPtr parser, bool onceFlag):
   parser_(parser), onceFlag_(onceFlag) {}
 
 void RepeatParsePR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
+  std::cout << "repeat parse" << std::endl;
   //至少是0次匹配
   while (parser_->match(lexer)) {
     ast.push_back(parser_->parse(lexer));
@@ -100,8 +124,10 @@ bool RepeatParsePR::match(Lexer &lexer) {
 MatchTokenPR::MatchTokenPR(ASTKind kind): kind_(kind) {};
 
 void MatchTokenPR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
+  std::cout << "match token" << std::endl;
   if (match(lexer)) {
     //通过parse后，lexer消耗一个token
+    std::cout << "consume: " << lexer.peek(0)->getText() << std::endl;
     ASTreePtr leaf = ASTFactory::getLeafInstance(kind_, lexer.read());
     ast.push_back(leaf);
   }
@@ -157,8 +183,10 @@ CustomTerminalSymbalPR::CustomTerminalSymbalPR(const std::string &pattern, bool 
   pattern_(pattern), skipFlag_(skipFlag) {}
 
 void CustomTerminalSymbalPR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
+  std::cout << "custom parse " << pattern_ << std::endl;
   if (match(lexer)) {
     if (!skipFlag_)
+      std::cout << "consume: " << lexer.peek(0)->getText() << std::endl;
       ast.push_back(ASTFactory::getLeafInstance(ASTKind::LEAF_COMMON, lexer.read()));
   }
   else {
@@ -185,6 +213,7 @@ BinaryExprPR::BinaryExprPR(const std::map<std::string, Precedence> &operators,
     ParserPtr parser): operators_(operators), parser_(parser) {}
 
 void BinaryExprPR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
+  std::cout << "binary expr parse" << std::endl;
   ASTreePtr right = parser_->parse(lexer);  
   Precedence prec = nextOperatorPrec(lexer);
   while (prec.weight_ != -1) {
@@ -222,6 +251,7 @@ ASTreePtr BinaryExprPR::constructBinaryTree(ASTreePtr leftFactor, const Preceden
   auto &exprTree = tmptr->children();
 
   exprTree.push_back(leftFactor);
+  std::cout << "consume: " << lexer.peek(0)->getText() << std::endl;
   exprTree.push_back(ASTFactory::getLeafInstance(ASTKind::LEAF_COMMON, lexer.read()));
   auto rightFactor = parser_->parse(lexer);
 
@@ -273,3 +303,63 @@ ParserPtr Parser::rule(ASTKind kind) {
   return std::make_shared<Parser>(kind); 
 }
 
+ParserPtr Parser::number(ASTKind kind) {
+  //TODO
+  switch (kind) {
+    case ASTKind::LEAF_INT:
+      rulesCombination_.push_back(std::make_shared<IntMatcher>());
+      break;
+    default:
+      throw ParseException("TODO exception of Parser::number");
+      break;
+  }
+  return shared_from_this();
+}
+
+ParserPtr Parser::id(std::set<std::string> &reserved) {
+  rulesCombination_.push_back(std::make_shared<IdMatcher>(reserved));
+  return shared_from_this();
+}
+
+ParserPtr Parser::str() {
+  rulesCombination_.push_back(std::make_shared<StrMatcher>());
+  return shared_from_this();
+}
+
+ParserPtr Parser::custom(const std::string &pattern, bool skipFlag) {
+  rulesCombination_.push_back(std::make_shared<CustomTerminalSymbalPR>(pattern, skipFlag));
+  return shared_from_this();
+}
+
+ParserPtr Parser::binaryExpr(const std::map<std::string, Precedence> &operators, 
+    ParserPtr factorPs) {
+  rulesCombination_.push_back(std::make_shared<BinaryExprPR>(operators, factorPs));
+  return shared_from_this();
+}
+
+ParserPtr Parser::commomPR(ParserPtr parser) {
+  ////如果子规则只有一个规则，就进行剪支
+  //if (parser->rulesCombination_.size() == 1) {
+    //rulesCombination_.push_back(parser->rulesCombination_[0]);
+  //}
+  //else {
+    //rulesCombination_.push_back(std::make_shared<CommonParsePR>(parser));
+  //}
+  rulesCombination_.push_back(std::make_shared<CommonParsePR>(parser));
+  return shared_from_this();
+}
+
+ParserPtr Parser::orPR(const std::vector<ParserPtr> &parsers) {
+  rulesCombination_.push_back(std::make_shared<OrParsePR>(parsers));
+  return shared_from_this();
+}
+
+ParserPtr Parser::optionPR(ParserPtr parser) {
+  rulesCombination_.push_back(std::make_shared<RepeatParsePR>(parser, true));
+  return shared_from_this();
+}
+
+ParserPtr Parser::repeatPR(ParserPtr parser) {
+  rulesCombination_.push_back(std::make_shared<RepeatParsePR>(parser, false));
+  return shared_from_this();
+}

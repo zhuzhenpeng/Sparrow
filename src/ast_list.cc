@@ -18,17 +18,27 @@ Iterator<ASTreePtr> ASTList::iterator() {
 }
 
 std::string ASTList::info() {
-  std::string result; 
+  std::string result = "( ";
   for(auto child: children_) {
     result += child->info();
-    result += "\n";
+    result += " ";
   }
+  result += " ";
   return result;
 }
 
 std::vector<ASTreePtr>& ASTList::children() {
   return children_;
 }
+
+/**************************元表达式****************************************/
+
+PrimaryExprAST::PrimaryExprAST(): ASTList(ASTKind::LIST_PRIMARY_EXPR) {}
+
+
+/**************************负值表达式*************************************/
+
+NegativeExprAST::NegativeExprAST(): ASTList(ASTKind::LIST_NEGETIVE_EXPR) {}
 
 /***********************二元表达式******************************************/
 
@@ -56,3 +66,50 @@ void BinaryExprAST::checkValid() {
         std::to_string(children_.size()));
   }
 }
+
+/********************************块**************************************/
+
+BlockStmntAST::BlockStmntAST(): ASTList(ASTKind::LIST_BLOCK_STMNT) {}
+
+/******************************if块*************************************/
+
+IfStmntAST::IfStmntAST(): ASTList(ASTKind::LIST_IF_STMNT) {}
+
+ASTreePtr IfStmntAST::condition() {
+  if (children_.empty())
+    throw ASTException("get if AST condition failed");
+  return children_[0];
+}
+
+ASTreePtr IfStmntAST::thenBlock() {
+  if (children_.size() < 2)
+    throw ASTException("get if AST then block failed");
+  return children_[1];
+}
+
+ASTreePtr IfStmntAST::elseBlock() {
+  if (children_.size() > 2)
+    return children_[2];
+  else
+    return nullptr;
+}
+
+/****************************while块***********************************/
+
+WhileStmntAST::WhileStmntAST(): ASTList(ASTKind::LIST_WHILE_STMNT) {}
+
+ASTreePtr WhileStmntAST::condition() {
+  if (children_.empty())
+    throw ASTException("get while AST condition failed");
+  return children_[0];
+}
+
+ASTreePtr WhileStmntAST::body() {
+  if (children_.size() < 2)
+    throw ASTException("get while AST body failed");
+  return children_[1];
+}
+
+/****************************Null块************************************/
+
+NullStmntAST::NullStmntAST(): ASTList(ASTKind::LIST_NULL_STMNT) {}

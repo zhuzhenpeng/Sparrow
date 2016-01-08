@@ -26,7 +26,14 @@ enum class ASTKind {
   LEAF_STR = 1003,
 
   LIST_COMMON = 2000, 
-  LIST_BINARY_EXPR = 2001,
+  LIST_PRIMARY_EXPR = 2001,
+  LIST_NEGETIVE_EXPR = 2002,
+  LIST_BINARY_EXPR = 2003,
+
+  LIST_BLOCK_STMNT = 2004,
+  LIST_IF_STMNT = 2005,
+  LIST_WHILE_STMNT = 2006,
+  LIST_NULL_STMNT = 2007,
 };
 
 /*********************AST的基类，用于定义接口****************************/

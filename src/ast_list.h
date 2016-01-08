@@ -60,7 +60,21 @@ protected:
   std::vector<ASTreePtr> children_;
 };
 
-/***********************二元表达式******************************************/
+/**************************元表达式****************************************/
+
+class PrimaryExprAST: public ASTList {
+public:
+  PrimaryExprAST();
+};
+
+/**************************负值表达式*************************************/
+
+class NegativeExprAST: public ASTList {
+public:
+  NegativeExprAST();
+};
+
+/*****************************二元表达式***********************************/
 
 class BinaryExprAST: public ASTList {
 public:
@@ -70,6 +84,39 @@ public:
   std::string getOperator();
 private:
   void checkValid();
+};
+
+/********************************块**************************************/
+
+class BlockStmntAST: public ASTList {
+public:
+  BlockStmntAST();
+};
+
+/******************************if块*************************************/
+
+class IfStmntAST: public ASTList {
+public:
+  IfStmntAST();
+  ASTreePtr condition();
+  ASTreePtr thenBlock();
+  ASTreePtr elseBlock();
+};
+
+/****************************while块***********************************/
+
+class WhileStmntAST: public ASTList {
+public:
+  WhileStmntAST();
+  ASTreePtr condition();
+  ASTreePtr body();
+};
+
+/****************************Null块************************************/
+
+class NullStmntAST: public ASTList {
+public:
+  NullStmntAST();
 };
 
 #endif

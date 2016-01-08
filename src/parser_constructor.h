@@ -1,7 +1,8 @@
 #ifndef SPARROW_PARSER_CONSTRUCTOR_H_
 #define SPARROW_PARSER_CONSTRUCTOR_H_
 
-/* 利用组合子的编程思想编写一个语法解析器构造器 */
+/* 利用组合子的编程思想编写一个语法解析器构造器
+ * 通过组合一系列规则构造出和BNF表述规则一样的解析器 */
 #include <vector>
 #include <memory>
 #include <exception>
@@ -119,6 +120,9 @@ protected:
 
 //优先级
 struct Precedence {
+  Precedence() = default;
+  Precedence(int weight, bool leftAssoc): weight_(weight), leftAssoc_(leftAssoc) {}
+
   int weight_ = -1;   //优先级数值，越大优先级越高, -1表示无效值
   bool leftAssoc_ = true; //同一个运算符时，左相关标志
 
@@ -150,9 +154,13 @@ private:
 /********************************Parser类*************************************/
 //Parser是一些列规则组合的载体，本身并不包含parse逻辑
 //外部通过调用Parser的一些接口可以构造出特性规则的Parser
-class Parser {
+class Parser: public std::enable_shared_from_this<Parser> {
 public:
+  //Parser对象通过rule构造，而不是通过构造函数直接构造
+  Parser(ASTKind kind);
+
   ASTreePtr parse(Lexer &lexer);
+
   bool match(Lexer &lexer);
 
   //返回一个规则组合，通过该规则parse后返回ASTList
@@ -162,34 +170,32 @@ public:
   static ParserPtr rule(ASTKind kind);
 
   //添加解析数字的规则，指定该规则返回的ASTree类型
-  Parser& number(ASTKind kind);
+  ParserPtr number(ASTKind kind);
 
-  //添加解析ID的规则，指定该规则返回的ASTree类型，以及保留字
-  Parser& id(ASTKind kind, std::set<std::string> &reserved);
+  //添加解析ID的规则，指定该规则的保留字
+  ParserPtr id(std::set<std::string> &reserved);
 
-  //添加解析字符串的规则，指定该规则返回的ASTree类型
-  Parser& str(ASTKind kind);
+  //添加解析字符串的规则
+  ParserPtr str();
 
-  //添加自定义终结符，指定该符号解析后是否需要添加到AST中
-  Parser& custom(const std::string &patter, bool skipFlag);
+  //添加自定义终结符规则，指定该符号解析后是否需要添加到AST中
+  ParserPtr custom(const std::string &pattern, bool skipFlag);
 
-  //添加二元运算符
-  Parser& binaryExpr(const std::map<std::string, Precedence> &operators, ParserPtr factorPs);
+  //添加二元运算符规则
+  ParserPtr binaryExpr(const std::map<std::string, Precedence> &operators, ParserPtr factorPs);
 
   //普通规则
-  Parser& commomPR(ParserPtr parser);
+  ParserPtr commomPR(ParserPtr parser);
 
   //或规则
-  Parser& orPR(ParserPtr parser);
+  ParserPtr orPR(const std::vector<ParserPtr> &parsers);
 
   //0..1规则
-  Parser& optionPR(ParserPtr parser);
+  ParserPtr optionPR(ParserPtr parser);
 
   //0..*规则
-  Parser& repeatPR(ParserPtr parser);
+  ParserPtr repeatPR(ParserPtr parser);
 
-private:
-  Parser(ASTKind kind);
 
 private:
   std::vector<ParseRulePtr> rulesCombination_;  //规则组合集合
@@ -218,4 +224,5 @@ public:
     errMsg_ = "construct AST error: " + parsingToken->info() + ", except: " + expect;
   }
 };
+
 #endif
