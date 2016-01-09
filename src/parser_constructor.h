@@ -28,6 +28,11 @@ class ParseRule {
 public:
   virtual void parse(Lexer &lexer, std::vector<ASTreePtr> &ast) = 0;
   virtual bool match(Lexer &lexer) = 0;
+protected:
+  void handleParseResult(ASTreePtr result, std::vector<ASTreePtr> &ast) {
+    if (result != nullptr)
+      ast.push_back(result);
+  }
 };
 using ParseRulePtr = std::shared_ptr<ParseRule>;
 
@@ -43,7 +48,6 @@ private:
 
 /*********************************选择操作************************************/
 class OrParsePR: public ParseRule {
-public:
 public:
   OrParsePR(const std::vector<ParserPtr> &parsers);
   void parse(Lexer &lexer, std::vector<ASTreePtr> &ast) override;
@@ -151,6 +155,18 @@ private:
   ParserPtr parser_;
 };
 
+/********************************EOF******************************************/
+
+class EOFPR: public ParseRule {
+public:
+  EOFPR(ParserPtr parser);
+  void parse(Lexer &lexer, std::vector<ASTreePtr> &ast) override;
+  bool match(Lexer &lexer) override;
+private:
+  ParserPtr parser_;
+};
+
+
 /********************************Parser类*************************************/
 //Parser是一些列规则组合的载体，本身并不包含parse逻辑
 //外部通过调用Parser的一些接口可以构造出特性规则的Parser
@@ -195,7 +211,6 @@ public:
 
   //0..*规则
   ParserPtr repeatPR(ParserPtr parser);
-
 
 private:
   std::vector<ParseRulePtr> rulesCombination_;  //规则组合集合

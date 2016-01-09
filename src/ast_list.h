@@ -101,6 +101,7 @@ public:
   ASTreePtr condition();
   ASTreePtr thenBlock();
   ASTreePtr elseBlock();
+  std::string info() override;
 };
 
 /****************************while块***********************************/
@@ -110,6 +111,7 @@ public:
   WhileStmntAST();
   ASTreePtr condition();
   ASTreePtr body();
+  std::string info() override;
 };
 
 /****************************Null块************************************/

@@ -1,5 +1,6 @@
 #include "ast_list.h"
 #include "ast_leaf.h"
+#include <iostream>
 
 /**************************AST内部（非叶子）节点******************************/
 
@@ -18,12 +19,15 @@ Iterator<ASTreePtr> ASTList::iterator() {
 }
 
 std::string ASTList::info() {
-  std::string result = "( ";
-  for(auto child: children_) {
-    result += child->info();
-    result += " ";
+  //std::cout << "children size: " << children_.size() << std::endl;
+  std::string result = "(";
+  //std::cout << "[" << static_cast<int>(kind_) << "]" << std::endl;
+  for (size_t i = 0; i < children_.size(); ++i) {
+    result += children_[i]->info();
+    if (i < children_.size() - 1)
+      result += " ";
   }
-  result += " ";
+  result += ")";
   return result;
 }
 
@@ -57,7 +61,7 @@ ASTreePtr BinaryExprAST::rightFactor() {
 std::string BinaryExprAST::getOperator() {
   checkValid();
   auto id = reinterpret_cast<ASTLeaf*>(children_[1].get())->getToken();
-  return reinterpret_cast<IdToken*>(id.get())->getId();
+  return id->getText();
 }
 
 void BinaryExprAST::checkValid() {
@@ -94,6 +98,23 @@ ASTreePtr IfStmntAST::elseBlock() {
     return nullptr;
 }
 
+std::string IfStmntAST::info() {
+  std::string result = "(if ";
+  result += condition()->info();
+  result += " ";
+  result += thenBlock()->info();
+  auto elsePtr = elseBlock();
+  if (elsePtr == nullptr) {
+    result += ")";
+  }
+  else {
+    result += " else ";
+    result += elsePtr->info();
+    result += ")";
+  }
+  return result;
+}
+
 /****************************while块***********************************/
 
 WhileStmntAST::WhileStmntAST(): ASTList(ASTKind::LIST_WHILE_STMNT) {}
@@ -108,6 +129,15 @@ ASTreePtr WhileStmntAST::body() {
   if (children_.size() < 2)
     throw ASTException("get while AST body failed");
   return children_[1];
+}
+
+std::string WhileStmntAST::info() {
+  std::string result = "(while ";
+  result += condition()->info();
+  result += " ";
+  result += body()->info();
+  result += ")";
+  return result;
 }
 
 /****************************Null块************************************/

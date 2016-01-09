@@ -17,10 +17,7 @@ Iterator<ASTreePtr> ASTLeaf::iterator() {
 }
 
 std::string ASTLeaf::info() {
-  std::string result = std::string("file: ") + token_->getFileName() + 
-    ", line: " + std::to_string(token_->getLineNumber()) +
-    ", raw text: " + token_->getText();
-  return result;
+  return token_->getText();
 }
 
 TokenPtr ASTLeaf::getToken() const {
@@ -31,6 +28,10 @@ TokenPtr ASTLeaf::getToken() const {
 
 IntTokenAST::IntTokenAST(TokenPtr token): ASTLeaf(ASTKind::LEAF_INT, token) {}
 
+std::string IntTokenAST::info() {
+  return std::to_string(getValue());
+}
+
 int IntTokenAST::getValue() const {
   return reinterpret_cast<IntToken*>(token_.get())->getValue();
 }
@@ -39,14 +40,22 @@ int IntTokenAST::getValue() const {
 
 IdTokenAST::IdTokenAST(TokenPtr token): ASTLeaf(ASTKind::LEAF_Id, token) {}
 
+std::string IdTokenAST::info() {
+  return getId();
+}
+
 std::string IdTokenAST::getId() const {
-  return reinterpret_cast<IdToken*>(token_.get())->getId();
+  return token_->getText();
 }
 
 /*********************StrToken对应的叶子节点*************************/
 
 StrTokenAST::StrTokenAST(TokenPtr token): ASTLeaf(ASTKind::LEAF_STR, token) {}
 
+std::string StrTokenAST::info() {
+  return getContent();
+}
+
 std::string StrTokenAST::getContent() const {
-  return reinterpret_cast<StrToken*>(token_.get())->getString();
+  return token_->getText();
 }

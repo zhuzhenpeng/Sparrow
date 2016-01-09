@@ -53,13 +53,10 @@ using IntTokenPtr = std::shared_ptr<IntToken>;
 class StrToken: public Token {
 public:
   StrToken(int lineNumber, const std::string &fileName, const std::string &text);
-  std::string getString() const;
 
 private:
   //对源字符串进行处理，保留转义字符'\n'，识别\\和\"
   std::string polish(const std::string &srcStr);  
-private:
-  std::string content_;
 };
 using StrTokenPtr = std::shared_ptr<StrToken>;
 
@@ -68,9 +65,6 @@ using StrTokenPtr = std::shared_ptr<StrToken>;
 class IdToken: public Token {
 public:
   IdToken(int lineNumber, const std::string &fileName, const std::string &text);
-  std::string getId() const;
-private:
-  std::string id_;
 };
 using IdTokenPtr = std::shared_ptr<IdToken>;
 
@@ -89,16 +83,8 @@ private:
 };
 
 /*******************EOLToken***************************/
-class EOLToken;
-using EOLTokenPtr = std::shared_ptr<EOLToken>;
 
-class EOLToken: public Token {
-public:
-  static EOLTokenPtr getInstance();
-private:
-  EOLToken(int lineNumber, const std::string &fileName, const std::string &text);
-private:
-  static EOLTokenPtr eol_;
-};
+//EOL是特殊的IdToken
+extern IdTokenPtr g_EOLTokenPtr;
 
 #endif

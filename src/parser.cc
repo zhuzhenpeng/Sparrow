@@ -38,7 +38,7 @@ void BasicParser::init() {
                ->repeatPR(Parser::rule()\
                                 ->orPR({
                                     Parser::rule()->custom(";", true),
-                                    Parser::rule()->custom("\n", true)})\
+                                    Parser::rule()->custom("\\n", true)})\
                                 ->optionPR(statement))\
                ->custom("}", true);
 
@@ -62,23 +62,29 @@ void BasicParser::init() {
       });
 
   //program
-  program_->orPR({
-        statement,
-        Parser::rule(ASTKind::LIST_NULL_STMNT)
-      })->orPR({
+  //program_->orPR({
+        //statement,
+        //Parser::rule(ASTKind::LIST_NULL_STMNT)
+      //})->orPR({
+                //Parser::rule()->custom(";", true), 
+                //Parser::rule()->custom("\\n", true)
+              //});
+  program_->commomPR(statement)\
+      ->orPR({
                 Parser::rule()->custom(";", true), 
-                Parser::rule()->custom("\n", true)
+                Parser::rule()->custom("\\n", true)
               });
 }
 
 ASTreePtr BasicParser::parse(Lexer &lexer) {
-  return program_->parse(lexer);
+    return program_->parse(lexer);
 }
 
 void BasicParser::initReserved() {
+  //符号不用添加进来，符号被作为ID处理
   reserved_.insert(";");
-  reserved_.insert("}");
-  reserved_.insert("\n");
+  reserved_.insert("}");    
+  reserved_.insert("\\n");
 }
 
 void BasicParser::initOperators() {

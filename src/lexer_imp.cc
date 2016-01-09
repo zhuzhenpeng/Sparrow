@@ -101,7 +101,6 @@ void LexerImp::parseNextLine() {
       it != endIt; ++it) {
     const std::smatch &results = *it;
     const std::string &matchStr = it->str();
-    //std::cout << "match: " << matchStr << std::endl;
 
     if (!results[1].matched)    //空格
       continue;
@@ -124,6 +123,10 @@ void LexerImp::parseNextLine() {
       tokenQueue_.push_back(tp);
     }
   }
+
+  //如果不是以分号分割，那么每一行后面添加一个换行token
+  if (tokenQueue_.back()->getText() != ";")
+    tokenQueue_.push_back(g_EOLTokenPtr);
 
   ++lineNumber_;
 }

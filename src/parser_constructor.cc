@@ -67,8 +67,9 @@ ASTreePtr ASTFactory::getListInstance(ASTKind kind) {
 CommonParsePR::CommonParsePR(ParserPtr parser): parser_(parser) {}
 
 void CommonParsePR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
-  std::cout << "common parse" << std::endl;
-  ast.push_back(parser_->parse(lexer));
+  //std::cout << "common parse" << std::endl;
+  auto subTree = parser_->parse(lexer);
+  handleParseResult(subTree, ast);
 }
 
 bool CommonParsePR::match(Lexer &lexer) {
@@ -80,12 +81,15 @@ bool CommonParsePR::match(Lexer &lexer) {
 OrParsePR::OrParsePR(const std::vector<ParserPtr> &parsers): parsers_(parsers) {}
 
 void OrParsePR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
-  std::cout << "or parse" << std::endl;
+  //std::cout << "or parse" << std::endl;
   ParserPtr parser = choosePs(lexer);
-  if (parser == nullptr) 
+  if (parser == nullptr) {
     throw ParseException("or choose failed: " + lexer.peek(0)->info());
-  else
-    ast.push_back(parser->parse(lexer));
+  }
+  else {
+    auto subTree = parser->parse(lexer);
+    handleParseResult(subTree, ast);
+  }
 }
 
 bool OrParsePR::match(Lexer &lexer) {
@@ -106,16 +110,18 @@ RepeatParsePR::RepeatParsePR(ParserPtr parser, bool onceFlag):
   parser_(parser), onceFlag_(onceFlag) {}
 
 void RepeatParsePR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
-  std::cout << "repeat parse" << std::endl;
+  //std::cout << "repeat parse" << std::endl;
   //至少是0次匹配
-  while (parser_->match(lexer)) {
-    ast.push_back(parser_->parse(lexer));
+  while (match(lexer)) {
+    auto subTree = parser_->parse(lexer);
+    handleParseResult(subTree, ast);
     if (onceFlag_)
       break;
   } 
 }
 
 bool RepeatParsePR::match(Lexer &lexer) {
+  //std::cout << "match? " << std::endl;
   return parser_->match(lexer);
 }
 
@@ -124,12 +130,12 @@ bool RepeatParsePR::match(Lexer &lexer) {
 MatchTokenPR::MatchTokenPR(ASTKind kind): kind_(kind) {};
 
 void MatchTokenPR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
-  std::cout << "match token" << std::endl;
+  //std::cout << "match token" << std::endl;
   if (match(lexer)) {
     //通过parse后，lexer消耗一个token
-    std::cout << "consume: " << lexer.peek(0)->getText() << std::endl;
+    //std::cout << "consume: " << lexer.peek(0)->getText() << std::endl;
     ASTreePtr leaf = ASTFactory::getLeafInstance(kind_, lexer.read());
-    ast.push_back(leaf);
+    handleParseResult(leaf, ast);
   }
   else {
     std::string expect;
@@ -157,8 +163,10 @@ IdMatcher::IdMatcher(std::set<std::string> &reserved):
 
 bool IdMatcher::match(Lexer &lexer) {
   auto token = lexer.peek(0);
+  
+  //不在保留字中的才算是ID
   return token->getKind() == TokenKind::TK_ID && 
-    reserved_.find(reinterpret_cast<IdToken*>(token.get())->getId()) == reserved_.end();
+    reserved_.find(token->getText())== reserved_.end();
 }
 
 /////////////////////int
@@ -183,11 +191,16 @@ CustomTerminalSymbalPR::CustomTerminalSymbalPR(const std::string &pattern, bool 
   pattern_(pattern), skipFlag_(skipFlag) {}
 
 void CustomTerminalSymbalPR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
-  std::cout << "custom parse " << pattern_ << std::endl;
+  //std::cout << "custom parse " << pattern_ << std::endl;
   if (match(lexer)) {
-    if (!skipFlag_)
-      std::cout << "consume: " << lexer.peek(0)->getText() << std::endl;
-      ast.push_back(ASTFactory::getLeafInstance(ASTKind::LEAF_COMMON, lexer.read()));
+    //std::cout << "consume: " << lexer.peek(0)->getText() << std::endl;
+    if (!skipFlag_) {
+      auto subTree = ASTFactory::getLeafInstance(ASTKind::LEAF_COMMON, lexer.read());
+      handleParseResult(subTree, ast);
+    }
+    else {
+      lexer.read(); //直接读取消耗掉token 
+    }
   }
   else {
     throw NotMatchingException(lexer.peek(0), pattern_);
@@ -197,7 +210,7 @@ void CustomTerminalSymbalPR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
 bool CustomTerminalSymbalPR::match(Lexer &lexer) {
   auto token = lexer.peek(0);
   if (token->getKind() == TokenKind::TK_ID) {
-    return reinterpret_cast<IdToken*>(token.get())->getId() == pattern_;
+    return token->getText() == pattern_;
   }
   else {
     return false;
@@ -213,15 +226,15 @@ BinaryExprPR::BinaryExprPR(const std::map<std::string, Precedence> &operators,
     ParserPtr parser): operators_(operators), parser_(parser) {}
 
 void BinaryExprPR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
-  std::cout << "binary expr parse" << std::endl;
-  ASTreePtr right = parser_->parse(lexer);  
+  //std::cout << "binary expr parse" << std::endl;
+  ASTreePtr right = parser_->parse(lexer);
   Precedence prec = nextOperatorPrec(lexer);
   while (prec.weight_ != -1) {
     //下一个是运算符，需要构造一颗相应的二叉树，把上面解析出来的AST作为它的左节点
     right = constructBinaryTree(right, prec, lexer);
     prec = nextOperatorPrec(lexer);
   }
-  ast.push_back(right);
+  handleParseResult(right, ast);
 }
 
 bool BinaryExprPR::match(Lexer &lexer) {
@@ -235,7 +248,7 @@ Precedence BinaryExprPR::nextOperatorPrec(Lexer &lexer) {
     return Precedence();
   }
   else {
-    const std::string &symbol = reinterpret_cast<IdToken*>(token.get())->getId();
+    const std::string &symbol = token->getText();
     auto prec = operators_.find(symbol);
     if (prec == operators_.end())
       return Precedence();
@@ -251,7 +264,7 @@ ASTreePtr BinaryExprPR::constructBinaryTree(ASTreePtr leftFactor, const Preceden
   auto &exprTree = tmptr->children();
 
   exprTree.push_back(leftFactor);
-  std::cout << "consume: " << lexer.peek(0)->getText() << std::endl;
+  //std::cout << "consume: " << lexer.peek(0)->getText() << std::endl;
   exprTree.push_back(ASTFactory::getLeafInstance(ASTKind::LEAF_COMMON, lexer.read()));
   auto rightFactor = parser_->parse(lexer);
 
@@ -262,6 +275,7 @@ ASTreePtr BinaryExprPR::constructBinaryTree(ASTreePtr leftFactor, const Preceden
     nextPrec = nextOperatorPrec(lexer);
   }
   exprTree.push_back(rightFactor);
+
   return result;
 }
 
@@ -279,19 +293,25 @@ Parser::Parser(ASTKind kind): kind_(kind) {}
 
 ASTreePtr Parser::parse(Lexer &lexer) {
   ASTreePtr result = ASTFactory::getListInstance(kind_);
-  BinaryExprAST *tmptr = reinterpret_cast<BinaryExprAST*>(result.get());
+  ASTList *tmptr = reinterpret_cast<ASTList*>(result.get());
   auto &children = tmptr->children();
 
   for (auto rule: rulesCombination_)
     rule->parse(lexer, children);
-
-  return result;
+  
+  //剪枝
+  if (children.empty())
+    return nullptr;
+  else if (children.size() == 1)
+    return children[0];
+  else
+    return result;
 }
 
 bool Parser::match(Lexer &lexer) {
   if (rulesCombination_.empty())
     return true;
-  else 
+  else
     return rulesCombination_[0]->match(lexer);
 }
 
@@ -338,14 +358,13 @@ ParserPtr Parser::binaryExpr(const std::map<std::string, Precedence> &operators,
 }
 
 ParserPtr Parser::commomPR(ParserPtr parser) {
-  ////如果子规则只有一个规则，就进行剪支
-  //if (parser->rulesCombination_.size() == 1) {
-    //rulesCombination_.push_back(parser->rulesCombination_[0]);
-  //}
-  //else {
-    //rulesCombination_.push_back(std::make_shared<CommonParsePR>(parser));
-  //}
-  rulesCombination_.push_back(std::make_shared<CommonParsePR>(parser));
+  //如果子规则只有一个规则，就进行剪支
+  if (parser->rulesCombination_.size() == 1) {
+    rulesCombination_.push_back(parser->rulesCombination_[0]);
+  }
+  else {
+    rulesCombination_.push_back(std::make_shared<CommonParsePR>(parser));
+  }
   return shared_from_this();
 }
 

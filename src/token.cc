@@ -61,12 +61,8 @@ int IntToken::getValue() const {
 
 StrToken::StrToken(int lineNumber, const std::string &fileName, const std::string &text):
   Token(lineNumber, fileName, text) {
-  content_ = polish(text);
+  text_ = polish(text);
   kind_ = TokenKind::TK_STR; 
-}
-
-std::string StrToken::getString() const {
-  return content_;
 }
 
 std::string StrToken::polish(const std::string &srcStr) {
@@ -97,17 +93,13 @@ std::string StrToken::polish(const std::string &srcStr) {
 IdToken::IdToken(int lineNumber, const std::string &fileName, const std::string &text):
   Token(lineNumber, fileName, text) {
   //去掉左侧的空白符
-  id_.assign(
+  text_.assign(
         std::find_if(text.begin(), text.end(), 
           [](const char &c){
           return c != ' ';
           }),
         text.end());
   kind_ = TokenKind::TK_ID;
-}
-
-std::string IdToken::getId() const {
-  return id_;
 }
 
 /********************EOFToken***************************/
@@ -128,16 +120,4 @@ EOFTokenPtr EOFToken::getInstance() {
 
 /*******************EOLToken***************************/
 
-EOLTokenPtr EOLToken::eol_ = nullptr;
-
-EOLToken::EOLToken(int lineNumber, const std::string &fileName, const std::string &text):
-  Token(lineNumber, fileName, text) {
-    kind_ = TokenKind::TK_EOL;
-}
-
-EOLTokenPtr EOLToken::getInstance() {
-  if (eol_ == nullptr) {
-    eol_.reset(new EOLToken(-1, "", ""));
-  }
-  return eol_;
-}
+IdTokenPtr g_EOLTokenPtr = std::make_shared<IdToken>(-1, "", "\\n");

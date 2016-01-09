@@ -32,6 +32,7 @@ protected:
 class IntTokenAST: public ASTLeaf {
 public:
   IntTokenAST(TokenPtr token); 
+  std::string info() override;
   int getValue() const;
 };
 
@@ -40,6 +41,7 @@ public:
 class IdTokenAST: public ASTLeaf {
 public:
   IdTokenAST(TokenPtr token);
+  std::string info() override;
   std::string getId() const;
 };
 
@@ -47,6 +49,7 @@ public:
 class StrTokenAST: public ASTLeaf {
 public:
   StrTokenAST(TokenPtr token);
+  std::string info() override;
   std::string getContent() const;
 };
 
