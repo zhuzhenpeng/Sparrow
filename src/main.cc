@@ -13,7 +13,8 @@ int main() {
     
     while (lexer->peek(0)->getKind() != TokenKind::TK_EOF) {
       auto tree = bp.parse(*lexer);
-      std::cout << tree->info() << std::endl;     
+      if (tree != nullptr)
+        std::cout << tree->info() << std::endl;     
     }
   } 
   catch (std::exception &e) {

@@ -62,15 +62,10 @@ void BasicParser::init() {
       });
 
   //program
-  //program_->orPR({
-        //statement,
-        //Parser::rule(ASTKind::LIST_NULL_STMNT)
-      //})->orPR({
-                //Parser::rule()->custom(";", true), 
-                //Parser::rule()->custom("\\n", true)
-              //});
-  program_->commomPR(statement)\
-      ->orPR({
+  program_->orPR({
+        statement,
+        Parser::rule(ASTKind::LIST_NULL_STMNT)
+      })->orPR({
                 Parser::rule()->custom(";", true), 
                 Parser::rule()->custom("\\n", true)
               });
