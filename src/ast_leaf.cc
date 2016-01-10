@@ -20,6 +20,10 @@ std::string ASTLeaf::info() {
   return token_->getText();
 }
 
+ObjectPtr ASTLeaf::eval(__attribute__((unused)) Environment &env) {
+  throw ASTEvalException("error call: not evalable for AST leaf");
+}
+
 TokenPtr ASTLeaf::getToken() const {
   return token_;
 }
@@ -32,8 +36,12 @@ std::string IntTokenAST::info() {
   return std::to_string(getValue());
 }
 
+ObjectPtr IntTokenAST::eval(__attribute__((unused)) Environment &env) {
+  return std::make_shared<IntObject>(getValue());
+}
+
 int IntTokenAST::getValue() const {
-  return reinterpret_cast<IntToken*>(token_.get())->getValue();
+  return std::static_pointer_cast<IntToken>(token_)->getValue();
 }
 
 /*********************IdToken对应的叶子节点***************************/
@@ -42,6 +50,10 @@ IdTokenAST::IdTokenAST(TokenPtr token): ASTLeaf(ASTKind::LEAF_Id, token) {}
 
 std::string IdTokenAST::info() {
   return getId();
+}
+
+ObjectPtr IdTokenAST::eval(Environment &env) {
+  return env.get(getId()); 
 }
 
 std::string IdTokenAST::getId() const {
@@ -54,6 +66,10 @@ StrTokenAST::StrTokenAST(TokenPtr token): ASTLeaf(ASTKind::LEAF_STR, token) {}
 
 std::string StrTokenAST::info() {
   return getContent();
+}
+
+ObjectPtr StrTokenAST::eval(__attribute__((unused)) Environment &env) {
+  return std::make_shared<StrObject>(getContent());
 }
 
 std::string StrTokenAST::getContent() const {

@@ -136,7 +136,7 @@ void LexerImp::resetStatus() {
   hasMore_ = true;
   lineNumber_ = 1;
   if (!fileName_.empty()) {
-    std::ifstream *tmpIs = reinterpret_cast<std::ifstream *>(is_);
+    std::ifstream *tmpIs = dynamic_cast<std::ifstream *>(is_);
     tmpIs->close();
   } else {
     delete is_;

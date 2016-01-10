@@ -54,6 +54,9 @@ public:
   //返回该节点信息
   std::string info() override;
 
+  //抛出异常
+  ObjectPtr eval(Environment &env) override;
+
   std::vector<ASTreePtr>& children();
 
 protected:
@@ -65,6 +68,7 @@ protected:
 class PrimaryExprAST: public ASTList {
 public:
   PrimaryExprAST();
+  ObjectPtr eval(Environment &env) override;
 };
 
 /**************************负值表达式*************************************/
@@ -72,6 +76,8 @@ public:
 class NegativeExprAST: public ASTList {
 public:
   NegativeExprAST();
+  std::string info() override;
+  ObjectPtr eval(Environment &env) override;
 };
 
 /*****************************二元表达式***********************************/
@@ -82,6 +88,16 @@ public:
   ASTreePtr leftFactor();
   ASTreePtr rightFactor();
   std::string getOperator();
+  ObjectPtr eval(Environment &env) override;
+private:
+  //赋值操作
+  ObjectPtr assignOp(Environment &env, ObjectPtr rightValue);
+
+  //除赋值以外其它操作
+  ObjectPtr otherOp(ObjectPtr left, const std::string &op, ObjectPtr right);
+
+  //数字间的运算
+  ObjectPtr computeNumber(IntObjectPtr left, const std::string &op, IntObjectPtr right);
 private:
   void checkValid();
 };
@@ -91,6 +107,7 @@ private:
 class BlockStmntAST: public ASTList {
 public:
   BlockStmntAST();
+  ObjectPtr eval(Environment &env) override;
 };
 
 /******************************if块*************************************/
@@ -102,6 +119,7 @@ public:
   ASTreePtr thenBlock();
   ASTreePtr elseBlock();
   std::string info() override;
+  ObjectPtr eval(Environment &env) override;
 };
 
 /****************************while块***********************************/
@@ -112,6 +130,7 @@ public:
   ASTreePtr condition();
   ASTreePtr body();
   std::string info() override;
+  ObjectPtr eval(Environment &env) override;
 };
 
 /****************************Null块************************************/
@@ -119,6 +138,7 @@ public:
 class NullStmntAST: public ASTList {
 public:
   NullStmntAST();
+  ObjectPtr eval(Environment &env) override;
 };
 
 #endif

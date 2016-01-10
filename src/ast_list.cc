@@ -31,6 +31,10 @@ std::string ASTList::info() {
   return result;
 }
 
+ObjectPtr ASTList::eval(__attribute__((unused)) Environment &env) {
+  throw ASTEvalException("call error, not evalable for AST list");
+}
+
 std::vector<ASTreePtr>& ASTList::children() {
   return children_;
 }
@@ -39,10 +43,28 @@ std::vector<ASTreePtr>& ASTList::children() {
 
 PrimaryExprAST::PrimaryExprAST(): ASTList(ASTKind::LIST_PRIMARY_EXPR) {}
 
+ObjectPtr PrimaryExprAST::eval(Environment &env) {
+  return children_[0]->eval(env);
+}
 
 /**************************负值表达式*************************************/
 
 NegativeExprAST::NegativeExprAST(): ASTList(ASTKind::LIST_NEGETIVE_EXPR) {}
+
+std::string NegativeExprAST::info() {
+  return "-" + children_[1]->info();
+}
+
+ObjectPtr NegativeExprAST::eval(Environment &env) {
+  auto num = children_[1]->eval(env);
+  if (num->kind_ == ObjKind::Int) {
+    int positive = std::static_pointer_cast<IntObject>(num)->value_;
+    return std::make_shared<IntObject>(-positive);
+  }
+  else {
+    throw ASTEvalException("bad type for -");
+  }
+}
 
 /***********************二元表达式******************************************/
 
@@ -60,8 +82,79 @@ ASTreePtr BinaryExprAST::rightFactor() {
 
 std::string BinaryExprAST::getOperator() {
   checkValid();
-  auto id = reinterpret_cast<ASTLeaf*>(children_[1].get())->getToken();
+  auto id = std::dynamic_pointer_cast<ASTLeaf>(children_[1])->getToken();
   return id->getText();
+}
+
+ObjectPtr BinaryExprAST::eval(Environment &env) {
+  std::string op = getOperator();
+  if (op == "=") {
+    ObjectPtr rightValue = rightFactor()->eval(env);
+    return assignOp(env, rightValue);
+  }
+  else {
+    ObjectPtr leftValue = leftFactor()->eval(env);
+    ObjectPtr rightValue = rightFactor()->eval(env);
+    return otherOp(leftValue, op, rightValue);
+  }
+}
+
+ObjectPtr BinaryExprAST::assignOp(Environment &env, ObjectPtr rightValue) {
+  auto leftTree = leftFactor();
+  if (leftTree->kind_ == ASTKind::LEAF_Id) {
+    env.put(std::dynamic_pointer_cast<IdTokenAST>(leftTree)->getId(), rightValue);
+    return rightValue;
+  }
+  else {
+    throw ASTEvalException("bad assign, not a valid id");
+  }
+}
+
+ObjectPtr BinaryExprAST::otherOp(ObjectPtr left, const std::string &op, ObjectPtr right) {
+  if (left->kind_ == ObjKind::Int && right->kind_ == ObjKind::Int) {
+    return computeNumber(std::static_pointer_cast<IntObject>(left), op, 
+        std::static_pointer_cast<IntObject>(right));
+  } 
+  else {
+    auto strLeft = std::static_pointer_cast<StrObject>(left);
+    auto strRight = std::static_pointer_cast<StrObject>(right);
+    if (op == "+") {
+      return std::make_shared<StrObject>(strLeft->str_ + strRight->str_);
+    }
+    else if (op == "==") {
+      if (strLeft->str_ == strRight->str_)
+        return std::make_shared<BoolObject>(true);
+      else
+        return std::make_shared<BoolObject>(false);
+    }
+    else {
+      throw ASTEvalException("bad type for str operation");
+    }
+  }
+}
+
+ObjectPtr BinaryExprAST::computeNumber(IntObjectPtr left, const std::string &op, 
+    IntObjectPtr right) {
+  int a = left->value_;
+  int b = right->value_;
+  if (op == "+")
+    return std::make_shared<IntObject>(a + b);
+  else if (op == "-")
+    return std::make_shared<IntObject>(a - b);
+  else if (op == "*")
+    return std::make_shared<IntObject>(a * b);
+  else if (op == "/")
+    return std::make_shared<IntObject>(a / b);
+  else if (op == "%")
+    return std::make_shared<IntObject>(a & b);
+  else if (op == "==")
+    return std::make_shared<BoolObject>(a == b);
+  else if (op == ">")
+    return std::make_shared<BoolObject>(a > b);
+  else if (op == "<")
+    return std::make_shared<BoolObject>(a < b);
+  else
+    throw ASTEvalException("bad operators for bianry expr");
 }
 
 void BinaryExprAST::checkValid() {
@@ -74,6 +167,15 @@ void BinaryExprAST::checkValid() {
 /********************************块**************************************/
 
 BlockStmntAST::BlockStmntAST(): ASTList(ASTKind::LIST_BLOCK_STMNT) {}
+
+ObjectPtr BlockStmntAST::eval(Environment &env) {
+  ObjectPtr result;
+  for (auto subTree: children_) {
+    if (!(subTree->kind_ == ASTKind::LIST_NULL_STMNT))
+      result = subTree->eval(env);
+  }
+  return result;
+}
 
 /******************************if块*************************************/
 
@@ -115,6 +217,22 @@ std::string IfStmntAST::info() {
   return result;
 }
 
+ObjectPtr IfStmntAST::eval(Environment &env) {
+  auto b = condition()->eval(env);
+  if (b->kind_ != ObjKind::Bool)
+    throw ASTEvalException("error type for if condition part");
+  if (std::static_pointer_cast<BoolObject>(b)->b_) {
+    return thenBlock()->eval(env);
+  }
+  else {
+    auto eb = elseBlock();
+    if (eb == nullptr)
+      return nullptr;
+    else
+      return eb->eval(env);
+  }
+}
+
 /****************************while块***********************************/
 
 WhileStmntAST::WhileStmntAST(): ASTList(ASTKind::LIST_WHILE_STMNT) {}
@@ -140,6 +258,26 @@ std::string WhileStmntAST::info() {
   return result;
 }
 
+ObjectPtr WhileStmntAST::eval(Environment &env) {
+  ObjectPtr result;
+  while (true) {
+    ObjectPtr con = condition()->eval(env);
+
+    if (con->kind_ != ObjKind::Bool)
+      throw ASTEvalException("error type for while condition part");
+    if (!std::static_pointer_cast<BoolObject>(con)->b_) {
+      return result;
+    }
+    else {
+      result = body()->eval(env);
+    }
+  }
+}
+
 /****************************Null块************************************/
 
 NullStmntAST::NullStmntAST(): ASTList(ASTKind::LIST_NULL_STMNT) {}
+
+ObjectPtr NullStmntAST::eval(__attribute__((unused)) Environment &env) {
+  return nullptr;
+}

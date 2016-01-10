@@ -24,7 +24,7 @@ void BasicParser::init() {
 
   //factor
   auto factor = Parser::rule()->orPR({
-        Parser::rule()->custom("-", true)->commomPR(primary),
+        Parser::rule(ASTKind::LIST_NEGETIVE_EXPR)->custom("-", false)->commomPR(primary),
         primary
       });
 

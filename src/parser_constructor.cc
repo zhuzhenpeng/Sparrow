@@ -260,7 +260,7 @@ Precedence BinaryExprPR::nextOperatorPrec(Lexer &lexer) {
 ASTreePtr BinaryExprPR::constructBinaryTree(ASTreePtr leftFactor, const Precedence &opPrec, 
     Lexer &lexer) {
   ASTreePtr result = ASTFactory::getListInstance(ASTKind::LIST_BINARY_EXPR); 
-  BinaryExprAST *tmptr = reinterpret_cast<BinaryExprAST*>(result.get());
+  auto tmptr = std::dynamic_pointer_cast<BinaryExprAST>(result);
   auto &exprTree = tmptr->children();
 
   exprTree.push_back(leftFactor);
@@ -293,7 +293,7 @@ Parser::Parser(ASTKind kind): kind_(kind) {}
 
 ASTreePtr Parser::parse(Lexer &lexer) {
   ASTreePtr result = ASTFactory::getListInstance(kind_);
-  ASTList *tmptr = reinterpret_cast<ASTList*>(result.get());
+  auto tmptr = std::dynamic_pointer_cast<ASTList>(result);
   auto &children = tmptr->children();
 
   for (auto rule: rulesCombination_)

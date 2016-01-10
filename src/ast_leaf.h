@@ -21,6 +21,9 @@ public:
 
   std::string info() override;
 
+  //抛出调用异常
+  ObjectPtr eval(Environment &env) override;
+
   TokenPtr getToken() const;
 
 protected:
@@ -33,6 +36,7 @@ class IntTokenAST: public ASTLeaf {
 public:
   IntTokenAST(TokenPtr token); 
   std::string info() override;
+  ObjectPtr eval(Environment &env) override;
   int getValue() const;
 };
 
@@ -42,6 +46,7 @@ class IdTokenAST: public ASTLeaf {
 public:
   IdTokenAST(TokenPtr token);
   std::string info() override;
+  ObjectPtr eval(Environment &env) override;
   std::string getId() const;
 };
 
@@ -50,6 +55,7 @@ class StrTokenAST: public ASTLeaf {
 public:
   StrTokenAST(TokenPtr token);
   std::string info() override;
+  ObjectPtr eval(Environment &env) override;
   std::string getContent() const;
 };
 
