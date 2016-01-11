@@ -1,4 +1,5 @@
 #include "token.h"
+#include <iostream>
 
 #include <algorithm>
 
@@ -60,8 +61,7 @@ int IntToken::getValue() const {
 /********************StrToken****************************/
 
 StrToken::StrToken(int lineNumber, const std::string &fileName, const std::string &text):
-  Token(lineNumber, fileName, text) {
-  text_ = polish(text);
+  Token(lineNumber, fileName, polish(text)) {
   kind_ = TokenKind::TK_STR; 
 }
 
@@ -71,7 +71,9 @@ std::string StrToken::polish(const std::string &srcStr) {
 
   std::string result;
   size_t len = srcStr.length() - 1;
-  for (size_t i = 0; i < len; ++i) {
+  //debug, include
+  std::cout << "src str: " << srcStr << std::endl;
+  for (size_t i = 1; i < len; ++i) {
     char c = srcStr[i];
     if (c == '\\' && i+1 < len) {
       char c2 = srcStr[i+1];
@@ -85,6 +87,7 @@ std::string StrToken::polish(const std::string &srcStr) {
     result.push_back(c);
   }
 
+  std::cout << "result: " << result << std::endl;
   return result;
 }
 
