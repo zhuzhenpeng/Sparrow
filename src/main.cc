@@ -4,6 +4,8 @@
 #include "lexer_imp.h"
 #include "parser.h"
 
+#include "debugger.h"
+
 int main() {
   try {
     std::unique_ptr<Lexer> lexer(new LexerImp());
@@ -14,15 +16,11 @@ int main() {
     Environment env;
     while (lexer->peek(0)->getKind() != TokenKind::TK_EOF) {
       auto tree = bp.parse(*lexer);
-      if (tree != nullptr)
-        std::cout << tree->info() << std::endl;     
+      //if (tree != nullptr)
+        //std::cout << tree->info() << std::endl;     
       
       if (tree != nullptr) {
         auto result = tree->eval(env);
-        if (result == nullptr) {
-          std::cout << "shit" << std::endl;
-          continue;
-        }
         switch (result->kind_) {
           case ObjKind::Bool:
             std::cout << std::static_pointer_cast<BoolObject>(result)->b_ << std::endl;

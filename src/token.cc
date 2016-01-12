@@ -1,5 +1,4 @@
 #include "token.h"
-#include <iostream>
 
 #include <algorithm>
 
@@ -71,9 +70,7 @@ std::string StrToken::polish(const std::string &srcStr) {
 
   std::string result;
   size_t len = srcStr.length() - 1;
-  //debug, include
-  std::cout << "src str: " << srcStr << std::endl;
-  for (size_t i = 1; i < len; ++i) {
+  for (size_t i = 0; i < srcStr.length(); ++i) {
     char c = srcStr[i];
     if (c == '\\' && i+1 < len) {
       char c2 = srcStr[i+1];
@@ -87,7 +84,6 @@ std::string StrToken::polish(const std::string &srcStr) {
     result.push_back(c);
   }
 
-  std::cout << "result: " << result << std::endl;
   return result;
 }
 
@@ -95,13 +91,6 @@ std::string StrToken::polish(const std::string &srcStr) {
 
 IdToken::IdToken(int lineNumber, const std::string &fileName, const std::string &text):
   Token(lineNumber, fileName, text) {
-  //去掉左侧的空白符
-  text_.assign(
-        std::find_if(text.begin(), text.end(), 
-          [](const char &c){
-          return c != ' ';
-          }),
-        text.end());
   kind_ = TokenKind::TK_ID;
 }
 

@@ -1,6 +1,6 @@
 #include "ast_list.h"
 #include "ast_leaf.h"
-#include <iostream>
+#include "debugger.h"
 
 /**************************AST内部（非叶子）节点******************************/
 
@@ -19,11 +19,8 @@ Iterator<ASTreePtr> ASTList::iterator() {
 }
 
 std::string ASTList::info() {
-  //debug, include
-  //std::cout << "children size: " << children_.size() << std::endl;
   std::string result = "(";
-  //debug
-  std::cout << "[" << static_cast<int>(kind_) << "]" << std::endl;
+  MyDebugger::print(static_cast<int>(kind_), __FILE__, __LINE__);
   for (size_t i = 0; i < children_.size(); ++i) {
     result += children_[i]->info();
     if (i < children_.size() - 1)
@@ -92,9 +89,6 @@ ObjectPtr BinaryExprAST::eval(Environment &env) {
   std::string op = getOperator();
   if (op == "=") {
     ObjectPtr rightValue = rightFactor()->eval(env);
-    //debug
-    if (rightValue == nullptr)
-      std::cout << "shit 95 " << std::endl;
     return assignOp(env, rightValue);
   }
   else {
@@ -108,8 +102,6 @@ ObjectPtr BinaryExprAST::assignOp(Environment &env, ObjectPtr rightValue) {
   auto leftTree = leftFactor();
   if (leftTree->kind_ == ASTKind::LEAF_Id) {
     env.put(std::dynamic_pointer_cast<IdTokenAST>(leftTree)->getId(), rightValue);
-    //debug
-    std::cout << std::static_pointer_cast<StrObject>(rightValue)->str_ << std::endl;
     return rightValue;
   }
   else {

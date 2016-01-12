@@ -100,7 +100,7 @@ void LexerImp::parseNextLine() {
   for (std::sregex_iterator it(line.begin(), line.end(), parsePattern_), endIt;
       it != endIt; ++it) {
     const std::smatch &results = *it;
-    const std::string &matchStr = it->str();
+    //const std::string &matchStr = it->str();
 
     if (!results[1].matched)    //空格
       continue;
@@ -109,17 +109,17 @@ void LexerImp::parseNextLine() {
 
     if (results[3].matched) { //匹配整数
       IntTokenPtr tp = std::make_shared<IntToken>(lineNumber_, 
-          fileName_, matchStr);
+          fileName_, results[3].str());
       tokenQueue_.push_back(tp);
     } 
     else if (results[4].matched) { // 匹配字符串
       StrTokenPtr tp = std::make_shared<StrToken>(lineNumber_, 
-          fileName_, matchStr);
+          fileName_, results[4].str());
       tokenQueue_.push_back(tp);
     }
     else {  //匹配ID
       IdTokenPtr tp = std::make_shared<IdToken>(lineNumber_, 
-          fileName_, matchStr);
+          fileName_, results[1].str());
       tokenQueue_.push_back(tp);
     }
   }

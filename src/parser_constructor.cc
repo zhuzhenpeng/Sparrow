@@ -1,8 +1,8 @@
 #include "parser_constructor.h"
 
-#include <iostream>
 #include "ast_leaf.h"
 #include "ast_list.h"
+//#include <iostream>
 
 /***************************生成各类AST的静态工厂******************************/
 ASTreePtr ASTFactory::getLeafInstance(ASTKind kind, TokenPtr token) {
@@ -67,7 +67,7 @@ ASTreePtr ASTFactory::getListInstance(ASTKind kind) {
 CommonParsePR::CommonParsePR(ParserPtr parser): parser_(parser) {}
 
 void CommonParsePR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
-  //std::cout << "common parse" << std::endl;
+  //std::cout << "common" << std::endl;
   auto subTree = parser_->parse(lexer);
   handleParseResult(subTree, ast);
 }
@@ -178,7 +178,7 @@ bool IntMatcher::match(Lexer &lexer) {
 }
 
 /////////////////////string
-StrMatcher::StrMatcher(): MatchTokenPR(ASTKind::LEAF_Id) {}
+StrMatcher::StrMatcher(): MatchTokenPR(ASTKind::LEAF_STR) {}
 
 bool StrMatcher::match(Lexer &lexer) {
   auto token = lexer.peek(0);
