@@ -141,4 +141,31 @@ public:
   ObjectPtr eval(Environment &env) override;
 };
 
+/***************************ParameterList*****************************/
+
+class ParameterListAST: public ASTList {
+public:
+  ParameterListAST();
+  std::string getParamText(int i);
+};
+
+/**************************函数定义块********************************/
+
+class DefStmnt: public ASTList {
+public:
+  DefStmnt();
+  ASTreePtr funcName();
+  ASTreePtr parameterList();
+  ASTreePtr body();
+  std::string info() override;
+};
+
+/*************************后缀表达式*******************************/
+
+
+
+/***************************实参***********************************/
+
+
+
 #endif

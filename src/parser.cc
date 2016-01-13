@@ -13,6 +13,11 @@ void BasicParser::init() {
   auto expr = Parser::rule();
   auto statement = Parser::rule();
 
+  //param
+  auto param = Parser::rule()->id(reserved_);
+
+  //params
+
   //primary
   auto primary = Parser::rule(ASTKind::LIST_PRIMARY_EXPR)->orPR({
         Parser::rule()->custom("(", true)->commomPR(expr)->custom(")", true),

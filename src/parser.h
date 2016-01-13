@@ -7,15 +7,21 @@
 #include "parser_constructor.h"
 
 /*语法规则：
- * primary    : "(" expr ")" | NUMBER | IDENTIFIER | STRING
+ * param      : IDENTIFIER
+ * params     : param {"," param}
+ * param_list : "(" params ")"
+ * def        : "def" IDENTIFIER param_list block
+ * args       : expr {"," expr}
+ * arg_postfix: "(" [args] ")"
+ * primary    : ("(" expr ")" | NUMBER | IDENTIFIER | STRING) {arg_postfix}
  * factory    : "-" primary | primary
  * expr       : factor { OP factor }
  * block      : "{" [statement] {(";" | EOL) [statement]} "}"
- * simple     : expr
+ * simple     : expr [args]
  * statement  : "if" expr block ["else" block]
  *              | "while" expr block
  *              | simple
- * program    : [statement] (";" | EOL)
+ * program    : [def | statement] (";" | EOL)
  */
 
 class BasicParser {
