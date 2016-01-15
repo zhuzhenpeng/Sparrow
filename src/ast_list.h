@@ -6,10 +6,6 @@
 
 /**************************AST内部（非叶子）节点******************************/
 
-enum class ASTListKind {
-  
-};
-
 class ASTList: public ASTree {
 
   /*****************内部迭代器类********************/
@@ -40,7 +36,7 @@ class ASTList: public ASTree {
   };
 
 public:
-  ASTList(ASTKind kind);
+  ASTList(ASTKind kind, bool ignore);
 
   //返回第i个子节点
   ASTreePtr child(int i) override;
@@ -55,12 +51,18 @@ public:
   std::string info() override;
 
   //抛出异常
-  ObjectPtr eval(Environment &env) override;
+  ObjectPtr eval(EnvPtr env) override;
 
   std::vector<ASTreePtr>& children();
 
+  bool ignore() const;
+
 protected:
   std::vector<ASTreePtr> children_;
+  
+  //考虑在没有子节点和子节点个数为1的情况下，该节点是否可以被忽略
+  //用于剪枝
+  bool ignore_;
 };
 
 /**************************元表达式****************************************/
@@ -68,7 +70,7 @@ protected:
 class PrimaryExprAST: public ASTList {
 public:
   PrimaryExprAST();
-  ObjectPtr eval(Environment &env) override;
+  ObjectPtr eval(EnvPtr env) override;
 };
 
 /**************************负值表达式*************************************/
@@ -77,7 +79,7 @@ class NegativeExprAST: public ASTList {
 public:
   NegativeExprAST();
   std::string info() override;
-  ObjectPtr eval(Environment &env) override;
+  ObjectPtr eval(EnvPtr env) override;
 };
 
 /*****************************二元表达式***********************************/
@@ -88,10 +90,10 @@ public:
   ASTreePtr leftFactor();
   ASTreePtr rightFactor();
   std::string getOperator();
-  ObjectPtr eval(Environment &env) override;
+  ObjectPtr eval(EnvPtr env) override;
 private:
   //赋值操作
-  ObjectPtr assignOp(Environment &env, ObjectPtr rightValue);
+  ObjectPtr assignOp(EnvPtr env, ObjectPtr rightValue);
 
   //除赋值以外其它操作
   ObjectPtr otherOp(ObjectPtr left, const std::string &op, ObjectPtr right);
@@ -107,8 +109,9 @@ private:
 class BlockStmntAST: public ASTList {
 public:
   BlockStmntAST();
-  ObjectPtr eval(Environment &env) override;
+  ObjectPtr eval(EnvPtr env) override;
 };
+using BlockStmntPtr = std::shared_ptr<BlockStmntAST>;
 
 /******************************if块*************************************/
 
@@ -119,7 +122,7 @@ public:
   ASTreePtr thenBlock();
   ASTreePtr elseBlock();
   std::string info() override;
-  ObjectPtr eval(Environment &env) override;
+  ObjectPtr eval(EnvPtr env) override;
 };
 
 /****************************while块***********************************/
@@ -130,7 +133,7 @@ public:
   ASTreePtr condition();
   ASTreePtr body();
   std::string info() override;
-  ObjectPtr eval(Environment &env) override;
+  ObjectPtr eval(EnvPtr env) override;
 };
 
 /****************************Null块************************************/
@@ -138,7 +141,7 @@ public:
 class NullStmntAST: public ASTList {
 public:
   NullStmntAST();
-  ObjectPtr eval(Environment &env) override;
+  ObjectPtr eval(EnvPtr env) override;
 };
 
 /***************************ParameterList*****************************/
@@ -147,25 +150,41 @@ class ParameterListAST: public ASTList {
 public:
   ParameterListAST();
   std::string getParamText(int i);
+  size_t size() const;
+  ObjectPtr eval(EnvPtr env) override;
 };
+using ParameterListPtr = std::shared_ptr<ParameterListAST>;
 
 /**************************函数定义块********************************/
 
-class DefStmnt: public ASTList {
+class DefStmntAST: public ASTList {
 public:
-  DefStmnt();
-  ASTreePtr funcName();
-  ASTreePtr parameterList();
-  ASTreePtr body();
+  DefStmntAST();
+  std::string funcName();
+  ParameterListPtr parameterList();
+  BlockStmntPtr block();
   std::string info() override;
+
+  //生成一个函数对象，放入当前的环境中
+  //返回空指针
+  ObjectPtr eval(EnvPtr env) override;
 };
 
 /*************************后缀表达式*******************************/
 
-
+class PostfixAST: public  ASTList {
+public:
+  PostfixAST();
+  ObjectPtr eval(EnvPtr env) override;
+};
 
 /***************************实参***********************************/
 
-
+class Arguments: public PostfixAST {
+public:
+  Arguments();
+  size_t size() const;
+  ObjectPtr eval(EnvPtr env) override;
+};
 
 #endif

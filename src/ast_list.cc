@@ -4,7 +4,7 @@
 
 /**************************AST内部（非叶子）节点******************************/
 
-ASTList::ASTList(ASTKind kind): ASTree(kind) {}
+ASTList::ASTList(ASTKind kind, bool ignore): ASTree(kind), ignore_(ignore) {}
 
 ASTreePtr ASTList::child(int i) {
   return children_[i];
@@ -30,7 +30,7 @@ std::string ASTList::info() {
   return result;
 }
 
-ObjectPtr ASTList::eval(__attribute__((unused)) Environment &env) {
+ObjectPtr ASTList::eval(__attribute__((unused)) EnvPtr env) {
   throw ASTEvalException("call error, not evalable for AST list");
 }
 
@@ -38,23 +38,27 @@ std::vector<ASTreePtr>& ASTList::children() {
   return children_;
 }
 
+bool ASTList::ignore() const {
+  return ignore_;
+}
+
 /**************************元表达式****************************************/
 
-PrimaryExprAST::PrimaryExprAST(): ASTList(ASTKind::LIST_PRIMARY_EXPR) {}
+PrimaryExprAST::PrimaryExprAST(): ASTList(ASTKind::LIST_PRIMARY_EXPR, true) {}
 
-ObjectPtr PrimaryExprAST::eval(Environment &env) {
+ObjectPtr PrimaryExprAST::eval(EnvPtr env) {
   return children_[0]->eval(env);
 }
 
 /**************************负值表达式*************************************/
 
-NegativeExprAST::NegativeExprAST(): ASTList(ASTKind::LIST_NEGETIVE_EXPR) {}
+NegativeExprAST::NegativeExprAST(): ASTList(ASTKind::LIST_NEGETIVE_EXPR, true) {}
 
 std::string NegativeExprAST::info() {
   return "-" + children_[1]->info();
 }
 
-ObjectPtr NegativeExprAST::eval(Environment &env) {
+ObjectPtr NegativeExprAST::eval(EnvPtr env) {
   auto num = children_[1]->eval(env);
   if (num->kind_ == ObjKind::Int) {
     int positive = std::static_pointer_cast<IntObject>(num)->value_;
@@ -67,7 +71,7 @@ ObjectPtr NegativeExprAST::eval(Environment &env) {
 
 /***********************二元表达式******************************************/
 
-BinaryExprAST::BinaryExprAST(): ASTList(ASTKind::LIST_BINARY_EXPR) {}
+BinaryExprAST::BinaryExprAST(): ASTList(ASTKind::LIST_BINARY_EXPR, true) {}
 
 ASTreePtr BinaryExprAST::leftFactor() {
   checkValid();
@@ -85,7 +89,7 @@ std::string BinaryExprAST::getOperator() {
   return id->getText();
 }
 
-ObjectPtr BinaryExprAST::eval(Environment &env) {
+ObjectPtr BinaryExprAST::eval(EnvPtr env) {
   std::string op = getOperator();
   if (op == "=") {
     ObjectPtr rightValue = rightFactor()->eval(env);
@@ -98,10 +102,10 @@ ObjectPtr BinaryExprAST::eval(Environment &env) {
   }
 }
 
-ObjectPtr BinaryExprAST::assignOp(Environment &env, ObjectPtr rightValue) {
+ObjectPtr BinaryExprAST::assignOp(EnvPtr env, ObjectPtr rightValue) {
   auto leftTree = leftFactor();
   if (leftTree->kind_ == ASTKind::LEAF_Id) {
-    env.put(std::dynamic_pointer_cast<IdTokenAST>(leftTree)->getId(), rightValue);
+    env->put(std::dynamic_pointer_cast<IdTokenAST>(leftTree)->getId(), rightValue);
     return rightValue;
   }
   else {
@@ -165,9 +169,9 @@ void BinaryExprAST::checkValid() {
 
 /********************************块**************************************/
 
-BlockStmntAST::BlockStmntAST(): ASTList(ASTKind::LIST_BLOCK_STMNT) {}
+BlockStmntAST::BlockStmntAST(): ASTList(ASTKind::LIST_BLOCK_STMNT, true) {}
 
-ObjectPtr BlockStmntAST::eval(Environment &env) {
+ObjectPtr BlockStmntAST::eval(EnvPtr env) {
   ObjectPtr result;
   for (auto subTree: children_) {
     if (!(subTree->kind_ == ASTKind::LIST_NULL_STMNT))
@@ -178,7 +182,7 @@ ObjectPtr BlockStmntAST::eval(Environment &env) {
 
 /******************************if块*************************************/
 
-IfStmntAST::IfStmntAST(): ASTList(ASTKind::LIST_IF_STMNT) {}
+IfStmntAST::IfStmntAST(): ASTList(ASTKind::LIST_IF_STMNT, true) {}
 
 ASTreePtr IfStmntAST::condition() {
   if (children_.empty())
@@ -216,7 +220,7 @@ std::string IfStmntAST::info() {
   return result;
 }
 
-ObjectPtr IfStmntAST::eval(Environment &env) {
+ObjectPtr IfStmntAST::eval(EnvPtr env) {
   auto b = condition()->eval(env);
   if (b->kind_ != ObjKind::Bool)
     throw ASTEvalException("error type for if condition part");
@@ -234,7 +238,7 @@ ObjectPtr IfStmntAST::eval(Environment &env) {
 
 /****************************while块***********************************/
 
-WhileStmntAST::WhileStmntAST(): ASTList(ASTKind::LIST_WHILE_STMNT) {}
+WhileStmntAST::WhileStmntAST(): ASTList(ASTKind::LIST_WHILE_STMNT, true) {}
 
 ASTreePtr WhileStmntAST::condition() {
   if (children_.empty())
@@ -257,7 +261,7 @@ std::string WhileStmntAST::info() {
   return result;
 }
 
-ObjectPtr WhileStmntAST::eval(Environment &env) {
+ObjectPtr WhileStmntAST::eval(EnvPtr env) {
   ObjectPtr result;
   while (true) {
     ObjectPtr con = condition()->eval(env);
@@ -275,8 +279,48 @@ ObjectPtr WhileStmntAST::eval(Environment &env) {
 
 /****************************Null块************************************/
 
-NullStmntAST::NullStmntAST(): ASTList(ASTKind::LIST_NULL_STMNT) {}
+NullStmntAST::NullStmntAST(): ASTList(ASTKind::LIST_NULL_STMNT, true) {}
 
-ObjectPtr NullStmntAST::eval(__attribute__((unused)) Environment &env) {
+ObjectPtr NullStmntAST::eval(__attribute__((unused)) EnvPtr env) {
   return nullptr;
 }
+
+/***************************ParameterList*****************************/
+
+ParameterListAST::ParameterListAST(): ASTList(ASTKind::LIST_PARAMETER, false) {}
+
+std::string ParameterListAST::getParamText(int i) {
+  return std::static_pointer_cast<ASTLeaf>(children_[i])->getToken()->getText();
+}
+
+size_t ParameterListAST::size() const {
+  return children_.size();
+}
+
+/**************************函数定义块********************************/
+
+DefStmntAST::DefStmntAST(): ASTList(ASTKind::LIST_DEF_STMNT, false) {}
+
+std::string DefStmntAST::funcName() {
+  return std::static_pointer_cast<ASTLeaf>(children_[0])->getToken()->getText();
+}
+
+ParameterListPtr DefStmntAST::parameterList() {
+  return std::static_pointer_cast<ParameterListAST>(children_[1]);
+}
+
+BlockStmntPtr DefStmntAST::block() {
+  return std::static_pointer_cast<BlockStmntAST>(children_[2]);
+}
+
+std::string DefStmntAST::info() {
+  return std::string("(def") + funcName() + " " + children_[1]->info() + " " +\
+    children_[2]->info() + ")";
+}
+
+ObjectPtr DefStmntAST::eval(EnvPtr env) {
+  auto funcObj = std::make_shared<FuncObject>(parameterList(), block(), env);
+  env->put(funcName(), funcObj);
+  return nullptr;
+}
+

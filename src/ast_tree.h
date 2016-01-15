@@ -3,72 +3,8 @@
 
 #include <memory>
 #include <string>
-#include <map>
 #include <exception>
-
-/******************************解析时变量类型****************************/
-
-enum class ObjKind {
-  Int = 1, 
-  String = 2, 
-  Bool = 3
-};
-
-class Object {
-public:
-  Object(ObjKind kind): kind_(kind) {}
-public:
-  ObjKind kind_;
-};
-using ObjectPtr = std::shared_ptr<Object>;
-
-//Int 类型
-class IntObject: public Object {
-public:
-  IntObject(int value): Object(ObjKind::Int), value_(value) {}
-public:
-  int value_;
-};
-using IntObjectPtr = std::shared_ptr<IntObject>;
-
-//Str 类型
-class StrObject: public Object {
-public:
-  StrObject(const std::string &str): Object(ObjKind::String), str_(str) {}
-public:
-  std::string str_;
-};
-using StrObjectPtr = std::shared_ptr<StrObject>;
-
-//BOOL 类型
-class BoolObject: public Object {
-public:
-  BoolObject(bool b): Object(ObjKind::Bool), b_(b) {}
-  BoolObject(int num): Object(ObjKind::Bool), b_(num != 0) {}
-public:
-  bool b_;
-};
-using BoolObjectPtr = std::shared_ptr<BoolObject>;
-
-/******************************全局环境变量表****************************/
-
-class Environment {
-public:
-  ObjectPtr get(const std::string &name) {
-    try {
-      return env_.at(name);
-    }
-    catch (std::out_of_range &e) {
-      return nullptr;
-    }
-  }
-  void put(const std::string &name, ObjectPtr obj) {
-    env_[name] = obj;
-  }
-
-private:
-  std::map<std::string, ObjectPtr> env_;
-};
+#include "env.h"
 
 /******************************AST迭代器接口*****************************/
 template <typename Item>
@@ -99,6 +35,10 @@ enum class ASTKind {
   LIST_IF_STMNT = 2005,
   LIST_WHILE_STMNT = 2006,
   LIST_NULL_STMNT = 2007,
+  LIST_PARAMETER = 2008,
+  LIST_DEF_STMNT = 2009,
+  LIST_POSTFIX = 2010,
+  LIST_ARGUMENTS = 2011
 };
 
 /*********************AST的基类，用于定义接口****************************/
@@ -122,11 +62,12 @@ public:
   virtual std::string info() = 0;
 
   //解析执行该节点并返回结果值，入参为环境变量
-  virtual ObjectPtr eval(Environment &env) = 0;
+  virtual ObjectPtr eval(EnvPtr env) = 0;
+
 public:
+  //AST类型
   ASTKind kind_;
 };
-
 
 /******************************AST相关的异常****************************/
 class ASTException: public std::exception {

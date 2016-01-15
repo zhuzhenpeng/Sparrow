@@ -32,7 +32,7 @@ ASTreePtr ASTFactory::getListInstance(ASTKind kind) {
   ASTreePtr result = nullptr;
   switch (kind) {
     case ASTKind::LIST_COMMON:
-      result = std::make_shared<ASTList>(ASTKind::LIST_COMMON);
+      result = std::make_shared<ASTList>(ASTKind::LIST_COMMON, true);
       break;
     case ASTKind::LIST_PRIMARY_EXPR:
       result = std::make_shared<PrimaryExprAST>();
@@ -54,6 +54,18 @@ ASTreePtr ASTFactory::getListInstance(ASTKind kind) {
       break;
     case ASTKind::LIST_NULL_STMNT:
       result = std::make_shared<NullStmntAST>();
+      break;
+    case ASTKind::LIST_PARAMETER:
+      result = std::make_shared<ParameterListAST>();
+      break;
+    case ASTKind::LIST_DEF_STMNT:
+      result = std::make_shared<DefStmntAST>();
+      break;
+    case ASTKind::LIST_POSTFIX:
+      result = std::make_shared<PostfixAST>();
+      break;
+    case ASTKind::LIST_ARGUMENTS:
+      result = std::make_shared<Arguments>();
       break;
     default:
       throw ParseException("get null AST list instance");
@@ -300,9 +312,9 @@ ASTreePtr Parser::parse(Lexer &lexer) {
     rule->parse(lexer, children);
   
   //剪枝
-  if (children.empty())
+  if (children.empty() && tmptr->ignore())
     return nullptr;
-  else if (children.size() == 1)
+  else if (children.size() == 1 && tmptr->ignore())
     return children[0];
   else
     return result;
@@ -320,6 +332,9 @@ ParserPtr Parser::rule() {
 }
 
 ParserPtr Parser::rule(ASTKind kind) {
+  if (static_cast<int>(kind) < static_cast<int>(ASTKind::LIST_COMMON)) {
+    throw ParseException("Cannot construct rule for AST Leaf"); 
+  }
   return std::make_shared<Parser>(kind); 
 }
 

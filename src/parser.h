@@ -10,13 +10,13 @@
  * param      : IDENTIFIER
  * params     : param {"," param}
  * param_list : "(" params ")"
- * def        : "def" IDENTIFIER param_list block
- * args       : expr {"," expr}
- * arg_postfix: "(" [args] ")"
  * primary    : ("(" expr ")" | NUMBER | IDENTIFIER | STRING) {arg_postfix}
  * factory    : "-" primary | primary
  * expr       : factor { OP factor }
  * block      : "{" [statement] {(";" | EOL) [statement]} "}"
+ * def        : "def" IDENTIFIER param_list block
+ * args       : expr {"," expr}
+ * arg_postfix: "(" [args] ")"
  * simple     : expr [args]
  * statement  : "if" expr block ["else" block]
  *              | "while" expr block
