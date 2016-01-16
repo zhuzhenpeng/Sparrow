@@ -1,9 +1,10 @@
 #include "env.h"
 
 /*****************************函数 类型******************************/
-FuncObject::FuncObject(std::shared_ptr<ParameterListAST> params, 
+FuncObject::FuncObject(const std::string &functionName, 
+    std::shared_ptr<ParameterListAST> params, 
     std::shared_ptr<BlockStmntAST> block, EnvPtr env):
-  Object(ObjKind::Func), params_(params), block_(block), env_(env) {}
+  Object(ObjKind::Func), funcName_(functionName), params_(params), block_(block), env_(env) {}
 
 std::shared_ptr<ParameterListAST> FuncObject::params() const {
   return params_;
@@ -27,12 +28,11 @@ void Environment::setOuterEnv(EnvPtr outer) {
 }
 
 ObjectPtr Environment::get(const std::string &name) {
-  try {
-    return env_.at(name);
-  }
-  catch (std::out_of_range &e) {
+  auto env = locateEnv(name);
+  if (env == nullptr)
     return nullptr;
-  }
+  else 
+    return env->env_[name];
 }
 
 void Environment::put(const std::string &name, ObjectPtr obj) {
@@ -49,4 +49,8 @@ EnvPtr Environment::locateEnv(const std::string &name) {
     return nullptr;
   else
     return outerEnv_->locateEnv(name);
+}
+
+void Environment::putNew(const std::string &name, ObjectPtr obj) {
+  env_[name] = obj;
 }

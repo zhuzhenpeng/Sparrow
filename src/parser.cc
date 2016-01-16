@@ -12,7 +12,7 @@ void BasicParser::init() {
   program_ = Parser::rule();
   auto expr = Parser::rule();
   auto statement = Parser::rule();
-  auto arg_postfix = Parser::rule();
+  auto postfix = Parser::rule();
 
   //param
   auto param = Parser::rule()->id(reserved_);
@@ -30,7 +30,7 @@ void BasicParser::init() {
         Parser::rule()->number(ASTKind::LEAF_INT),
         Parser::rule()->id(reserved_),
         Parser::rule()->str()
-      })->repeatPR(arg_postfix);
+      })->repeatPR(postfix);
 
 
   //factor
@@ -61,8 +61,8 @@ void BasicParser::init() {
   auto args = Parser::rule(ASTKind::LIST_ARGUMENTS)->commomPR(expr)\
               ->repeatPR(Parser::rule()->custom(",", true)->commomPR(expr));
 
-  //arg_postfix
-  arg_postfix->custom("(", true)->optionPR(args)->custom(")", true);
+  //postfix
+  postfix->custom("(", true)->optionPR(args)->custom(")", true);
 
   //simple
   auto simple = Parser::rule(ASTKind::LIST_PRIMARY_EXPR)->commomPR(expr)->optionPR(args);
@@ -85,8 +85,8 @@ void BasicParser::init() {
 
   //program
   program_->orPR({
-        statement,
         def,
+        statement,
         Parser::rule(ASTKind::LIST_NULL_STMNT)
       })->orPR({
                 Parser::rule()->custom(";", true), 

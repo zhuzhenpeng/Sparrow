@@ -66,11 +66,21 @@ protected:
 };
 
 /**************************元表达式****************************************/
-
+class PostfixAST;
 class PrimaryExprAST: public ASTList {
 public:
   PrimaryExprAST();
   ObjectPtr eval(EnvPtr env) override;
+
+private:
+  ASTreePtr operand();
+
+  //nest表示从外往内数的第几层，如果是最外层，则为0
+  std::shared_ptr<PostfixAST> postfix(size_t nest);
+  bool hasPostfix(size_t nest);
+
+  //primary表达式可能是一个嵌套调用
+  ObjectPtr evalSubExpr(EnvPtr env, size_t nest);
 };
 
 /**************************负值表达式*************************************/
@@ -144,18 +154,25 @@ public:
   ObjectPtr eval(EnvPtr env) override;
 };
 
-/***************************ParameterList*****************************/
+/****************************形参列表*********************************/
 
 class ParameterListAST: public ASTList {
 public:
   ParameterListAST();
-  std::string getParamText(int i);
+  std::string paramName(size_t i);
   size_t size() const;
-  ObjectPtr eval(EnvPtr env) override;
+
+  //继承自父类的eval接口废弃，抛出异常
+  ObjectPtr eval(__attribute__((unused)) EnvPtr env) override {
+    throw ASTEvalException("error call for Parameter List AST eval, abandoned");
+  }
+
+  //根据入参设置函数运行时环境
+  void eval(EnvPtr funcEnv, EnvPtr callerEnv, const std::vector<ASTreePtr> &args);
 };
 using ParameterListPtr = std::shared_ptr<ParameterListAST>;
 
-/**************************函数定义块********************************/
+/**************************函数定义**********************************/
 
 class DefStmntAST: public ASTList {
 public:
@@ -170,13 +187,21 @@ public:
   ObjectPtr eval(EnvPtr env) override;
 };
 
-/*************************后缀表达式*******************************/
+/************************后缀表达式接口*****************************/
 
-class PostfixAST: public  ASTList {
+class PostfixAST: public ASTList {
 public:
-  PostfixAST();
-  ObjectPtr eval(EnvPtr env) override;
+  PostfixAST(ASTKind kind, bool ignore): ASTList(kind, ignore) {}
+
+  //Postfix继承自父类的eval方法废弃，会抛出异常，改用其它eval方法
+  ObjectPtr eval(__attribute__((unused)) EnvPtr env) override {
+    throw ASTEvalException("Postfix AST eval exception, abandoned");
+  }
+  
+  //caller指的是使用这个后缀的对象
+  virtual ObjectPtr eval(EnvPtr env, ObjectPtr caller) = 0;
 };
+
 
 /***************************实参***********************************/
 
@@ -184,7 +209,7 @@ class Arguments: public PostfixAST {
 public:
   Arguments();
   size_t size() const;
-  ObjectPtr eval(EnvPtr env) override;
+  ObjectPtr eval(EnvPtr env, ObjectPtr caller) override;
 };
 
 #endif

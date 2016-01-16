@@ -20,7 +20,6 @@ Iterator<ASTreePtr> ASTList::iterator() {
 
 std::string ASTList::info() {
   std::string result = "(";
-  MyDebugger::print(static_cast<int>(kind_), __FILE__, __LINE__);
   for (size_t i = 0; i < children_.size(); ++i) {
     result += children_[i]->info();
     if (i < children_.size() - 1)
@@ -47,7 +46,35 @@ bool ASTList::ignore() const {
 PrimaryExprAST::PrimaryExprAST(): ASTList(ASTKind::LIST_PRIMARY_EXPR, true) {}
 
 ObjectPtr PrimaryExprAST::eval(EnvPtr env) {
-  return children_[0]->eval(env);
+  return evalSubExpr(env, 0); 
+}
+
+ASTreePtr PrimaryExprAST::operand() {
+  if (children_.empty())
+    throw ASTException("no children for Primary AST, can't get operand");
+  return children_[0];
+}
+
+std::shared_ptr<PostfixAST> PrimaryExprAST::postfix(size_t nest) {
+  return std::static_pointer_cast<PostfixAST>(children_[children_.size() - nest - 1]);
+}
+
+bool PrimaryExprAST::hasPostfix(size_t nest) {
+  return children_.size() > (nest + 1);
+}
+
+ObjectPtr PrimaryExprAST::evalSubExpr(EnvPtr env, size_t nest) {
+  ObjectPtr result = nullptr;
+  if (hasPostfix(nest)) {
+    // 类似于 foo(2)这种调用，ASTLeaf的eval，从环境中搜索foo的Obj并把它返回
+    // 在此处它就是caller
+    ObjectPtr caller = evalSubExpr(env, nest + 1);
+    result = postfix(nest)->eval(env, caller);
+  }
+  else {
+    result = operand()->eval(env);
+  }
+  return result;
 }
 
 /**************************负值表达式*************************************/
@@ -289,12 +316,19 @@ ObjectPtr NullStmntAST::eval(__attribute__((unused)) EnvPtr env) {
 
 ParameterListAST::ParameterListAST(): ASTList(ASTKind::LIST_PARAMETER, false) {}
 
-std::string ParameterListAST::getParamText(int i) {
+std::string ParameterListAST::paramName(size_t i) {
   return std::static_pointer_cast<ASTLeaf>(children_[i])->getToken()->getText();
 }
 
 size_t ParameterListAST::size() const {
   return children_.size();
+}
+
+void ParameterListAST::eval(EnvPtr funcEnv, EnvPtr callerEnv, 
+    const std::vector<ASTreePtr> &args) {
+  for (size_t i = 0; i < args.size(); ++i) {
+    funcEnv->put(paramName(i), args[i]->eval(callerEnv));
+  }
 }
 
 /**************************函数定义块********************************/
@@ -314,13 +348,35 @@ BlockStmntPtr DefStmntAST::block() {
 }
 
 std::string DefStmntAST::info() {
-  return std::string("(def") + funcName() + " " + children_[1]->info() + " " +\
+  return std::string("(def ") + funcName() + " " + children_[1]->info() + " " +\
     children_[2]->info() + ")";
 }
 
 ObjectPtr DefStmntAST::eval(EnvPtr env) {
-  auto funcObj = std::make_shared<FuncObject>(parameterList(), block(), env);
+  auto funcObj = std::make_shared<FuncObject>(funcName(), parameterList(), block(), env);
   env->put(funcName(), funcObj);
   return nullptr;
 }
 
+/***************************实参***********************************/
+
+Arguments::Arguments(): PostfixAST(ASTKind::LIST_ARGUMENTS, false) {}
+
+size_t Arguments::size() const {
+  return children_.size();
+}
+
+ObjectPtr Arguments::eval(EnvPtr env, ObjectPtr caller) {
+  if (caller->kind_ != ObjKind::Func)
+    throw ASTEvalException("bad function for eval");
+
+  auto func = std::static_pointer_cast<FuncObject>(caller);
+  auto params = func->params();
+  if (size() != params->size())
+    throw ASTEvalException("error function call, not match the number of parameters");
+
+  EnvPtr funcEnv = func->runtimeEnv();
+  params->eval(funcEnv, env, children_);
+  auto result = func->block()->eval(funcEnv);
+  return result;
+}

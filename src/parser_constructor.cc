@@ -2,7 +2,7 @@
 
 #include "ast_leaf.h"
 #include "ast_list.h"
-//#include <iostream>
+#include "debugger.h"
 
 /***************************生成各类AST的静态工厂******************************/
 ASTreePtr ASTFactory::getLeafInstance(ASTKind kind, TokenPtr token) {
@@ -61,9 +61,6 @@ ASTreePtr ASTFactory::getListInstance(ASTKind kind) {
     case ASTKind::LIST_DEF_STMNT:
       result = std::make_shared<DefStmntAST>();
       break;
-    case ASTKind::LIST_POSTFIX:
-      result = std::make_shared<PostfixAST>();
-      break;
     case ASTKind::LIST_ARGUMENTS:
       result = std::make_shared<Arguments>();
       break;
@@ -93,7 +90,7 @@ bool CommonParsePR::match(Lexer &lexer) {
 OrParsePR::OrParsePR(const std::vector<ParserPtr> &parsers): parsers_(parsers) {}
 
 void OrParsePR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
-  //std::cout << "or parse" << std::endl;
+  //MyDebugger::print("or parse" + lexer.peek(0)->info(), __FILE__, __LINE__);
   ParserPtr parser = choosePs(lexer);
   if (parser == nullptr) {
     throw ParseException("or choose failed: " + lexer.peek(0)->info());

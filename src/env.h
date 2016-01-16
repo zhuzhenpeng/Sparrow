@@ -21,6 +21,7 @@ enum class ObjKind {
 class Object {
 public:
   Object(ObjKind kind): kind_(kind) {}
+  virtual std::string info() = 0;
 public:
   ObjKind kind_;
 };
@@ -30,6 +31,9 @@ using ObjectPtr = std::shared_ptr<Object>;
 class IntObject: public Object {
 public:
   IntObject(int value): Object(ObjKind::Int), value_(value) {}
+  std::string info() override {
+    return "Int: " + std::to_string(value_);
+  }
 public:
   int value_;
 };
@@ -39,6 +43,9 @@ using IntObjectPtr = std::shared_ptr<IntObject>;
 class StrObject: public Object {
 public:
   StrObject(const std::string &str): Object(ObjKind::String), str_(str) {}
+  std::string info() override {
+    return "Str: " + str_; 
+  }
 public:
   std::string str_;
 };
@@ -49,6 +56,9 @@ class BoolObject: public Object {
 public:
   BoolObject(bool b): Object(ObjKind::Bool), b_(b) {}
   BoolObject(int num): Object(ObjKind::Bool), b_(num != 0) {}
+  std::string info() override {
+    return "Bool: " + std::to_string(b_);
+  }
 public:
   bool b_;
 };
@@ -58,13 +68,17 @@ using BoolObjectPtr = std::shared_ptr<BoolObject>;
 
 class FuncObject: public Object {
 public:
-  FuncObject(std::shared_ptr<ParameterListAST> params, 
+  FuncObject(const std::string &funcionName, std::shared_ptr<ParameterListAST> params, 
       std::shared_ptr<BlockStmntAST> block, EnvPtr env);
   std::shared_ptr<ParameterListAST> params() const;
   std::shared_ptr<BlockStmntAST> block() const;
   EnvPtr runtimeEnv() const;
-
+  
+  std::string info() override {
+    return "Func: " + funcName_;
+  }
 private:
+  std::string funcName_;
   std::shared_ptr<ParameterListAST> params_;
   std::shared_ptr<BlockStmntAST> block_;
   EnvPtr env_;

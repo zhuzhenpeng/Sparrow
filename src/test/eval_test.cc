@@ -10,7 +10,7 @@ class EvalTest: public testing::Test {
 protected:
   std::unique_ptr<Lexer> lexer;
   std::unique_ptr<BasicParser> parser;
-  std::unique_ptr<Environment> env;
+  EnvPtr env;
   std::vector<int> expectResults;
 
   void SetUp() override{
@@ -19,7 +19,7 @@ protected:
     parser->init();
     env.reset(new Environment());
 
-    expectResults = {0, 0, 1, 10, 45};
+    expectResults = {0, 0, 1, 10, 45, 51};
   }
 
 };
@@ -33,7 +33,7 @@ TEST_F(EvalTest, normal) {
       auto tree = parser->parse(*lexer);
 
       if (tree != nullptr) {
-        auto result = tree->eval(*env);
+        auto result = tree->eval(env);
         EXPECT_EQ(expectResults[resultIndex], 
                   std::static_pointer_cast<IntObject>(result)->value_);
         ++resultIndex;
@@ -41,7 +41,7 @@ TEST_F(EvalTest, normal) {
     }
   }
   catch (std::exception &e) {
-    std::cerr << e.what() << std::endl;
+    FAIL() << e.what();
   }
 }
 
