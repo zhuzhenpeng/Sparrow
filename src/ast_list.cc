@@ -79,7 +79,7 @@ ObjectPtr PrimaryExprAST::evalSubExpr(EnvPtr env, size_t nest) {
 
 /**************************负值表达式*************************************/
 
-NegativeExprAST::NegativeExprAST(): ASTList(ASTKind::LIST_NEGETIVE_EXPR, true) {}
+NegativeExprAST::NegativeExprAST(): ASTList(ASTKind::LIST_NEGETIVE_EXPR, false) {}
 
 std::string NegativeExprAST::info() {
   return "-" + children_[1]->info();
@@ -98,7 +98,7 @@ ObjectPtr NegativeExprAST::eval(EnvPtr env) {
 
 /***********************二元表达式******************************************/
 
-BinaryExprAST::BinaryExprAST(): ASTList(ASTKind::LIST_BINARY_EXPR, true) {}
+BinaryExprAST::BinaryExprAST(): ASTList(ASTKind::LIST_BINARY_EXPR, false) {}
 
 ASTreePtr BinaryExprAST::leftFactor() {
   checkValid();
@@ -196,12 +196,11 @@ void BinaryExprAST::checkValid() {
 
 /********************************块**************************************/
 
-BlockStmntAST::BlockStmntAST(): ASTList(ASTKind::LIST_BLOCK_STMNT, true) {}
+BlockStmntAST::BlockStmntAST(): ASTList(ASTKind::LIST_BLOCK_STMNT, false) {}
 
 ObjectPtr BlockStmntAST::eval(EnvPtr env) {
   ObjectPtr result;
   for (auto subTree: children_) {
-    if (!(subTree->kind_ == ASTKind::LIST_NULL_STMNT))
       result = subTree->eval(env);
   }
   return result;
@@ -209,7 +208,7 @@ ObjectPtr BlockStmntAST::eval(EnvPtr env) {
 
 /******************************if块*************************************/
 
-IfStmntAST::IfStmntAST(): ASTList(ASTKind::LIST_IF_STMNT, true) {}
+IfStmntAST::IfStmntAST(): ASTList(ASTKind::LIST_IF_STMNT, false) {}
 
 ASTreePtr IfStmntAST::condition() {
   if (children_.empty())
@@ -265,7 +264,7 @@ ObjectPtr IfStmntAST::eval(EnvPtr env) {
 
 /****************************while块***********************************/
 
-WhileStmntAST::WhileStmntAST(): ASTList(ASTKind::LIST_WHILE_STMNT, true) {}
+WhileStmntAST::WhileStmntAST(): ASTList(ASTKind::LIST_WHILE_STMNT, false) {}
 
 ASTreePtr WhileStmntAST::condition() {
   if (children_.empty())
@@ -309,7 +308,8 @@ ObjectPtr WhileStmntAST::eval(EnvPtr env) {
 NullStmntAST::NullStmntAST(): ASTList(ASTKind::LIST_NULL_STMNT, true) {}
 
 ObjectPtr NullStmntAST::eval(__attribute__((unused)) EnvPtr env) {
-  return nullptr;
+  //NULL块的子节点总是为空，且可被忽略，因此不会出现在AST中
+  throw ASTEvalException("Null Stmnt AST should not appear in AST, fatal error");
 }
 
 /***************************ParameterList*****************************/
@@ -379,4 +379,25 @@ ObjectPtr Arguments::eval(EnvPtr env, ObjectPtr caller) {
   params->eval(funcEnv, env, children_);
   auto result = func->block()->eval(funcEnv);
   return result;
+}
+
+/**************************闭包**********************************/
+
+LambAST::LambAST(): ASTList(ASTKind::LIST_LAMB, false) {}
+
+ParameterListPtr LambAST::parameterList() {
+  return std::dynamic_pointer_cast<ParameterListAST>(children_[0]);
+}
+
+BlockStmntPtr LambAST::block() {
+  return std::dynamic_pointer_cast<BlockStmntAST>(children_[1]);
+}
+
+std::string LambAST::info() {
+  return "(lamb " + parameterList()->info() + " " + block()->info() + ")";
+}
+
+ObjectPtr LambAST::eval(EnvPtr env) {
+  //lambda创建的闭包都用closure来表示它的函数名
+  return std::make_shared<FuncObject>("closure", parameterList(), block(), env);
 }

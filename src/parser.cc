@@ -13,24 +13,34 @@ void BasicParser::init() {
   auto expr = Parser::rule();
   auto statement = Parser::rule();
   auto postfix = Parser::rule();
+  auto block = Parser::rule(ASTKind::LIST_BLOCK_STMNT);
 
   //param
   auto param = Parser::rule()->id(reserved_);
 
   //params
-  auto params = Parser::rule(ASTKind::LIST_PARAMETER)->commomPR(param)\
-                ->repeatPR(Parser::rule()->custom(",", true)->commomPR(param));
+  auto params = Parser::rule(ASTKind::LIST_PARAMETER)->orPR({
+        Parser::rule()->commomPR(param)\
+          ->repeatPR(Parser::rule()->custom(",", true)->commomPR(param)),
+        Parser::rule(ASTKind::LIST_NULL_STMNT), 
+      });
 
   //param_list
-  auto paramsList = Parser::rule()->custom("(", true)->optionPR(params)->custom(")", true);
+  auto paramsList = Parser::rule()->custom("(", true)->commomPR(params)->custom(")", true);
 
   //primary
-  auto primary = Parser::rule(ASTKind::LIST_PRIMARY_EXPR)->orPR({
-        Parser::rule()->custom("(", true)->commomPR(expr)->custom(")", true),
-        Parser::rule()->number(ASTKind::LEAF_INT),
-        Parser::rule()->id(reserved_),
-        Parser::rule()->str()
-      })->repeatPR(postfix);
+  auto primary = Parser::rule()\
+      ->orPR(
+          {Parser::rule(ASTKind::LIST_LAMB)\
+            ->custom("lamb", true)->commomPR(paramsList)->commomPR(block),
+          
+          Parser::rule(ASTKind::LIST_PRIMARY_EXPR)->orPR({
+            Parser::rule()->custom("(", true)->commomPR(expr)->custom(")", true),
+            Parser::rule()->number(ASTKind::LEAF_INT),
+            Parser::rule()->id(reserved_),
+            Parser::rule()->str()
+            })->repeatPR(postfix)
+          });
 
 
   //factor
@@ -43,29 +53,31 @@ void BasicParser::init() {
   expr->binaryExpr(operators_, factor);
 
   //block
-  auto block = Parser::rule(ASTKind::LIST_BLOCK_STMNT)\
-               ->custom("{", true)\
-               ->optionPR(statement)\
-               ->repeatPR(Parser::rule()\
-                                ->orPR({
-                                    Parser::rule()->custom(";", true),
-                                    Parser::rule()->custom("\\n", true)})\
-                                ->optionPR(statement))\
-               ->custom("}", true);
+  block->custom("{", true)\
+    ->optionPR(statement)\
+    ->repeatPR(Parser::rule()\
+        ->orPR({
+          Parser::rule()->custom(";", true),
+          Parser::rule()->custom("\\n", true)})\
+        ->optionPR(statement))\
+    ->custom("}", true);
 
   //def
   auto def = Parser::rule(ASTKind::LIST_DEF_STMNT)->custom("def", true)->id(reserved_)\
              ->commomPR(paramsList)->commomPR(block);
 
   //args
-  auto args = Parser::rule(ASTKind::LIST_ARGUMENTS)->commomPR(expr)\
-              ->repeatPR(Parser::rule()->custom(",", true)->commomPR(expr));
+  auto args = Parser::rule(ASTKind::LIST_ARGUMENTS)->orPR({
+        Parser::rule()->commomPR(expr)\
+          ->repeatPR(Parser::rule()->custom(",", true)->commomPR(expr)),
+        Parser::rule(ASTKind::LIST_NULL_STMNT),
+      });
 
   //postfix
-  postfix->custom("(", true)->optionPR(args)->custom(")", true);
+  postfix->custom("(", true)->commomPR(args)->custom(")", true);
 
   //simple
-  auto simple = Parser::rule(ASTKind::LIST_PRIMARY_EXPR)->commomPR(expr)->optionPR(args);
+  auto simple = Parser::rule(ASTKind::LIST_PRIMARY_EXPR)->commomPR(expr);
 
   //statement
   statement->orPR({

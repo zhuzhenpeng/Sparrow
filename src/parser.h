@@ -9,15 +9,18 @@
 /*语法规则：
  * param      : IDENTIFIER
  * params     : param {"," param}
+ *              | NULL
  * param_list : "(" params ")"
- * primary    : ("(" expr ")" | NUMBER | IDENTIFIER | STRING) {posifix}
+ * primary    : "lamb" param_list block
+ *              |("(" expr ")" | NUMBER | IDENTIFIER | STRING) {posifix}
  * factory    : "-" primary | primary
  * expr       : factor { OP factor }
  * block      : "{" [statement] {(";" | EOL) [statement]} "}"
  * def        : "def" IDENTIFIER param_list block
  * args       : expr {"," expr}
- * postfix    : "(" [args] ")"
- * simple     : expr [args]
+ *              | NULL
+ * postfix    : "(" args ")"
+ * simple     : expr
  * statement  : "if" expr block ["else" block]
  *              | "while" expr block
  *              | simple

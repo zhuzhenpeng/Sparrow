@@ -64,6 +64,9 @@ ASTreePtr ASTFactory::getListInstance(ASTKind kind) {
     case ASTKind::LIST_ARGUMENTS:
       result = std::make_shared<Arguments>();
       break;
+    case ASTKind::LIST_LAMB:
+      result = std::make_shared<LambAST>();
+      break;
     default:
       throw ParseException("get null AST list instance");
       break;
@@ -301,12 +304,17 @@ bool BinaryExprPR::isRightHiger(const Precedence &left, const Precedence &right)
 Parser::Parser(ASTKind kind): kind_(kind) {}
 
 ASTreePtr Parser::parse(Lexer &lexer) {
+  //MyDebugger::print(static_cast<int>(kind_), __LINE__);
+
+  //返回结果是根据Parser本身的类型决定的
   ASTreePtr result = ASTFactory::getListInstance(kind_);
+
   auto tmptr = std::dynamic_pointer_cast<ASTList>(result);
   auto &children = tmptr->children();
 
   for (auto rule: rulesCombination_)
     rule->parse(lexer, children);
+
   
   //剪枝
   if (children.empty() && tmptr->ignore())
@@ -318,6 +326,8 @@ ASTreePtr Parser::parse(Lexer &lexer) {
 }
 
 bool Parser::match(Lexer &lexer) {
+  //规则为空只可能发生在LIST_NULL_STMNT的情况下
+  //此时认为是匹配成功的
   if (rulesCombination_.empty())
     return true;
   else
@@ -370,13 +380,7 @@ ParserPtr Parser::binaryExpr(const std::map<std::string, Precedence> &operators,
 }
 
 ParserPtr Parser::commomPR(ParserPtr parser) {
-  //如果子规则只有一个规则，就进行剪支
-  if (parser->rulesCombination_.size() == 1) {
-    rulesCombination_.push_back(parser->rulesCombination_[0]);
-  }
-  else {
-    rulesCombination_.push_back(std::make_shared<CommonParsePR>(parser));
-  }
+  rulesCombination_.push_back(std::make_shared<CommonParsePR>(parser));
   return shared_from_this();
 }
 

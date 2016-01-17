@@ -212,4 +212,15 @@ public:
   ObjectPtr eval(EnvPtr env, ObjectPtr caller) override;
 };
 
+/**************************闭包**********************************/
+
+class LambAST: public ASTList {
+public:
+  LambAST();
+  ParameterListPtr parameterList();
+  BlockStmntPtr block();
+  std::string info() override;
+  ObjectPtr eval(EnvPtr env) override;
+};
+
 #endif
