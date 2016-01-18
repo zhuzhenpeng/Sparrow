@@ -367,8 +367,12 @@ size_t Arguments::size() const {
 }
 
 ObjectPtr Arguments::eval(EnvPtr env, ObjectPtr caller) {
-  if (caller->kind_ != ObjKind::Func)
+  if (caller->kind_ != ObjKind::Func && caller->kind_ != ObjKind::Native_Func)
     throw ASTEvalException("bad function for eval");
+
+  if (caller->kind_ == ObjKind::Native_Func) {
+    return invokeNative(env, std::dynamic_pointer_cast<NativeFunction>(caller));
+  }
 
   auto func = std::static_pointer_cast<FuncObject>(caller);
   auto params = func->params();
@@ -379,6 +383,17 @@ ObjectPtr Arguments::eval(EnvPtr env, ObjectPtr caller) {
   params->eval(funcEnv, env, children_);
   auto result = func->block()->eval(funcEnv);
   return result;
+}
+
+ObjectPtr Arguments::invokeNative(EnvPtr env, NativeFuncPtr func) {
+  if (size() != func->paramNum())
+    throw ASTEvalException("error function call, not match the number of parameters");
+
+  std::vector<ObjectPtr> params;
+  for (auto t: children_)
+    params.push_back(t->eval(env));
+
+  return func->invoke(params);
 }
 
 /**************************闭包**********************************/

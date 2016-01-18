@@ -203,13 +203,19 @@ public:
 };
 
 
-/***************************实参***********************************/
+/***************************函数实参********************************/
 
 class Arguments: public PostfixAST {
 public:
   Arguments();
   size_t size() const;
+  
+  //函数调用发生在这里
+  //caller为函数对象
   ObjectPtr eval(EnvPtr env, ObjectPtr caller) override;
+
+private:
+  ObjectPtr invokeNative(EnvPtr env, NativeFuncPtr func);
 };
 
 /**************************闭包**********************************/

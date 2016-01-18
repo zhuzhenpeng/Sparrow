@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <map>
+#include <vector>
 
 class ParameterListAST;
 class BlockStmntAST;
@@ -15,7 +16,8 @@ enum class ObjKind {
   Int = 1, 
   String = 2, 
   Bool = 3,
-  Func = 4
+  Func = 4,
+  Native_Func = 5,
 };
 
 class Object {
@@ -84,6 +86,33 @@ private:
   EnvPtr env_;
 };
 using FuncPtr = std::shared_ptr<FuncObject>;
+
+/****************************原生函数********************************/
+
+class NativeFunction: public Object {
+public:
+  NativeFunction(const std::string &name, size_t paramNum): 
+    Object(ObjKind::Native_Func), funcName_(name), paramNum_(paramNum) {}
+
+  std::string name() const {
+    return funcName_;
+  }
+
+  size_t paramNum() const {
+    return paramNum_;
+  }
+
+  std::string info() override {
+    return "native function: " + funcName_;
+  }
+
+  virtual ObjectPtr invoke(const std::vector<ObjectPtr> &params) = 0;
+
+protected:
+  std::string funcName_;
+  size_t paramNum_;
+};
+using NativeFuncPtr = std::shared_ptr<NativeFunction>;
 
 /********************************环境********************************/
 

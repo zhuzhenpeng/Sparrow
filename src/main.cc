@@ -3,6 +3,7 @@
 #include <exception>
 #include "lexer_imp.h"
 #include "parser.h"
+#include "native_func.h"
 
 int main() {
   try {
@@ -12,6 +13,7 @@ int main() {
     parser->init();
 
     EnvPtr globalEnv = std::make_shared<Environment>();
+    NativeFuncInitializer::initialize(globalEnv);
     
     lexer->parseFile("./test.src");
     while (lexer->peek(0)->getKind() != TokenKind::TK_EOF) {
@@ -19,7 +21,7 @@ int main() {
 
       if (tree != nullptr) {
         //std::cout << "[" << static_cast<int>(tree->kind_) << "]" << std::endl;
-        std::cout << tree->info() << std::endl;
+        //std::cout << tree->info() << std::endl;
       }
 
       if (tree != nullptr) {
