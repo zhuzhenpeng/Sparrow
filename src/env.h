@@ -5,9 +5,12 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <exception>
 
 class ParameterListAST;
 class BlockStmntAST;
+class ClassStmntAST;
+class ClassBodyAST;
 class Environment;
 using EnvPtr = std::shared_ptr<Environment>;
 
@@ -18,6 +21,8 @@ enum class ObjKind {
   Bool = 3,
   Func = 4,
   Native_Func = 5,
+  Class_Info = 6,
+  Class_Instance = 7
 };
 
 class Object {
@@ -114,6 +119,49 @@ protected:
 };
 using NativeFuncPtr = std::shared_ptr<NativeFunction>;
 
+/***************************类元信息*********************************/
+class ClassInfo;
+using ClassInfoPtr = std::shared_ptr<ClassInfo>;
+
+class ClassInfo: public Object {
+public:
+  ClassInfo(std::shared_ptr<ClassStmntAST> stmnt, EnvPtr env);
+
+  //返回类名
+  std::string name();
+
+  //返回父类
+  ClassInfoPtr superClass();
+
+  //返回类定义体
+  std::shared_ptr<ClassBodyAST> body();
+
+  EnvPtr getEnvitonment();
+  
+  std::string info() override;
+private:  
+  std::shared_ptr<ClassStmntAST> definition_;
+  EnvPtr env_;
+  ClassInfoPtr superClass_ = nullptr;
+};
+
+/*****************************对象***********************************/
+
+class ClassInstance: public Object {
+public:
+  ClassInstance(EnvPtr env);
+
+  void write(const std::string &member, ObjectPtr value);
+
+  ObjectPtr read(const std::string &member);
+
+  std::string info() override;
+private:
+  bool checkAccessValid(const std::string &member);
+private:
+  EnvPtr env_;
+};
+
 /********************************环境********************************/
 
 class Environment :public std::enable_shared_from_this<Environment>{
@@ -132,6 +180,9 @@ public:
   //否则向外寻找变量所在的环境，并更新它的值
   void put(const std::string &name, ObjectPtr obj);
 
+  //检查变量是否在当前的环境
+  bool isExistInCurrentEnv(const std::string &name);
+
 private:
   //定位变量所在环境，如果找不到则返回空
   EnvPtr locateEnv(const std::string &name);
@@ -145,6 +196,18 @@ private:
 
   //当前环境的键值
   std::map<std::string, ObjectPtr> env_;
+};
+
+/********************************异常******************************/
+
+class EnvException: public std::exception {
+public:
+  EnvException(const std::string &errMsg): errMsg_(errMsg) {}
+  const char* what() const noexcept override {
+    return errMsg_.c_str();
+  }
+private:
+  std::string errMsg_;
 };
 
 #endif

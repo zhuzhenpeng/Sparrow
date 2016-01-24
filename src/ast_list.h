@@ -229,4 +229,32 @@ public:
   ObjectPtr eval(EnvPtr env) override;
 };
 
+/*************************类************************************/
+
+class ClassBodyAST: public ASTList {
+public:
+  ClassBodyAST();
+  ObjectPtr eval(EnvPtr env) override;
+};
+using ClassBodyPtr = std::shared_ptr<ClassBodyAST>;
+
+class ClassStmntAST: public ASTList {
+public:
+  ClassStmntAST();
+
+  //返回类的名字
+  std::string name();
+
+  //返回父类的名字
+  std::string superClassName();
+
+  //返回类定义体
+  ClassBodyPtr body();
+
+  ObjectPtr eval(EnvPtr env) override;
+
+  std::string info() override;
+};
+using ClassStmntPtr = std::shared_ptr<ClassStmntAST>;
+
 #endif

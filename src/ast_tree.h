@@ -40,6 +40,8 @@ enum class ASTKind {
   LIST_POSTFIX = 2010,
   LIST_ARGUMENTS = 2011,
   LIST_LAMB = 2012,
+  LIST_CLASS_BODY = 2013,
+  LIST_CLASS_STMNT = 2014,
 };
 
 /*********************AST的基类，用于定义接口****************************/

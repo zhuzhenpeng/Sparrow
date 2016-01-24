@@ -1,4 +1,5 @@
 #include "env.h"
+#include "ast_list.h"
 
 /*****************************函数 类型******************************/
 FuncObject::FuncObject(const std::string &functionName, 
@@ -18,7 +19,65 @@ EnvPtr FuncObject::runtimeEnv() const {
   return std::make_shared<Environment>(env_);
 }
 
-/********************************环境********************************/
+/***************************类元信息*********************************/
+ClassInfo::ClassInfo(std::shared_ptr<ClassStmntAST> stmnt, EnvPtr env):
+  Object(ObjKind::Class_Info), definition_(stmnt), env_(env) {
+
+  ObjectPtr obj = env->get(stmnt->superClassName());
+  if (obj == nullptr)   
+    return;
+  else if (obj->kind_ == ObjKind::Class_Info)
+    superClass_ = std::static_pointer_cast<ClassInfo>(obj);
+  else
+    throw EnvException("unknown super class: " + stmnt->superClassName());
+}
+
+std::string ClassInfo::name() {
+  return definition_->name();
+}
+
+ClassInfoPtr ClassInfo::superClass() {
+  return superClass_;
+}
+
+std::shared_ptr<ClassBodyAST> ClassInfo::body() {
+  return definition_->body();
+}
+
+EnvPtr ClassInfo::getEnvitonment() {
+  return env_;
+}
+
+std::string ClassInfo::info() {
+  return "<class: " + name() + ">";
+}
+
+/**************************对象*************************************/
+
+ClassInstance::ClassInstance(EnvPtr env): Object(ObjKind::Class_Instance), env_(env){}
+
+void ClassInstance::write(const std::string &member, ObjectPtr value) {
+  if (checkAccessValid(member))
+    env_->put(member, value);
+}
+
+ObjectPtr ClassInstance::read(const std::string &member) {
+  checkAccessValid(member);
+  return env_->get(member);
+}
+
+bool ClassInstance::checkAccessValid(const std::string &member) {
+  if (env_->isExistInCurrentEnv(member))
+    return true;
+  else
+    throw EnvException("Access " + member + " error");
+}
+
+std::string ClassInstance::info() {
+  return "<object>";
+}
+
+/*******************************环境********************************/
 Environment::Environment() = default;
 
 Environment::Environment(EnvPtr outer): outerEnv_(outer) {}
@@ -40,6 +99,10 @@ void Environment::put(const std::string &name, ObjectPtr obj) {
   if (env == nullptr)
     env = this->shared_from_this();
   env->putNew(name, obj);
+}
+
+bool Environment::isExistInCurrentEnv(const std::string &name) {
+  return env_.find(name) != env_.end();
 }
 
 EnvPtr Environment::locateEnv(const std::string &name) {

@@ -379,6 +379,7 @@ ObjectPtr Arguments::eval(EnvPtr env, ObjectPtr caller) {
   if (size() != params->size())
     throw ASTEvalException("error function call, not match the number of parameters");
 
+  //每次调用函数，都有创建一个新的内部环境
   EnvPtr funcEnv = func->runtimeEnv();
   params->eval(funcEnv, env, children_);
   auto result = func->block()->eval(funcEnv);
