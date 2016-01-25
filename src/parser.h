@@ -19,12 +19,15 @@
  * def        : "def" IDENTIFIER param_list block
  * args       : expr {"," expr}
  *              | NULL
- * postfix    : "(" args ")"
+ * postfix    : "." IDENTIFIER | "(" args ")"
  * simple     : expr
  * statement  : "if" expr block ["else" block]
  *              | "while" expr block
  *              | simple
- * program    : [def | statement] (";" | EOL)
+ * member     : def | simple
+ * class_body : "{" [member] {(";" | EOL) [member]} "}"
+ * def_class  : "class" IDENTIFIER ["extends" IDENTIFIER ] class_body
+ * program    : [def_class | def | statement] (";" | EOL)
  */
 
 class BasicParser {

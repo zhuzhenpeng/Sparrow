@@ -135,6 +135,23 @@ ObjectPtr BinaryExprAST::assignOp(EnvPtr env, ObjectPtr rightValue) {
     env->put(std::dynamic_pointer_cast<IdTokenAST>(leftTree)->getId(), rightValue);
     return rightValue;
   }
+  else if (leftTree->kind_ == ASTKind::LIST_PRIMARY_EXPR) { //对象赋值
+    PrimaryExprPtr primary = std::dynamic_pointer_cast<PrimaryExprAST>(leftTree);
+    if (primary->hasPostfix(0) && primary->postfix(0)->kind_ == ASTKind::LIST_INSTANCE_DOT) {
+      auto obj = primary->evalSubExpr(env, 1);
+      if (obj->kind_ == ObjKind::Class_Instance) {
+        auto dot = std::dynamic_pointer_cast<InstanceDot>(primary->postfix(0));
+        return setInstanceField(std::dynamic_pointer_cast<ClassInstance>(obj), 
+            dot->name(), rightValue);
+      }
+      else {
+        throw ASTEvalException("bad assign, left value is not a valid instance");
+      }
+    }
+    else {
+      throw ASTEvalException("bad assign, not a valid id");
+    }
+  }
   else {
     throw ASTEvalException("bad assign, not a valid id");
   }
@@ -185,6 +202,12 @@ ObjectPtr BinaryExprAST::computeNumber(IntObjectPtr left, const std::string &op,
     return std::make_shared<BoolObject>(a < b);
   else
     throw ASTEvalException("bad operators for bianry expr");
+}
+
+ObjectPtr BinaryExprAST::setInstanceField(InstancePtr obj, const std::string &filedName, 
+    ObjectPtr rvalue) {
+  obj->write(filedName, rvalue);  
+  return obj;
 }
 
 void BinaryExprAST::checkValid() {
@@ -416,4 +439,102 @@ std::string LambAST::info() {
 ObjectPtr LambAST::eval(EnvPtr env) {
   //lambda创建的闭包都用closure来表示它的函数名
   return std::make_shared<FuncObject>("closure", parameterList(), block(), env);
+}
+
+/************************类************************************/
+
+ClassBodyAST::ClassBodyAST(): ASTList(ASTKind::LIST_CLASS_BODY, false) {}
+
+ObjectPtr ClassBodyAST::eval(EnvPtr env) {
+  for(auto child: children_)
+    child->eval(env);
+  return nullptr;
+}
+
+////ClassStmnt
+
+ClassStmntAST::ClassStmntAST(): ASTList(ASTKind::LIST_CLASS_STMNT, false) {}
+
+std::string ClassStmntAST::name() {
+  auto nameLeaf = std::dynamic_pointer_cast<ASTLeaf>(children_[0]);
+  if (nameLeaf == nullptr)
+    throw ASTException("get class name failed, unknown type for first child");
+  return nameLeaf->getToken()->getText();
+}
+
+std::string ClassStmntAST::superClassName() {
+  if (numChildren() < 3) {
+    return "";
+  }
+  else {
+    auto nameLeaf = std::dynamic_pointer_cast<ASTLeaf>(children_[1]);
+    if (nameLeaf == nullptr)
+      throw ASTException("get super class name failed");
+    return nameLeaf->getToken()->getText(); 
+  }
+}
+
+ClassBodyPtr ClassStmntAST::body() {
+  auto body = std::dynamic_pointer_cast<ClassBodyAST>(children_.back());
+  if (body == nullptr)
+    throw ASTEvalException("get class body failed");
+  return body;
+}
+
+ObjectPtr ClassStmntAST::eval(EnvPtr env) {
+    ClassInfoPtr newClass = std::make_shared<ClassInfo>(shared_from_this(), env);
+      env->put(name(), newClass);
+        return newClass;
+}
+
+std::string ClassStmntAST::info() {
+  std::string parent = superClassName();
+  return "(class " + name() + ": " + parent + "| body: " + body()->info() + ")";
+}
+
+/***********************类的域访问(.xx)***********************/
+
+InstanceDot::InstanceDot(): PostfixAST(ASTKind::LIST_INSTANCE_DOT, false) {}
+
+std::string InstanceDot::name() {
+  auto nameLeaf = std::dynamic_pointer_cast<ASTLeaf>(children_[0]);
+  if (nameLeaf == nullptr)
+    throw ASTException("get dot target name failed, unknown type for first child");
+  return nameLeaf->getToken()->getText();
+}
+
+std::string InstanceDot::info() {
+  return "." + name();
+}
+
+ObjectPtr InstanceDot::eval(__attribute__((unused))EnvPtr env, ObjectPtr caller) {
+  std::string member = name();
+  if (caller->kind_ == ObjKind::Class_Info) {
+    if (member == "new")
+      return newInstance(std::dynamic_pointer_cast<ClassInfo>(caller));
+    else
+      throw ASTEvalException("unknow operation for class: " + member);
+  } 
+  else if (caller->kind_ == ObjKind::Class_Instance) {
+    auto instance = std::dynamic_pointer_cast<ClassInstance>(caller);
+    return instance->read(member);
+  }
+  else {
+    throw ASTEvalException("bad member access: " + member);
+  }
+}
+
+//利用闭包的方式来实现对象
+ObjectPtr InstanceDot::newInstance(ClassInfoPtr ci) {
+  EnvPtr instanceEnv = std::make_shared<Environment>(ci->getEnvitonment());
+  InstancePtr obj = std::make_shared<ClassInstance>(instanceEnv);
+  initInstance(ci, instanceEnv);
+  return obj;
+}
+
+void InstanceDot::initInstance(ClassInfoPtr ci, EnvPtr env) {
+  //递归由父类往下初始化
+  if (ci->superClass() != nullptr)
+    initInstance(ci->superClass(), env);
+  ci->body()->eval(env);
 }

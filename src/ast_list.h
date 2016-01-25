@@ -72,16 +72,17 @@ public:
   PrimaryExprAST();
   ObjectPtr eval(EnvPtr env) override;
 
-private:
-  ASTreePtr operand();
-
   //nest表示从外往内数的第几层，如果是最外层，则为0
   std::shared_ptr<PostfixAST> postfix(size_t nest);
   bool hasPostfix(size_t nest);
 
-  //primary表达式可能是一个嵌套调用
+  //返回操作数（该节点的第一个对象）
+  ASTreePtr operand();
+  
+  //计算子表达式，如a.b.c则从左往右依次计算
   ObjectPtr evalSubExpr(EnvPtr env, size_t nest);
 };
+using PrimaryExprPtr = std::shared_ptr<PrimaryExprAST>;
 
 /**************************负值表达式*************************************/
 
@@ -105,11 +106,15 @@ private:
   //赋值操作
   ObjectPtr assignOp(EnvPtr env, ObjectPtr rightValue);
 
-  //除赋值以外其它操作
+  //除赋值以外其它运算符操作
   ObjectPtr otherOp(ObjectPtr left, const std::string &op, ObjectPtr right);
 
   //数字间的运算
   ObjectPtr computeNumber(IntObjectPtr left, const std::string &op, IntObjectPtr right);
+
+  //对象字段赋值
+  ObjectPtr setInstanceField(InstancePtr obj, const std::string &filedName, ObjectPtr rvalue);
+  
 private:
   void checkValid();
 };
@@ -238,7 +243,7 @@ public:
 };
 using ClassBodyPtr = std::shared_ptr<ClassBodyAST>;
 
-class ClassStmntAST: public ASTList {
+class ClassStmntAST: public ASTList, public std::enable_shared_from_this<ClassStmntAST> {
 public:
   ClassStmntAST();
 
@@ -256,5 +261,30 @@ public:
   std::string info() override;
 };
 using ClassStmntPtr = std::shared_ptr<ClassStmntAST>;
+
+/**********************对象的域访问(.xx)***********************/
+
+class InstanceDot: public PostfixAST {
+public:
+  InstanceDot();
+
+  //访问目标的名字
+  std::string name();
+
+  std::string info() override;
+
+  //如果caller是类元信息的实例，创建某个类的实例，
+  //如果是对象的实例，访问某个对象的成员变量、方法
+  //否则报错
+  ObjectPtr eval(EnvPtr env, ObjectPtr caller) override;
+
+private:
+  //创建并初始化对象
+  ObjectPtr newInstance(ClassInfoPtr ci);
+
+  //初始化对象，env是对象自身的环境
+  void initInstance(ClassInfoPtr ci, EnvPtr env);
+};
+using InstanceDotPtr = std::shared_ptr<InstanceDot>;
 
 #endif

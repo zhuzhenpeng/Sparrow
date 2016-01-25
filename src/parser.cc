@@ -74,7 +74,10 @@ void BasicParser::init() {
       });
 
   //postfix
-  postfix->custom("(", true)->commomPR(args)->custom(")", true);
+  postfix->orPR({
+      Parser::rule(ASTKind::LIST_INSTANCE_DOT)->custom(".", true)->id(reserved_),
+      Parser::rule()->custom("(", true)->commomPR(args)->custom(")", true)});
+
 
   //simple
   auto simple = Parser::rule(ASTKind::LIST_PRIMARY_EXPR)->commomPR(expr);
@@ -95,8 +98,28 @@ void BasicParser::init() {
         simple
       });
 
+  //member
+  auto member = Parser::rule()->orPR({def, simple});
+
+  //class_body
+  auto classBody = Parser::rule(ASTKind::LIST_CLASS_BODY)->custom("{", true)\
+                   ->optionPR(member)\
+                   ->repeatPR(
+                        Parser::rule()->orPR({
+                          Parser::rule()->custom(";", true), 
+                          Parser::rule()->custom("\\n", true)})\
+                        ->optionPR(member))\
+                   ->custom("}", true);
+
+  //def_class
+  auto defClass = Parser::rule(ASTKind::LIST_CLASS_STMNT)->custom("class", true)\
+                  ->id(reserved_)->optionPR(
+                    Parser::rule()->custom("extends", true)->id(reserved_)    
+                  )->commomPR(classBody);
+
   //program
   program_->orPR({
+        defClass,
         def,
         statement,
         Parser::rule(ASTKind::LIST_NULL_STMNT)

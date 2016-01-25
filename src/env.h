@@ -161,6 +161,7 @@ private:
 private:
   EnvPtr env_;
 };
+using InstancePtr = std::shared_ptr<ClassInstance>;
 
 /********************************环境********************************/
 

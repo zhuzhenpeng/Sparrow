@@ -73,6 +73,9 @@ ASTreePtr ASTFactory::getListInstance(ASTKind kind) {
     case ASTKind::LIST_CLASS_STMNT:
       result = std::make_shared<ClassStmntAST>();
       break;
+    case ASTKind::LIST_INSTANCE_DOT:
+      result = std::make_shared<InstanceDot>();
+      break;
     default:
       throw ParseException("get null AST list instance");
       break;
