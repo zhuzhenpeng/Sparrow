@@ -21,7 +21,7 @@ int main() {
 
       if (tree != nullptr) {
         //std::cout << "[" << static_cast<int>(tree->kind_) << "]" << std::endl;
-        //std::cout << tree->info() << std::endl;
+        std::cout << tree->info() << std::endl;
       }
 
       if (tree != nullptr) {

@@ -19,10 +19,11 @@ void BasicParser::init() {
   auto param = Parser::rule()->id(reserved_);
 
   //params
-  auto params = Parser::rule(ASTKind::LIST_PARAMETER)->orPR({
-        Parser::rule()->commomPR(param)\
+  auto params = Parser::rule()->orPR({
+        Parser::rule(ASTKind::LIST_PARAMETER)->commomPR(param)\
           ->repeatPR(Parser::rule()->custom(",", true)->commomPR(param)),
-        Parser::rule(ASTKind::LIST_NULL_STMNT), 
+        Parser::rule(ASTKind::LIST_PARAMETER)\
+          ->commomPR(Parser::rule(ASTKind::LIST_NULL_STMNT))
       });
 
   //param_list
@@ -67,10 +68,11 @@ void BasicParser::init() {
              ->commomPR(paramsList)->commomPR(block);
 
   //args
-  auto args = Parser::rule(ASTKind::LIST_ARGUMENTS)->orPR({
-        Parser::rule()->commomPR(expr)\
+  auto args = Parser::rule()->orPR({
+        Parser::rule(ASTKind::LIST_ARGUMENTS)->commomPR(expr)\
           ->repeatPR(Parser::rule()->custom(",", true)->commomPR(expr)),
-        Parser::rule(ASTKind::LIST_NULL_STMNT),
+        Parser::rule(ASTKind::LIST_ARGUMENTS)\
+          ->commomPR(Parser::rule(ASTKind::LIST_NULL_STMNT))
       });
 
   //postfix

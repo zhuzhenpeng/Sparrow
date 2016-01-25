@@ -20,6 +20,16 @@ Iterator<ASTreePtr> ASTList::iterator() {
 
 std::string ASTList::info() {
   std::string result = "(";
+
+  //std::string size = std::to_string(children_.size());
+  //result += "[" + size + "]";
+  
+  //std::string ignore = std::to_string(ignore_);
+  //result += "[" + ignore + "]";
+  
+  //std::string kind = std::to_string(static_cast<int>(kind_));
+  //result += "[" + kind + "]";
+
   for (size_t i = 0; i < children_.size(); ++i) {
     result += children_[i]->info();
     if (i < children_.size() - 1)
@@ -335,7 +345,7 @@ ObjectPtr NullStmntAST::eval(__attribute__((unused)) EnvPtr env) {
   throw ASTEvalException("Null Stmnt AST should not appear in AST, fatal error");
 }
 
-/***************************ParameterList*****************************/
+/******************************形参列表*******************************/
 
 ParameterListAST::ParameterListAST(): ASTList(ASTKind::LIST_PARAMETER, false) {}
 
@@ -399,8 +409,10 @@ ObjectPtr Arguments::eval(EnvPtr env, ObjectPtr caller) {
 
   auto func = std::static_pointer_cast<FuncObject>(caller);
   auto params = func->params();
-  if (size() != params->size())
+  if (size() != params->size()){
+    MyDebugger::print(std::to_string(params->size()), __FILE__, __LINE__);
     throw ASTEvalException("error function call, not match the number of parameters");
+  }
 
   //每次调用函数，都有创建一个新的内部环境
   EnvPtr funcEnv = func->runtimeEnv();

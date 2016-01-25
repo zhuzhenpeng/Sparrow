@@ -173,6 +173,7 @@ public:
   }
 
   //根据入参设置函数运行时环境
+  //该语法树记录形参名字，实参数据由外部args传入
   void eval(EnvPtr funcEnv, EnvPtr callerEnv, const std::vector<ASTreePtr> &args);
 };
 using ParameterListPtr = std::shared_ptr<ParameterListAST>;
@@ -207,7 +208,6 @@ public:
   virtual ObjectPtr eval(EnvPtr env, ObjectPtr caller) = 0;
 };
 
-
 /***************************函数实参********************************/
 
 class Arguments: public PostfixAST {
@@ -220,6 +220,7 @@ public:
   ObjectPtr eval(EnvPtr env, ObjectPtr caller) override;
 
 private:
+  //调用原生函数
   ObjectPtr invokeNative(EnvPtr env, NativeFuncPtr func);
 };
 
