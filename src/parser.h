@@ -11,15 +11,16 @@
  * params     : param {"," param}
  *              | NULL
  * param_list : "(" params ")"
+ * elements   : expr {"," expr}
  * primary    : "lamb" param_list block
- *              |("(" expr ")" | NUMBER | IDENTIFIER | STRING) {posifix}
+ *              |( "[" [elements] "]" | "(" expr ")" | NUMBER | IDENTIFIER | STRING ) {posifix}
  * factory    : "-" primary | primary
  * expr       : factor { OP factor }
  * block      : "{" [statement] {(";" | EOL) [statement]} "}"
  * def        : "def" IDENTIFIER param_list block
  * args       : expr {"," expr}
  *              | NULL
- * postfix    : "." IDENTIFIER | "(" args ")"
+ * postfix    : "." IDENTIFIER | "(" args ")" | "[" expr "]"
  * simple     : expr
  * statement  : "if" expr block ["else" block]
  *              | "while" expr block

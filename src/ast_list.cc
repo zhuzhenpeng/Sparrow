@@ -145,25 +145,47 @@ ObjectPtr BinaryExprAST::assignOp(EnvPtr env, ObjectPtr rightValue) {
     env->put(std::dynamic_pointer_cast<IdTokenAST>(leftTree)->getId(), rightValue);
     return rightValue;
   }
-  else if (leftTree->kind_ == ASTKind::LIST_PRIMARY_EXPR) { //对象赋值
+  else if (leftTree->kind_ == ASTKind::LIST_PRIMARY_EXPR) {
     PrimaryExprPtr primary = std::dynamic_pointer_cast<PrimaryExprAST>(leftTree);
+
+    //对象域访问
     if (primary->hasPostfix(0) && primary->postfix(0)->kind_ == ASTKind::LIST_INSTANCE_DOT) {
-      auto obj = primary->evalSubExpr(env, 1);
+      ObjectPtr obj = primary->evalSubExpr(env, 1);
       if (obj->kind_ == ObjKind::Class_Instance) {
         auto dot = std::dynamic_pointer_cast<InstanceDot>(primary->postfix(0));
         return setInstanceField(std::dynamic_pointer_cast<ClassInstance>(obj), 
             dot->name(), rightValue);
       }
       else {
-        throw ASTEvalException("bad assign, left value is not a valid instance");
+        throw ASTEvalException("bad assign, left value is not a valid class instance");
+      }
+    }
+    //数组访问
+    else if (primary->hasPostfix(0) && primary->postfix(0)->kind_ == ASTKind::LIST_ARRAY_REF) {
+      ObjectPtr array = primary->evalSubExpr(env, 1);
+      if (array->kind_ == ObjKind::Array) {
+        ArrayRefPtr arrRef = std::dynamic_pointer_cast<ArrayRefAST>(primary->postfix(0));
+        ObjectPtr index = arrRef->index()->eval(env);
+        if (index->kind_ == ObjKind::Int) {
+          auto a = std::dynamic_pointer_cast<Array>(array);
+          auto i = std::dynamic_pointer_cast<IntObject>(index);
+          a->set(i->value_, rightValue);
+          return rightValue;
+        }
+        else {
+          throw ASTEvalException("not a valid int type for array access");
+        }
+      }
+      else {
+        throw ASTEvalException("bad assign, left value is not a valid array");
       }
     }
     else {
-      throw ASTEvalException("bad assign, not a valid id");
+      throw ASTEvalException("bad assign, not a valid primary expression");
     }
   }
   else {
-    throw ASTEvalException("bad assign, not a valid id");
+    throw ASTEvalException("bad assign, not a valid left value");
   }
 }
 
@@ -549,4 +571,50 @@ void InstanceDot::initInstance(ClassInfoPtr ci, EnvPtr env) {
   if (ci->superClass() != nullptr)
     initInstance(ci->superClass(), env);
   ci->body()->eval(env);
+}
+
+/*******************数组字面量*******************************/
+
+ArrayLiteralAST::ArrayLiteralAST(): ASTList(ASTKind::LIST_ARRAY_LITERAL, false) {}
+
+int ArrayLiteralAST::size() {
+  return numChildren();
+}
+
+ObjectPtr ArrayLiteralAST::eval(EnvPtr env) {
+  size_t arraySize = size();
+  ArrayPtr array = std::make_shared<Array>(arraySize);
+  for (size_t i = 0; i < arraySize; ++i) {
+    array->set(i, children_[i]->eval(env));
+  }
+  return array;
+}
+
+/******************数组访问后缀****************************/
+
+ArrayRefAST::ArrayRefAST(): PostfixAST(ASTKind::LIST_ARRAY_REF, false) {}
+
+ASTreePtr ArrayRefAST::index() {
+  return children_[0];
+}
+
+std::string ArrayRefAST::info() {
+  return "[" + index()->info() + "]";
+}
+
+ObjectPtr ArrayRefAST::eval(EnvPtr env, ObjectPtr caller) {
+  if (caller->kind_ == ObjKind::Array) {
+    ArrayPtr array = std::dynamic_pointer_cast<Array>(caller);
+    ObjectPtr i = index()->eval(env);
+    if (i->kind_ != ObjKind::Int) {
+      throw ASTEvalException("index not a valid int type");
+    }
+    else {
+      IntObjectPtr index = std::dynamic_pointer_cast<IntObject>(i);
+      return array->get(index->value_);
+    }
+  }
+  else {
+    throw ASTEvalException("bad type for array index calling");
+  }
 }

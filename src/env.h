@@ -22,7 +22,8 @@ enum class ObjKind {
   Func = 4,
   Native_Func = 5,
   Class_Info = 6,
-  Class_Instance = 7
+  Class_Instance = 7,
+  Array = 8
 };
 
 class Object {
@@ -163,7 +164,20 @@ private:
 };
 using InstancePtr = std::shared_ptr<ClassInstance>;
 
-/********************************环境********************************/
+/*************************定长数组***********************************/
+
+class Array: public Object {
+public:
+  Array(size_t i);
+  void set(size_t i, ObjectPtr obj);
+  ObjectPtr get(size_t i);
+  std::string info() override;
+private:
+  std::vector<ObjectPtr> array_;
+};
+using ArrayPtr = std::shared_ptr<Array>;
+
+/****************************环境***********************************/
 
 class Environment :public std::enable_shared_from_this<Environment>{
 public:
@@ -209,6 +223,11 @@ public:
   }
 private:
   std::string errMsg_;
+};
+
+class OutOfIndexException: public EnvException {
+public:
+  OutOfIndexException(): EnvException("out of index") {};
 };
 
 #endif

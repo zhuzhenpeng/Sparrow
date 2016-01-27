@@ -77,6 +77,30 @@ std::string ClassInstance::info() {
   return "<object>";
 }
 
+/*************************定长数组***********************************/
+
+Array::Array(size_t i): Object(ObjKind::Array) {
+  array_ = std::vector<ObjectPtr>(i, nullptr);
+}
+
+void Array::set(size_t i, ObjectPtr obj) {
+  if (i >= array_.size())
+    throw OutOfIndexException();
+  else
+    array_[i] = obj;
+}
+
+ObjectPtr Array::get(size_t i) {
+  if (i >= array_.size())
+    throw OutOfIndexException();
+  else
+    return array_[i];
+}
+
+std::string Array::info() {
+  return "<array with size " + std::to_string(array_.size()) + ">";
+}
+
 /*******************************环境********************************/
 Environment::Environment() = default;
 

@@ -43,6 +43,8 @@ enum class ASTKind {
   LIST_CLASS_BODY = 2013,
   LIST_CLASS_STMNT = 2014,
   LIST_INSTANCE_DOT = 2015,
+  LIST_ARRAY_LITERAL = 2016,
+  LIST_ARRAY_REF = 2017 
 };
 
 /*********************AST的基类，用于定义接口****************************/

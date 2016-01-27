@@ -288,4 +288,28 @@ private:
 };
 using InstanceDotPtr = std::shared_ptr<InstanceDot>;
 
+/*******************数组字面量*******************************/
+
+class ArrayLiteralAST: public ASTList {
+public:
+  ArrayLiteralAST();
+  int size();
+  
+  //生成定长数组
+  ObjectPtr eval(EnvPtr env) override;
+};
+
+/******************数组访问后缀****************************/
+
+class ArrayRefAST: public PostfixAST {
+public:
+  ArrayRefAST();
+  ASTreePtr index();
+  std::string info() override;
+
+  //访问指定下标的对象
+  ObjectPtr eval(EnvPtr env, ObjectPtr caller) override;
+};
+using ArrayRefPtr = std::shared_ptr<ArrayRefAST>;
+
 #endif

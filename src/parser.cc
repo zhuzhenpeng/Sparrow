@@ -29,6 +29,10 @@ void BasicParser::init() {
   //param_list
   auto paramsList = Parser::rule()->custom("(", true)->commomPR(params)->custom(")", true);
 
+  //elements(array literal)
+  auto elements = Parser::rule(ASTKind::LIST_ARRAY_LITERAL)->commomPR(expr)\
+                  ->repeatPR(Parser::rule()->custom(",", true)->commomPR(expr));
+
   //primary
   auto primary = Parser::rule()\
       ->orPR(
@@ -36,6 +40,7 @@ void BasicParser::init() {
             ->custom("lamb", true)->commomPR(paramsList)->commomPR(block),
           
           Parser::rule(ASTKind::LIST_PRIMARY_EXPR)->orPR({
+            Parser::rule()->custom("[", true)->commomPR(elements)->custom("]", true),
             Parser::rule()->custom("(", true)->commomPR(expr)->custom(")", true),
             Parser::rule()->number(ASTKind::LEAF_INT),
             Parser::rule()->id(reserved_),
@@ -78,7 +83,9 @@ void BasicParser::init() {
   //postfix
   postfix->orPR({
       Parser::rule(ASTKind::LIST_INSTANCE_DOT)->custom(".", true)->id(reserved_),
-      Parser::rule()->custom("(", true)->commomPR(args)->custom(")", true)});
+      Parser::rule()->custom("(", true)->commomPR(args)->custom(")", true),
+      Parser::rule(ASTKind::LIST_ARRAY_REF)->custom("[", true)->commomPR(expr)->custom("]", true)
+      });
 
 
   //simple
@@ -140,6 +147,7 @@ void BasicParser::initReserved() {
   reserved_.insert(";");
   reserved_.insert("}");    
   reserved_.insert(")");
+  reserved_.insert("]");
   reserved_.insert("\\n");
 }
 
