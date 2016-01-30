@@ -6,14 +6,38 @@
 #include <exception>
 #include "env.h"
 
+/******************************AST相关的异常****************************/
+class ASTException: public std::exception {
+public:
+  ASTException(const std::string &msg): errMsg_(msg) {}
+  const char* what() const noexcept override {
+    return errMsg_.c_str();
+  }
+private:
+  std::string errMsg_;
+};
+
+class ASTEvalException: public ASTException {
+public:
+  ASTEvalException(const std::string &msg): ASTException(msg) {}
+};
+
 /******************************AST迭代器接口*****************************/
 template <typename Item>
 class Iterator {
 public:
-  virtual void first() = 0;
-  virtual void next() = 0;
-  virtual bool hasNext() const = 0;
-  virtual Item current() const = 0;
+  virtual void first() {
+    throw ASTException("un-implement Iterator exception!");
+  }
+  virtual void next() {
+    throw ASTException("un-implement Iterator exception!");
+  }
+  virtual bool hasNext() const {
+    throw ASTException("un-implement Iterator exception!");
+  }
+  virtual Item current() const {
+    throw ASTException("un-implement Iterator exception!");
+  }
 };
 
 /*****************************AST类型************************************/
@@ -75,20 +99,5 @@ public:
   ASTKind kind_;
 };
 
-/******************************AST相关的异常****************************/
-class ASTException: public std::exception {
-public:
-  ASTException(const std::string &msg): errMsg_(msg) {}
-  const char* what() const noexcept override {
-    return errMsg_.c_str();
-  }
-private:
-  std::string errMsg_;
-};
-
-class ASTEvalException: public ASTException {
-public:
-  ASTEvalException(const std::string &msg): ASTException(msg) {}
-};
 
 #endif
