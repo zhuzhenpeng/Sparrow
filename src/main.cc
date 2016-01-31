@@ -26,7 +26,7 @@ int main() {
 
       if (tree != nullptr) {
         auto result = tree->eval(globalEnv);
-        if (result != nullptr && result->kind_ == ObjKind::Int) {
+        if (result != nullptr && result->kind_ == ObjKind::INT) {
           std::cout << std::static_pointer_cast<IntObject>(result)->value_ << std::endl;
         }
       }

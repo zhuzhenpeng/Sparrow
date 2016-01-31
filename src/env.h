@@ -16,13 +16,13 @@ using EnvPtr = std::shared_ptr<Environment>;
 
 /******************************解析时变量类型****************************/
 enum class ObjKind {
-  Int = 1, 
-  String = 2, 
-  Bool = 3,
-  Func = 4,
-  Native_Func = 5,
-  Class_Info = 6,
-  Class_Instance = 7,
+  INT = 1, 
+  STRING = 2, 
+  BOOL = 3,
+  FUNCTION = 4,
+  NATIVE_FUNC = 5,
+  CLASS_INFO = 6,
+  CLASS_INSTANCE = 7,
   Array = 8
 };
 
@@ -38,7 +38,7 @@ using ObjectPtr = std::shared_ptr<Object>;
 /******************************Int 类型 ********************************/
 class IntObject: public Object {
 public:
-  IntObject(int value): Object(ObjKind::Int), value_(value) {}
+  IntObject(int value): Object(ObjKind::INT), value_(value) {}
   std::string info() override {
     return "Int: " + std::to_string(value_);
   }
@@ -50,7 +50,7 @@ using IntObjectPtr = std::shared_ptr<IntObject>;
 /******************************Str 类型********************************/
 class StrObject: public Object {
 public:
-  StrObject(const std::string &str): Object(ObjKind::String), str_(str) {}
+  StrObject(const std::string &str): Object(ObjKind::STRING), str_(str) {}
   std::string info() override {
     return "Str: " + str_; 
   }
@@ -62,8 +62,8 @@ using StrObjectPtr = std::shared_ptr<StrObject>;
 /*****************************BOOL 类型*******************************/
 class BoolObject: public Object {
 public:
-  BoolObject(bool b): Object(ObjKind::Bool), b_(b) {}
-  BoolObject(int num): Object(ObjKind::Bool), b_(num != 0) {}
+  BoolObject(bool b): Object(ObjKind::BOOL), b_(b) {}
+  BoolObject(int num): Object(ObjKind::BOOL), b_(num != 0) {}
   std::string info() override {
     return "Bool: " + std::to_string(b_);
   }
@@ -98,7 +98,7 @@ using FuncPtr = std::shared_ptr<FuncObject>;
 class NativeFunction: public Object {
 public:
   NativeFunction(const std::string &name, size_t paramNum): 
-    Object(ObjKind::Native_Func), funcName_(name), paramNum_(paramNum) {}
+    Object(ObjKind::NATIVE_FUNC), funcName_(name), paramNum_(paramNum) {}
 
   std::string name() const {
     return funcName_;

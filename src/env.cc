@@ -5,7 +5,7 @@
 FuncObject::FuncObject(const std::string &functionName, 
     std::shared_ptr<ParameterListAST> params, 
     std::shared_ptr<BlockStmntAST> block, EnvPtr env):
-  Object(ObjKind::Func), funcName_(functionName), params_(params), block_(block), env_(env) {}
+  Object(ObjKind::FUNCTION), funcName_(functionName), params_(params), block_(block), env_(env) {}
 
 std::shared_ptr<ParameterListAST> FuncObject::params() const {
   return params_;
@@ -21,12 +21,12 @@ EnvPtr FuncObject::runtimeEnv() const {
 
 /***************************类元信息*********************************/
 ClassInfo::ClassInfo(std::shared_ptr<ClassStmntAST> stmnt, EnvPtr env):
-  Object(ObjKind::Class_Info), definition_(stmnt), env_(env) {
+  Object(ObjKind::CLASS_INFO), definition_(stmnt), env_(env) {
 
   ObjectPtr obj = env->get(stmnt->superClassName());
   if (obj == nullptr)   
     return;
-  else if (obj->kind_ == ObjKind::Class_Info)
+  else if (obj->kind_ == ObjKind::CLASS_INFO)
     superClass_ = std::static_pointer_cast<ClassInfo>(obj);
   else
     throw EnvException("unknown super class: " + stmnt->superClassName());
@@ -54,7 +54,7 @@ std::string ClassInfo::info() {
 
 /**************************对象*************************************/
 
-ClassInstance::ClassInstance(EnvPtr env): Object(ObjKind::Class_Instance), env_(env){}
+ClassInstance::ClassInstance(EnvPtr env): Object(ObjKind::CLASS_INSTANCE), env_(env){}
 
 void ClassInstance::write(const std::string &member, ObjectPtr value) {
   if (checkAccessValid(member))

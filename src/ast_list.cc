@@ -97,7 +97,7 @@ std::string NegativeExprAST::info() {
 
 ObjectPtr NegativeExprAST::eval(EnvPtr env) {
   auto num = children_[1]->eval(env);
-  if (num->kind_ == ObjKind::Int) {
+  if (num->kind_ == ObjKind::INT) {
     int positive = std::static_pointer_cast<IntObject>(num)->value_;
     return std::make_shared<IntObject>(-positive);
   }
@@ -151,7 +151,7 @@ ObjectPtr BinaryExprAST::assignOp(EnvPtr env, ObjectPtr rightValue) {
     //对象域访问
     if (primary->hasPostfix(0) && primary->postfix(0)->kind_ == ASTKind::LIST_INSTANCE_DOT) {
       ObjectPtr obj = primary->evalSubExpr(env, 1);
-      if (obj->kind_ == ObjKind::Class_Instance) {
+      if (obj->kind_ == ObjKind::CLASS_INSTANCE) {
         auto dot = std::dynamic_pointer_cast<InstanceDot>(primary->postfix(0));
         return setInstanceField(std::dynamic_pointer_cast<ClassInstance>(obj), 
             dot->name(), rightValue);
@@ -166,7 +166,7 @@ ObjectPtr BinaryExprAST::assignOp(EnvPtr env, ObjectPtr rightValue) {
       if (array->kind_ == ObjKind::Array) {
         ArrayRefPtr arrRef = std::dynamic_pointer_cast<ArrayRefAST>(primary->postfix(0));
         ObjectPtr index = arrRef->index()->eval(env);
-        if (index->kind_ == ObjKind::Int) {
+        if (index->kind_ == ObjKind::INT) {
           auto a = std::dynamic_pointer_cast<Array>(array);
           auto i = std::dynamic_pointer_cast<IntObject>(index);
           a->set(i->value_, rightValue);
@@ -190,7 +190,7 @@ ObjectPtr BinaryExprAST::assignOp(EnvPtr env, ObjectPtr rightValue) {
 }
 
 ObjectPtr BinaryExprAST::otherOp(ObjectPtr left, const std::string &op, ObjectPtr right) {
-  if (left->kind_ == ObjKind::Int && right->kind_ == ObjKind::Int) {
+  if (left->kind_ == ObjKind::INT && right->kind_ == ObjKind::INT) {
     return computeNumber(std::static_pointer_cast<IntObject>(left), op, 
         std::static_pointer_cast<IntObject>(right));
   } 
@@ -303,7 +303,7 @@ std::string IfStmntAST::info() {
 
 ObjectPtr IfStmntAST::eval(EnvPtr env) {
   auto b = condition()->eval(env);
-  if (b->kind_ != ObjKind::Bool)
+  if (b->kind_ != ObjKind::BOOL)
     throw ASTEvalException("error type for if condition part");
   if (std::static_pointer_cast<BoolObject>(b)->b_) {
     return thenBlock()->eval(env);
@@ -347,7 +347,7 @@ ObjectPtr WhileStmntAST::eval(EnvPtr env) {
   while (true) {
     ObjectPtr con = condition()->eval(env);
 
-    if (con->kind_ != ObjKind::Bool)
+    if (con->kind_ != ObjKind::BOOL)
       throw ASTEvalException("error type for while condition part");
     if (!std::static_pointer_cast<BoolObject>(con)->b_) {
       return result;
@@ -422,10 +422,10 @@ size_t Arguments::size() const {
 }
 
 ObjectPtr Arguments::eval(EnvPtr env, ObjectPtr caller) {
-  if (caller->kind_ != ObjKind::Func && caller->kind_ != ObjKind::Native_Func)
+  if (caller->kind_ != ObjKind::FUNCTION && caller->kind_ != ObjKind::NATIVE_FUNC)
     throw ASTEvalException("bad function for eval");
 
-  if (caller->kind_ == ObjKind::Native_Func) {
+  if (caller->kind_ == ObjKind::NATIVE_FUNC) {
     return invokeNative(env, std::dynamic_pointer_cast<NativeFunction>(caller));
   }
 
@@ -543,13 +543,13 @@ std::string InstanceDot::info() {
 
 ObjectPtr InstanceDot::eval(__attribute__((unused))EnvPtr env, ObjectPtr caller) {
   std::string member = name();
-  if (caller->kind_ == ObjKind::Class_Info) {
+  if (caller->kind_ == ObjKind::CLASS_INFO) {
     if (member == "new")
       return newInstance(std::dynamic_pointer_cast<ClassInfo>(caller));
     else
       throw ASTEvalException("unknow operation for class: " + member);
   } 
-  else if (caller->kind_ == ObjKind::Class_Instance) {
+  else if (caller->kind_ == ObjKind::CLASS_INSTANCE) {
     auto instance = std::dynamic_pointer_cast<ClassInstance>(caller);
     return instance->read(member);
   }
@@ -606,7 +606,7 @@ ObjectPtr ArrayRefAST::eval(EnvPtr env, ObjectPtr caller) {
   if (caller->kind_ == ObjKind::Array) {
     ArrayPtr array = std::dynamic_pointer_cast<Array>(caller);
     ObjectPtr i = index()->eval(env);
-    if (i->kind_ != ObjKind::Int) {
+    if (i->kind_ != ObjKind::INT) {
       throw ASTEvalException("index not a valid int type");
     }
     else {
