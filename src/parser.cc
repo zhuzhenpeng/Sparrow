@@ -82,7 +82,7 @@ void BasicParser::init() {
 
   //postfix
   postfix->orPR({
-      Parser::rule(ASTKind::LIST_INSTANCE_DOT)->custom(".", true)->id(reserved_),
+      Parser::rule(ASTKind::LIST_DOT)->custom(".", true)->id(reserved_),
       Parser::rule()->custom("(", true)->commomPR(args)->custom(")", true),
       Parser::rule(ASTKind::LIST_ARRAY_REF)->custom("[", true)->commomPR(expr)->custom("]", true)
       });

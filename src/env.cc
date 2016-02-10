@@ -16,7 +16,7 @@ std::shared_ptr<BlockStmntAST> FuncObject::block() const {
 }
 
 EnvPtr FuncObject::runtimeEnv() const {
-  return std::make_shared<Environment>(env_);
+  return std::make_shared<CommonEnv>(env_);
 }
 
 /***************************类元信息*********************************/
@@ -102,15 +102,15 @@ std::string Array::info() {
 }
 
 /*******************************环境********************************/
-Environment::Environment() = default;
+CommonEnv::CommonEnv(): CommonEnv(nullptr) {};
 
-Environment::Environment(EnvPtr outer): outerEnv_(outer) {}
+CommonEnv::CommonEnv(EnvPtr outer):Object(ObjKind::ENV), outerEnv_(outer) {}
 
-void Environment::setOuterEnv(EnvPtr outer) {
+void CommonEnv::setOuterEnv(EnvPtr outer) {
   outerEnv_ = outer;
 }
 
-ObjectPtr Environment::get(const std::string &name) {
+ObjectPtr CommonEnv::get(const std::string &name) {
   auto env = locateEnv(name);
   if (env == nullptr)
     return nullptr;
@@ -118,18 +118,22 @@ ObjectPtr Environment::get(const std::string &name) {
     return env->env_[name];
 }
 
-void Environment::put(const std::string &name, ObjectPtr obj) {
+void CommonEnv::put(const std::string &name, ObjectPtr obj) {
   auto env = locateEnv(name);
   if (env == nullptr)
     env = this->shared_from_this();
   env->putNew(name, obj);
 }
 
-bool Environment::isExistInCurrentEnv(const std::string &name) {
+bool CommonEnv::isExistInCurrentEnv(const std::string &name) {
   return env_.find(name) != env_.end();
 }
 
-EnvPtr Environment::locateEnv(const std::string &name) {
+std::string CommonEnv::info() {
+  return "Enviroment";
+}
+
+EnvPtr CommonEnv::locateEnv(const std::string &name) {
   if (env_.find(name) != env_.end()) 
     return this->shared_from_this();
   else if (outerEnv_ == nullptr)
@@ -138,6 +142,6 @@ EnvPtr Environment::locateEnv(const std::string &name) {
     return outerEnv_->locateEnv(name);
 }
 
-void Environment::putNew(const std::string &name, ObjectPtr obj) {
+void CommonEnv::putNew(const std::string &name, ObjectPtr obj) {
   env_[name] = obj;
 }

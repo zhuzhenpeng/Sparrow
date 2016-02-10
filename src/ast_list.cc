@@ -76,8 +76,8 @@ bool PrimaryExprAST::hasPostfix(size_t nest) {
 ObjectPtr PrimaryExprAST::evalSubExpr(EnvPtr env, size_t nest) {
   ObjectPtr result = nullptr;
   if (hasPostfix(nest)) {
-    // 类似于 foo(2)这种调用，ASTLeaf的eval，从环境中搜索foo的Obj并把它返回
-    // 在此处它就是caller
+    //如果存在后缀则递归地，从左到右的求值
+    //caller往往是左侧求出来的函数对象、数组对象
     ObjectPtr caller = evalSubExpr(env, nest + 1);
     result = postfix(nest)->eval(env, caller);
   }
@@ -149,10 +149,10 @@ ObjectPtr BinaryExprAST::assignOp(EnvPtr env, ObjectPtr rightValue) {
     PrimaryExprPtr primary = std::dynamic_pointer_cast<PrimaryExprAST>(leftTree);
 
     //对象域访问
-    if (primary->hasPostfix(0) && primary->postfix(0)->kind_ == ASTKind::LIST_INSTANCE_DOT) {
+    if (primary->hasPostfix(0) && primary->postfix(0)->kind_ == ASTKind::LIST_DOT) {
       ObjectPtr obj = primary->evalSubExpr(env, 1);
       if (obj->kind_ == ObjKind::CLASS_INSTANCE) {
-        auto dot = std::dynamic_pointer_cast<InstanceDot>(primary->postfix(0));
+        auto dot = std::dynamic_pointer_cast<Dot>(primary->postfix(0));
         return setInstanceField(std::dynamic_pointer_cast<ClassInstance>(obj), 
             dot->name(), rightValue);
       }
@@ -528,20 +528,20 @@ std::string ClassStmntAST::info() {
 
 /***********************类的域访问(.xx)***********************/
 
-InstanceDot::InstanceDot(): PostfixAST(ASTKind::LIST_INSTANCE_DOT, false) {}
+Dot::Dot(): PostfixAST(ASTKind::LIST_DOT, false) {}
 
-std::string InstanceDot::name() {
+std::string Dot::name() {
   auto nameLeaf = std::dynamic_pointer_cast<ASTLeaf>(children_[0]);
   if (nameLeaf == nullptr)
     throw ASTException("get dot target name failed, unknown type for first child");
   return nameLeaf->getToken()->getText();
 }
 
-std::string InstanceDot::info() {
+std::string Dot::info() {
   return "." + name();
 }
 
-ObjectPtr InstanceDot::eval(__attribute__((unused))EnvPtr env, ObjectPtr caller) {
+ObjectPtr Dot::eval(__attribute__((unused))EnvPtr env, ObjectPtr caller) {
   std::string member = name();
   if (caller->kind_ == ObjKind::CLASS_INFO) {
     if (member == "new")
@@ -559,14 +559,14 @@ ObjectPtr InstanceDot::eval(__attribute__((unused))EnvPtr env, ObjectPtr caller)
 }
 
 //利用闭包的方式来实现对象
-ObjectPtr InstanceDot::newInstance(ClassInfoPtr ci) {
-  EnvPtr instanceEnv = std::make_shared<Environment>(ci->getEnvitonment());
+ObjectPtr Dot::newInstance(ClassInfoPtr ci) {
+  EnvPtr instanceEnv = std::make_shared<CommonEnv>(ci->getEnvitonment());
   InstancePtr obj = std::make_shared<ClassInstance>(instanceEnv);
   initInstance(ci, instanceEnv);
   return obj;
 }
 
-void InstanceDot::initInstance(ClassInfoPtr ci, EnvPtr env) {
+void Dot::initInstance(ClassInfoPtr ci, EnvPtr env) {
   //递归由父类往下初始化
   if (ci->superClass() != nullptr)
     initInstance(ci->superClass(), env);

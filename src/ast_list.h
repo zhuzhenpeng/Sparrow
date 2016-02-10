@@ -267,9 +267,9 @@ using ClassStmntPtr = std::shared_ptr<ClassStmntAST>;
 
 /**********************对象的域访问(.xx)***********************/
 
-class InstanceDot: public PostfixAST {
+class Dot: public PostfixAST {
 public:
-  InstanceDot();
+  Dot();
 
   //访问目标的名字
   std::string name();
@@ -288,7 +288,7 @@ private:
   //初始化对象，env是对象自身的环境
   void initInstance(ClassInfoPtr ci, EnvPtr env);
 };
-using InstanceDotPtr = std::shared_ptr<InstanceDot>;
+using DotPtr = std::shared_ptr<Dot>;
 
 /*******************数组字面量*******************************/
 

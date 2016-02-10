@@ -73,8 +73,8 @@ ASTreePtr ASTFactory::getListInstance(ASTKind kind) {
     case ASTKind::LIST_CLASS_STMNT:
       result = std::make_shared<ClassStmntAST>();
       break;
-    case ASTKind::LIST_INSTANCE_DOT:
-      result = std::make_shared<InstanceDot>();
+    case ASTKind::LIST_DOT:
+      result = std::make_shared<Dot>();
       break;
     case ASTKind::LIST_ARRAY_REF:
       result = std::make_shared<ArrayRefAST>();

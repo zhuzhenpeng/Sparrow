@@ -7,10 +7,12 @@ LexerImp::LexerImp(): is_(nullptr) {
   std::string patternStr = \
   "\\s*"
   "("
-  "(//.*)"
+  "(require [[:alnum:]]+(\\.[[:alnum:]]+)* as [[:alnum:]]+)"
+  "|(//.*)"
   "|([0-9]+)"
+  "|([0-9]+\\.[0-9])"
   "|(\"(\\\\\"|\\\\\\\\|\\\\n|[^\"])*\")"
-  "|[A-Z_a-z][A-Z_a-z0-9]*|==|<=|>=|&&|\\|\\||[[:punct:]]"
+  "|\\$?[A-Z_a-z][A-Z_a-z0-9]*|==|<=|>=|&&|\\|\\||[[:punct:]]"
   ")?";
 
   try {
@@ -100,21 +102,26 @@ void LexerImp::parseNextLine() {
   for (std::sregex_iterator it(line.begin(), line.end(), parsePattern_), endIt;
       it != endIt; ++it) {
     const std::smatch &results = *it;
-    //const std::string &matchStr = it->str();
+    //std::cout << "match: " << it->str() << std::endl;
 
     if (!results[1].matched)    //空格
       continue;
-    if (results[2].matched)   //注释
+    if (results[2].matched)     //引入其它文件
+      continue;
+    if (results[4].matched)   //注释
       continue;
 
-    if (results[3].matched) { //匹配整数
+    if (results[5].matched) { //匹配整数
       IntTokenPtr tp = std::make_shared<IntToken>(lineNumber_, 
-          fileName_, results[3].str());
+          fileName_, results[5].str());
       tokenQueue_.push_back(tp);
     } 
-    else if (results[4].matched) { // 匹配字符串
+    else if (results[6].matched) {  //匹配浮点数
+      std::cout << "TODO:match float" << std::endl;
+    }
+    else if (results[7].matched) { // 匹配字符串
       StrTokenPtr tp = std::make_shared<StrToken>(lineNumber_, 
-          fileName_, results[4].str());
+          fileName_, results[7].str());
       tokenQueue_.push_back(tp);
     }
     else {  //匹配ID

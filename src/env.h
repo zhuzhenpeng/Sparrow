@@ -11,11 +11,12 @@ class ParameterListAST;
 class BlockStmntAST;
 class ClassStmntAST;
 class ClassBodyAST;
-class Environment;
-using EnvPtr = std::shared_ptr<Environment>;
+class CommonEnv;
+using EnvPtr = std::shared_ptr<CommonEnv>;
 
 /******************************解析时变量类型****************************/
 enum class ObjKind {
+  ENV = 0,
   INT = 1, 
   STRING = 2, 
   BOOL = 3,
@@ -179,11 +180,12 @@ using ArrayPtr = std::shared_ptr<Array>;
 
 /****************************环境***********************************/
 
-class Environment :public std::enable_shared_from_this<Environment>{
+//使用辞典实现存储，待优化，用于前期快速实现
+class CommonEnv :public std::enable_shared_from_this<CommonEnv>, public Object{
 public:
-  Environment();
+  CommonEnv();
 
-  Environment(EnvPtr outer);
+  CommonEnv(EnvPtr outer);
 
   void setOuterEnv(EnvPtr outer);
 
@@ -197,6 +199,8 @@ public:
 
   //检查变量是否在当前的环境
   bool isExistInCurrentEnv(const std::string &name);
+
+  std::string info() override;
 
 private:
   //定位变量所在环境，如果找不到则返回空
@@ -213,6 +217,30 @@ private:
   std::map<std::string, ObjectPtr> env_;
 };
 
+/****************************符号表********************************/
+////记录符号与其位置关系
+//struct Location {
+  //int nest = -1;  //嵌套层数
+  //int index = -1; //所在位置，即数组下标
+//};
+
+//class Symbols;
+//using SymbolsPtr = std::shared_ptr<Symbols>;
+//class Symbols {
+//public:
+  //Symbols();
+  //Symbols(SymbolsPtr outer);
+
+  ////获取符号的位置
+  //Location locate(const std::string &name);
+
+//private:
+  ////外层符号表
+  //SymbolsPtr outer_;
+
+  ////符号和下标的哈希表
+  //std::map<std::string, int>symIndex_;
+//};
 /********************************异常******************************/
 
 class EnvException: public std::exception {
