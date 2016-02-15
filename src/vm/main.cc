@@ -8,9 +8,9 @@
 
 #include <stdlib.h>
 
-#include "lexer_imp.h"
-#include "parser.h"
-#include "native_func.h"
+#include "../lexer_imp.h"
+#include "../parser.h"
+#include "../native_func.h"
 
 int main(int argc, char *argv[]) {
   if (argc != 2) {
@@ -21,11 +21,8 @@ int main(int argc, char *argv[]) {
 
     /****************************预处理**************************************/
 
-    //每一个文件一个unit，每个unit有自己的全局环境
+    //每个unit的环境，unit以绝对路径名为标识
     std::map<std::string, EnvPtr> environments;  //<绝对路径名，环境>
-
-    //待处理的unit
-    std::stack<std::string> handlintUnits;
 
     //程序入口
     std::string entryFile(argv[1]);

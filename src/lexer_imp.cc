@@ -7,7 +7,7 @@ LexerImp::LexerImp(): is_(nullptr) {
   std::string patternStr = \
   "\\s*"
   "("
-  "(require [[:alnum:]]+(\\.[[:alnum:]]+)* as [[:alnum:]]+)"
+  "(require [[:alnum:]_]+(\\.[[:alnum:]_]+)* as [[:alnum:]_]+)"
   "|(//.*)"
   "|([0-9]+)"
   "|([0-9]+\\.[0-9])"

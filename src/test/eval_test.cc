@@ -17,7 +17,7 @@ protected:
     lexer.reset(new LexerImp());
     parser.reset(new BasicParser());
     parser->init();
-    env.reset(new Environment());
+    env.reset(new CommonEnv());
 
     expectResults = {0, 0, 1, 10, 45, 51};
   }
