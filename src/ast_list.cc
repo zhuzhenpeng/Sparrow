@@ -553,6 +553,10 @@ ObjectPtr Dot::eval(__attribute__((unused))EnvPtr env, ObjectPtr caller) {
     auto instance = std::dynamic_pointer_cast<ClassInstance>(caller);
     return instance->read(member);
   }
+  else if (caller->kind_ == ObjKind::ENV) {
+    EnvPtr env = std::dynamic_pointer_cast<CommonEnv>(caller);
+    return env->get(member);
+  }
   else {
     throw ASTEvalException("bad member access: " + member);
   }
