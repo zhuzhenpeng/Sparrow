@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 #include <stack>
 #include <regex>
 #include <iostream>
@@ -33,6 +34,10 @@ public:
       const std::string &entryFile);
 
 private:
+  //通过递归来深度遍历unit间的require
+  //unitAbPath是解析模块的绝对路径
+  void DFSRequire(std::map<std::string, EnvPtr> &env, const std::string &unitAbPath, 
+      ParseOrderTreePtr parseOrderTree);
 
   //解析文件头部的导入命令，如果需要导入则返回真，导入信息放在出参unit中
   bool parseRequire(std::istream &is, RequireUnit &unit);

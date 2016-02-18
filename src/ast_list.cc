@@ -76,7 +76,7 @@ bool PrimaryExprAST::hasPostfix(size_t nest) {
 ObjectPtr PrimaryExprAST::evalSubExpr(EnvPtr env, size_t nest) {
   ObjectPtr result = nullptr;
   if (hasPostfix(nest)) {
-    //如果存在后缀则递归地，从左到右的求值
+    //如果存在后缀则递归地求值
     //caller往往是左侧求出来的函数对象、数组对象
     ObjectPtr caller = evalSubExpr(env, nest + 1);
     result = postfix(nest)->eval(env, caller);
@@ -148,7 +148,7 @@ ObjectPtr BinaryExprAST::assignOp(EnvPtr env, ObjectPtr rightValue) {
   else if (leftTree->kind_ == ASTKind::LIST_PRIMARY_EXPR) {
     PrimaryExprPtr primary = std::dynamic_pointer_cast<PrimaryExprAST>(leftTree);
 
-    //对象域访问
+    //.域访问
     if (primary->hasPostfix(0) && primary->postfix(0)->kind_ == ASTKind::LIST_DOT) {
       ObjectPtr obj = primary->evalSubExpr(env, 1);
       if (obj->kind_ == ObjKind::CLASS_INSTANCE) {
@@ -156,8 +156,15 @@ ObjectPtr BinaryExprAST::assignOp(EnvPtr env, ObjectPtr rightValue) {
         return setInstanceField(std::dynamic_pointer_cast<ClassInstance>(obj), 
             dot->name(), rightValue);
       }
+      else if (obj->kind_ == ObjKind::ENV) {
+        EnvPtr targetEnv = std::dynamic_pointer_cast<CommonEnv>(obj);
+        auto dot = std::dynamic_pointer_cast<Dot>(primary->postfix(0));
+        targetEnv->put(dot->name(), rightValue);
+        return rightValue;
+      }
       else {
-        throw ASTEvalException("bad assign, left value is not a valid class instance");
+        throw ASTEvalException("bad assign, left value is not a valid class instance"\
+            " or environment alias");
       }
     }
     //数组访问

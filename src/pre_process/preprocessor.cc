@@ -1,7 +1,6 @@
 #include "preprocessor.h"
 
 #include <queue>
-#include <set>
 #include <fstream>
 #include "preprocess_exception.h"
 
@@ -25,7 +24,7 @@ Preprocessor::Preprocessor() {
 ParseOrderTreePtr Preprocessor::generateParsingOrder(std::map<std::string, EnvPtr> &env, 
       const std::string &entryFile) {
   
-  //获取入口的绝对路径
+  //获取程序入口的绝对路径
   char buffer[200];
   char *absolutePath = realpath(entryFile.c_str(), buffer);
   if (absolutePath == nullptr) {
@@ -35,49 +34,42 @@ ParseOrderTreePtr Preprocessor::generateParsingOrder(std::map<std::string, EnvPt
   
   //初始化解析顺序树
   ParseOrderTreePtr parseOrderTree = std::make_shared<ParseOrderTree>(entryAbPath);
-
-  std::queue<std::string> waitingUnits; //等待被解析的units的绝对路径
-  std::set<std::string> parsedUnits;    ///已经被解析过的units
-
-  waitingUnits.push(entryAbPath);
-  while (!waitingUnits.empty()) {
-    
-    std::string currUnitAbPath = waitingUnits.front();
-    waitingUnits.pop();
-    std::string currUnitAbPathPrefix = getPathPrefix(currUnitAbPath);
-
-    std::ifstream file(currUnitAbPath);
-    if (!file.is_open())
-      throw PreprocessException("cannot find the unit: " + currUnitAbPath);
-
-    //如果当前unit还未被引用或解析过，那么为它创建环境
-    if (env.find(currUnitAbPath) == env.end())
-      env[currUnitAbPath] = std::make_shared<CommonEnv>();
-    EnvPtr currEnv = env[currUnitAbPath];
-
-    RequireUnit requireUnit;  //引用unit
-    while (parseRequire(file, requireUnit)) {
-      std::string requireAbPath = currUnitAbPathPrefix + requireUnit.relativePath;
-      //如果引用的unit还未被引用或解析过，那么为它创建环境
-      if (env.find(requireAbPath) == env.end())
-        env[requireAbPath] = std::make_shared<CommonEnv>();
-      
-      //把引用unit放入当前环境中
-      currEnv->put(requireUnit.alias, env[requireAbPath]);
-
-      //如果解析顺序树没有引用unit，则放入其中
-      if (!parseOrderTree->hasNode(requireAbPath))
-        parseOrderTree->putNew(currUnitAbPath, requireAbPath);
-
-      //如果引用unit未被解析过，则放入队列中
-      if (parsedUnits.find(requireAbPath) == parsedUnits.end())
-        waitingUnits.push(requireAbPath);
-
-      parsedUnits.insert(currUnitAbPath);
-    }
-  }
+  DFSRequire(env, entryAbPath, parseOrderTree);
 
   return parseOrderTree;
+}
+
+void Preprocessor::DFSRequire(std::map<std::string, EnvPtr> &env, 
+    const std::string &unitAbPath, ParseOrderTreePtr parseOrderTree) {
+  
+  std::ifstream file(unitAbPath);
+  if (!file.is_open())
+    throw PreprocessException("cannot find the unit: " + unitAbPath);
+
+  std::string currUnitAbPathPrefix = getPathPrefix(unitAbPath);
+
+  //如果当前unit还未被引用或解析过，那么为它创建环境(只发生在程序入口所在的unit)
+  if (env.find(unitAbPath) == env.end())
+    env[unitAbPath] = std::make_shared<CommonEnv>();
+  EnvPtr currEnv = env[unitAbPath];
+
+  RequireUnit requireUnit;  //引用unit
+  while (parseRequire(file, requireUnit)) {
+    std::string requireAbPath = currUnitAbPathPrefix + requireUnit.relativePath;
+    //如果引用的unit还未被引用或解析过，那么为它创建环境
+    if (env.find(requireAbPath) == env.end())
+      env[requireAbPath] = std::make_shared<CommonEnv>();
+
+    //把引用unit放入当前环境中
+    currEnv->put(requireUnit.alias, env[requireAbPath]);
+
+    //如果解析顺序树没有引用unit，则放入其中，并深度递归解析
+    if (!parseOrderTree->hasNode(requireAbPath)) {
+      parseOrderTree->putNew(unitAbPath, requireAbPath);
+      DFSRequire(env, requireAbPath, parseOrderTree);
+    }
+  }
+  file.close();
 }
 
 bool Preprocessor::parseRequire(std::istream &is, RequireUnit &unit) {

@@ -54,9 +54,6 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
   try {
-
-    /****************************预处理**************************************/
-
     //每个unit的环境，unit以绝对路径名为标识
     std::map<std::string, EnvPtr> environments;  //<绝对路径名，环境>
 
@@ -70,7 +67,7 @@ int main(int argc, char *argv[]) {
     parser.reset(new BasicParser());
     parser->init();
 
-    //预处理
+    //预处理，生成解析顺序树
     Preprocessor p;
     auto parseOrderTree = p.generateParsingOrder(environments, entryFile);
 

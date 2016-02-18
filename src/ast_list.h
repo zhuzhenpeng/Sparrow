@@ -73,8 +73,7 @@ public:
   ObjectPtr eval(EnvPtr env) override;
 
   //nest表示从外往内数的第几层，如果是最外层，则为0
-  //用于.作用域访问
-  //或数组的下表访问
+  //用于.作用域访问或数组的下表访问
   std::shared_ptr<PostfixAST> postfix(size_t nest);
   bool hasPostfix(size_t nest);
 
