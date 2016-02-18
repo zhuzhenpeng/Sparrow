@@ -101,6 +101,10 @@ ObjectPtr NegativeExprAST::eval(EnvPtr env) {
     int positive = std::static_pointer_cast<IntObject>(num)->value_;
     return std::make_shared<IntObject>(-positive);
   }
+  else if (num->kind_ == ObjKind::FLOAT) {
+    double positive = std::static_pointer_cast<FloatObject>(num)->value_;
+    return std::make_shared<FloatObject>(-positive);
+  }
   else {
     throw ASTEvalException("bad type for -");
   }
@@ -198,9 +202,25 @@ ObjectPtr BinaryExprAST::assignOp(EnvPtr env, ObjectPtr rightValue) {
 
 ObjectPtr BinaryExprAST::otherOp(ObjectPtr left, const std::string &op, ObjectPtr right) {
   if (left->kind_ == ObjKind::INT && right->kind_ == ObjKind::INT) {
-    return computeNumber(std::static_pointer_cast<IntObject>(left), op, 
-        std::static_pointer_cast<IntObject>(right));
+    int leftInt = std::static_pointer_cast<IntObject>(left)->value_;
+    int rightInt = std::static_pointer_cast<IntObject>(right)->value_;
+    return computeInt(leftInt, op, rightInt);
   } 
+  else if (left->kind_ == ObjKind::FLOAT && right->kind_ == ObjKind::FLOAT) {
+    double leftFloat = std::static_pointer_cast<FloatObject>(left)->value_;
+    double rightFloat = std::static_pointer_cast<FloatObject>(right)->value_;
+    return computeFloat(leftFloat, op, rightFloat);
+  }
+  else if (left->kind_ == ObjKind::INT && right->kind_ == ObjKind::FLOAT) {
+    double leftFloat = std::static_pointer_cast<IntObject>(left)->value_;
+    double rightFloat = std::static_pointer_cast<FloatObject>(right)->value_;
+    return computeFloat(leftFloat, op, rightFloat);
+  }
+  else if (left->kind_ == ObjKind::FLOAT && right->kind_ == ObjKind::INT) {
+    double leftFloat = std::static_pointer_cast<FloatObject>(left)->value_;
+    double rightFloat = std::static_pointer_cast<IntObject>(right)->value_;
+    return computeFloat(leftFloat, op, rightFloat);
+  }
   else {
     auto strLeft = std::static_pointer_cast<StrObject>(left);
     auto strRight = std::static_pointer_cast<StrObject>(right);
@@ -219,26 +239,43 @@ ObjectPtr BinaryExprAST::otherOp(ObjectPtr left, const std::string &op, ObjectPt
   }
 }
 
-ObjectPtr BinaryExprAST::computeNumber(IntObjectPtr left, const std::string &op, 
-    IntObjectPtr right) {
-  int a = left->value_;
-  int b = right->value_;
+ObjectPtr BinaryExprAST::computeInt(int left, const std::string &op, int right) {
   if (op == "+")
-    return std::make_shared<IntObject>(a + b);
+    return std::make_shared<IntObject>(left + right);
   else if (op == "-")
-    return std::make_shared<IntObject>(a - b);
+    return std::make_shared<IntObject>(left - right);
   else if (op == "*")
-    return std::make_shared<IntObject>(a * b);
+    return std::make_shared<IntObject>(left * right);
   else if (op == "/")
-    return std::make_shared<IntObject>(a / b);
+    return std::make_shared<IntObject>(left / right);
   else if (op == "%")
-    return std::make_shared<IntObject>(a & b);
+    return std::make_shared<IntObject>(left % right);
   else if (op == "==")
-    return std::make_shared<BoolObject>(a == b);
+    return std::make_shared<BoolObject>(left == right);
   else if (op == ">")
-    return std::make_shared<BoolObject>(a > b);
+    return std::make_shared<BoolObject>(left > right);
   else if (op == "<")
-    return std::make_shared<BoolObject>(a < b);
+    return std::make_shared<BoolObject>(left < right);
+  else
+    throw ASTEvalException("bad operators for bianry expr");
+}
+
+ObjectPtr BinaryExprAST::computeFloat(double left, const std::string &op, double right) {
+  //%运算符属于非法运算符
+  if (op == "+")
+    return std::make_shared<FloatObject>(left + right);
+  else if (op == "-")
+    return std::make_shared<FloatObject>(left - right);
+  else if (op == "*")
+    return std::make_shared<FloatObject>(left * right);
+  else if (op == "/")
+    return std::make_shared<FloatObject>(left / right);
+  else if (op == "==")
+    return std::make_shared<BoolObject>(left == right);
+  else if (op == ">")
+    return std::make_shared<BoolObject>(left > right);
+  else if (op == "<")
+    return std::make_shared<BoolObject>(left < right);
   else
     throw ASTEvalException("bad operators for bianry expr");
 }

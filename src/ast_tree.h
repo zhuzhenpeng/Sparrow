@@ -47,8 +47,9 @@ enum class ASTKind {
 
   LEAF_COMMON = 1000, //普通叶子节点，如"{", "if", "while"这类
   LEAF_INT = 1001,
-  LEAF_Id = 1002,
-  LEAF_STR = 1003,
+  LEAF_FLOAT = 1002,
+  LEAF_Id = 1003,
+  LEAF_STR = 1004,
 
   LIST_COMMON = 2000, 
   LIST_PRIMARY_EXPR = 2001,

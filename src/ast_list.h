@@ -110,8 +110,11 @@ private:
   //除赋值以外其它运算符操作
   ObjectPtr otherOp(ObjectPtr left, const std::string &op, ObjectPtr right);
 
-  //数字间的运算
-  ObjectPtr computeNumber(IntObjectPtr left, const std::string &op, IntObjectPtr right);
+  //int型间的运算
+  ObjectPtr computeInt(int left, const std::string &op, int right);
+
+  //float型间的运算
+  ObjectPtr computeFloat(double left, const std::string &op, double right);
 
   //对象字段赋值
   ObjectPtr setInstanceField(InstancePtr obj, const std::string &filedName, ObjectPtr rvalue);

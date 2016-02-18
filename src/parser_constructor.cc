@@ -14,6 +14,9 @@ ASTreePtr ASTFactory::getLeafInstance(ASTKind kind, TokenPtr token) {
     case ASTKind::LEAF_INT:
        result = std::make_shared<IntTokenAST>(token);
        break;
+    case ASTKind::LEAF_FLOAT:
+       result = std::make_shared<FloatTokenAST>(token);
+       break;
     case ASTKind::LEAF_STR:
        result = std::make_shared<StrTokenAST>(token);
        break;
@@ -170,6 +173,9 @@ void MatchTokenPR::parse(Lexer &lexer, std::vector<ASTreePtr> &ast) {
       case ASTKind::LEAF_INT:
         expect = "int";
         break;
+      case ASTKind::LEAF_FLOAT:
+        expect = "float";
+        break;
       case ASTKind::LEAF_Id:
         expect = "id";
         break;
@@ -202,6 +208,14 @@ IntMatcher::IntMatcher(): MatchTokenPR(ASTKind::LEAF_INT) {}
 bool IntMatcher::match(Lexer &lexer) {
   auto token = lexer.peek(0);
   return token->getKind() == TokenKind::TK_INT;
+}
+
+/////////////////////float
+FloatMatcher::FloatMatcher(): MatchTokenPR(ASTKind::LEAF_FLOAT) {}
+
+bool FloatMatcher::match(Lexer &lexer) {
+  auto token = lexer.peek(0);
+  return token->getKind() == TokenKind::TK_FLOAT;
 }
 
 /////////////////////string
@@ -361,10 +375,12 @@ ParserPtr Parser::rule(ASTKind kind) {
 }
 
 ParserPtr Parser::number(ASTKind kind) {
-  //TODO
   switch (kind) {
     case ASTKind::LEAF_INT:
       rulesCombination_.push_back(std::make_shared<IntMatcher>());
+      break;
+    case ASTKind::LEAF_FLOAT:
+      rulesCombination_.push_back(std::make_shared<FloatMatcher>());
       break;
     default:
       throw ParseException("TODO exception of Parser::number");

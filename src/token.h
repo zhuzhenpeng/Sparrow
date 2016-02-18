@@ -8,7 +8,8 @@
 enum class TokenKind {
   TK_ID = 1, 
   TK_INT = 2, 
-  TK_STR = 3, 
+  TK_FLOAT = 3,
+  TK_STR = 4, 
   TK_EOF = -1,
   TK_EOL = -2
 };
@@ -48,6 +49,15 @@ private:
 };
 using IntTokenPtr = std::shared_ptr<IntToken>;
 
+/*******************FloatToken***************************/
+class FloatToken: public Token {
+public:
+  FloatToken(int lineNumber, const std::string &fileName, const std::string &text);
+  double getValue() const;
+private:
+  double value_;
+};
+using FloatTokenPtr = std::shared_ptr<FloatToken>;
 
 /********************StrToken****************************/
 class StrToken: public Token {

@@ -18,13 +18,14 @@ using EnvPtr = std::shared_ptr<CommonEnv>;
 enum class ObjKind {
   ENV = 0,
   INT = 1, 
-  STRING = 2, 
-  BOOL = 3,
-  FUNCTION = 4,
-  NATIVE_FUNC = 5,
-  CLASS_INFO = 6,
-  CLASS_INSTANCE = 7,
-  Array = 8
+  FLOAT = 2,
+  STRING = 3, 
+  BOOL = 4,
+  FUNCTION = 5,
+  NATIVE_FUNC = 6,
+  CLASS_INFO = 7,
+  CLASS_INSTANCE = 8,
+  Array = 9
 };
 
 class Object {
@@ -47,6 +48,17 @@ public:
   int value_;
 };
 using IntObjectPtr = std::shared_ptr<IntObject>;
+
+/*****************************Float类型********************************/
+class FloatObject: public Object {
+public:
+  FloatObject(double value): Object(ObjKind::FLOAT), value_(value) {}
+  std::string info() override {
+    return "Float: " + std::to_string(value_);
+  }
+public:
+  double value_;
+};
 
 /******************************Str 类型********************************/
 class StrObject: public Object {

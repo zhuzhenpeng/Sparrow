@@ -40,6 +40,16 @@ public:
   int getValue() const;
 };
 
+/*********************FloatToken对应的叶子节点************************/
+
+class FloatTokenAST: public ASTLeaf {
+public:
+  FloatTokenAST(TokenPtr token);
+  std::string info() override;
+  ObjectPtr eval(EnvPtr env) override;
+  double getValue() const;
+};
+
 /*********************IdToken对应的叶子节点***************************/
 
 class IdTokenAST: public ASTLeaf {

@@ -43,6 +43,7 @@ void BasicParser::init() {
             Parser::rule()->custom("[", true)->commomPR(elements)->custom("]", true),
             Parser::rule()->custom("(", true)->commomPR(expr)->custom(")", true),
             Parser::rule()->number(ASTKind::LEAF_INT),
+            Parser::rule()->number(ASTKind::LEAF_FLOAT),
             Parser::rule()->id(reserved_),
             Parser::rule()->str()
             })->repeatPR(postfix)

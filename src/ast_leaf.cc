@@ -44,6 +44,22 @@ int IntTokenAST::getValue() const {
   return std::static_pointer_cast<IntToken>(token_)->getValue();
 }
 
+/*********************FloatToken对应的叶子节点************************/
+
+FloatTokenAST::FloatTokenAST(TokenPtr token): ASTLeaf(ASTKind::LEAF_FLOAT, token) {}
+
+std::string FloatTokenAST::info() {
+  return std::to_string(getValue());
+}
+
+ObjectPtr FloatTokenAST::eval(__attribute__((unused))EnvPtr env) {
+  return std::make_shared<FloatObject>(getValue());
+}
+
+double FloatTokenAST::getValue() const {
+  return std::static_pointer_cast<FloatToken>(token_)->getValue();
+}
+
 /*********************IdToken对应的叶子节点***************************/
 
 IdTokenAST::IdTokenAST(TokenPtr token): ASTLeaf(ASTKind::LEAF_Id, token) {}

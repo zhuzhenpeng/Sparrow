@@ -10,7 +10,7 @@ LexerImp::LexerImp(): is_(nullptr) {
   "(require [[:alnum:]_]+(\\.[[:alnum:]_]+)* as [[:alnum:]_]+)"
   "|(//.*)"
   "|([0-9]+)"
-  "|([0-9]+\\.[0-9])"
+  "|([0-9]+\\.[0-9]+)"
   "|(\"(\\\\\"|\\\\\\\\|\\\\n|[^\"])*\")"
   "|\\$?[A-Z_a-z][A-Z_a-z0-9]*|==|<=|>=|&&|\\|\\||[[:punct:]]"
   ")?";
@@ -117,7 +117,9 @@ void LexerImp::parseNextLine() {
       tokenQueue_.push_back(tp);
     } 
     else if (results[6].matched) {  //匹配浮点数
-      std::cout << "TODO:match float" << std::endl;
+      FloatTokenPtr tp = std::make_shared<FloatToken>(lineNumber_,
+          fileName_, results[6].str());
+      tokenQueue_.push_back(tp);
     }
     else if (results[7].matched) { // 匹配字符串
       StrTokenPtr tp = std::make_shared<StrToken>(lineNumber_, 

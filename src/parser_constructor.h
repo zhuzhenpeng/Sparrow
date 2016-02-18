@@ -98,6 +98,13 @@ public:
   bool match(Lexer &lexer) override;
 };
 
+//float
+class FloatMatcher: public MatchTokenPR {
+public:
+  FloatMatcher();
+  bool match(Lexer &lexer) override;
+};
+
 //string
 class StrMatcher: public MatchTokenPR {
 public:

@@ -13,7 +13,7 @@
  * param_list : "(" params ")"
  * elements   : expr {"," expr}
  * primary    : "lamb" param_list block
- *              |( "[" [elements] "]" | "(" expr ")" | NUMBER | IDENTIFIER | STRING ) {postfix}
+ *              |( "[" [elements] "]" | "(" expr ")" | INT | FLOAT | IDENTIFIER | STRING ) {postfix}
  * factory    : "-" primary | primary
  * expr       : factor { OP factor }
  * block      : "{" [statement] {(";" | EOL) [statement]} "}"

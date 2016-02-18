@@ -57,6 +57,18 @@ int IntToken::getValue() const {
   return value_;
 }
 
+/********************FloatToken**************************/
+
+FloatToken::FloatToken(int lineNumber, const std::string &fileName, const std::string &text):
+  Token(lineNumber, fileName, text) {
+  value_ = std::stod(text);
+  kind_ = TokenKind::TK_FLOAT;  
+ }
+
+double FloatToken::getValue() const {
+  return value_;
+}
+
 /********************StrToken****************************/
 
 StrToken::StrToken(int lineNumber, const std::string &fileName, const std::string &text):
