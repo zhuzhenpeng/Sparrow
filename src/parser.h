@@ -22,9 +22,15 @@
  *              | NULL
  * postfix    : "." IDENTIFIER | "(" args ")" | "[" expr "]"
  * simple     : expr
- * statement  : "if" expr block ["else" block]
- *              | "while" expr block
+ * statement  : "if" condition block elif* ["else" block]
+ *              | "while" condition block
  *              | simple
+ * elif       : "elif" condition block
+ * condition  : expr
+ *              | and_logic
+ *              | or_logic
+ * and_logic  : "(" "&&" "," condition "," condition ")"
+ * or_logic   : "(" "||" "," condition "," condition ")"
  * member     : def | simple
  * class_body : "{" [member] {(";" | EOL) [member]} "}"
  * def_class  : "class" IDENTIFIER ["extends" IDENTIFIER ] class_body

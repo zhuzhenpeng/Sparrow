@@ -293,6 +293,105 @@ void BinaryExprAST::checkValid() {
   }
 }
 
+/*****************************条件判断**********************************/
+
+ConditionStmntAST::ConditionStmntAST(): ASTList(ASTKind::LIST_CONDITION_STMNT, false) {}
+
+std::string ConditionStmntAST::info() {
+  if (children_.size() != 1)
+    throw ASTEvalException("fatal error, error size for condition AST");
+  return children_[0]->info();
+}
+
+ObjectPtr ConditionStmntAST::eval(EnvPtr env) {
+  if (children_.size() != 1)
+    throw ASTEvalException("fatal error, error size for condition AST");
+  return children_[0]->eval(env);
+}
+
+/******************************与逻辑***********************************/
+
+AndLogicAST::AndLogicAST(): ASTList(ASTKind::LIST_AND_LOGIC, false) {}
+
+ConditionStmntPtr AndLogicAST::leftExpr() {
+  if (children_.size() < 1)
+    throw ASTEvalException("fatal error, not found left conditon for and logic");
+  if (children_[0]->kind_ != ASTKind::LIST_CONDITION_STMNT)
+    throw ASTEvalException("error AST kind for left expression");
+  return std::dynamic_pointer_cast<ConditionStmntAST>(children_[0]);
+}
+
+ConditionStmntPtr AndLogicAST::rightExpr() {
+  if (children_.size() < 2)
+    throw ASTEvalException("fatal error, not found right conditon for and logic");
+  if (children_[0]->kind_ != ASTKind::LIST_CONDITION_STMNT)
+    throw ASTEvalException("error AST kind for right expression");
+  return std::dynamic_pointer_cast<ConditionStmntAST>(children_[1]);
+}
+
+std::string AndLogicAST::info() {
+  std::string result = "(and ";
+  result += leftExpr()->info();
+  result += " ";
+  result += rightExpr()->info();
+  result += ")";
+  return result;
+}
+
+ObjectPtr AndLogicAST::eval(EnvPtr env) {
+  ObjectPtr leftResult = leftExpr()->eval(env);
+  if (leftResult->kind_ != ObjKind::BOOL)
+    throw ASTEvalException("error type for predicate: left factor in and logic");
+  ObjectPtr rightResult = rightExpr()->eval(env);
+  if (rightResult->kind_ != ObjKind::BOOL)
+    throw ASTEvalException("error type for predicate: right factor in and logic");
+  bool result = std::dynamic_pointer_cast<BoolObject>(leftResult)->b_ &&\
+                std::dynamic_pointer_cast<BoolObject>(rightResult)->b_;
+  return std::make_shared<BoolObject>(result);
+}
+
+/*****************************或逻辑************************************/
+
+OrLogicAST::OrLogicAST(): ASTList(ASTKind::LIST_OR_LOGIC, false) {}
+
+ConditionStmntPtr OrLogicAST::leftExpr() {
+  if (children_.size() < 1)
+    throw ASTEvalException("fatal error, not found left conditon for or logic");
+  if (children_[0]->kind_ != ASTKind::LIST_CONDITION_STMNT)
+    throw ASTEvalException("error AST kind for left expression");
+  return std::dynamic_pointer_cast<ConditionStmntAST>(children_[0]);
+}
+
+ConditionStmntPtr OrLogicAST::rightExpr() {
+  if (children_.size() < 2)
+    throw ASTEvalException("fatal error, not found right conditon for or logic");
+  if (children_[0]->kind_ != ASTKind::LIST_CONDITION_STMNT)
+    throw ASTEvalException("error AST kind for right expression");
+  return std::dynamic_pointer_cast<ConditionStmntAST>(children_[1]);
+}
+
+std::string OrLogicAST::info() {
+  std::string result = "(or ";
+  result += leftExpr()->info();
+  result += " ";
+  result += rightExpr()->info();
+  result += ")";
+  return result;
+}
+
+ObjectPtr OrLogicAST::eval(EnvPtr env) {
+  ObjectPtr leftResult = leftExpr()->eval(env);
+  if (leftResult->kind_ != ObjKind::BOOL)
+    throw ASTEvalException("error type for predicate: left factor in or logic");
+  ObjectPtr rightResult = rightExpr()->eval(env);
+  if (rightResult->kind_ != ObjKind::BOOL)
+    throw ASTEvalException("error type for predicate: right factor in or logic");
+  bool result = std::dynamic_pointer_cast<BoolObject>(leftResult)->b_ ||\
+                std::dynamic_pointer_cast<BoolObject>(rightResult)->b_;
+  return std::make_shared<BoolObject>(result);
+}
+
+
 /********************************块**************************************/
 
 BlockStmntAST::BlockStmntAST(): ASTList(ASTKind::LIST_BLOCK_STMNT, false) {}
@@ -309,10 +408,12 @@ ObjectPtr BlockStmntAST::eval(EnvPtr env) {
 
 IfStmntAST::IfStmntAST(): ASTList(ASTKind::LIST_IF_STMNT, false) {}
 
-ASTreePtr IfStmntAST::condition() {
+ConditionStmntPtr IfStmntAST::condition() {
   if (children_.empty())
-    throw ASTException("get if AST condition failed");
-  return children_[0];
+    throw ASTException("no sub AST in if AST");
+  if (children_[0]->kind_ != ASTKind::LIST_CONDITION_STMNT)
+    throw ASTException("error AST kind for if condition");
+  return std::dynamic_pointer_cast<ConditionStmntAST>(children_[0]);
 }
 
 ASTreePtr IfStmntAST::thenBlock() {
@@ -322,8 +423,8 @@ ASTreePtr IfStmntAST::thenBlock() {
 }
 
 ASTreePtr IfStmntAST::elseBlock() {
-  if (children_.size() > 2)
-    return children_[2];
+  if (children_.size() > 2 && children_.back()->kind_ != ASTKind::LIST_ELIF_STMNT)
+    return children_.back();
   else
     return nullptr;
 }
@@ -333,6 +434,14 @@ std::string IfStmntAST::info() {
   result += condition()->info();
   result += " ";
   result += thenBlock()->info();
+
+  for (size_t i = 2; i < children_.size(); ++i) {
+    if (children_[i]->kind_ == ASTKind::LIST_ELIF_STMNT) {
+      result += " ";
+      result += children_[i]->info();
+    }
+  }
+
   auto elsePtr = elseBlock();
   if (elsePtr == nullptr) {
     result += ")";
@@ -346,18 +455,70 @@ std::string IfStmntAST::info() {
 }
 
 ObjectPtr IfStmntAST::eval(EnvPtr env) {
-  auto b = condition()->eval(env);
-  if (b->kind_ != ObjKind::BOOL)
+  auto ifCond = condition()->eval(env);
+  if (ifCond->kind_ != ObjKind::BOOL)
     throw ASTEvalException("error type for if condition part");
-  if (std::static_pointer_cast<BoolObject>(b)->b_) {
+  if (std::static_pointer_cast<BoolObject>(ifCond)->b_) {
+    return thenBlock()->eval(env);
+  }
+  else if (children_.size() >= 3 && children_[2]->kind_ == ASTKind::LIST_ELIF_STMNT) {
+    for (size_t i = 2; i < children_.size(); ++i) {
+      //避免执行了else逻辑，每次遍历要判断下AST类型
+      if (children_[i]->kind_ == ASTKind::LIST_ELIF_STMNT) {
+        auto result = children_[i]->eval(env);
+        if (result != nullptr)
+          return result;
+      }
+      else {
+        break;
+      }
+    }
+  }
+
+  //如果解释器运行至此，说明源程序的if和elif谓言为假或没有elif块，此时执行else块
+  auto eb = elseBlock();
+  if (eb == nullptr)
+    return nullptr;
+  else
+    return eb->eval(env);
+}
+
+/******************************elif块**********************************/
+
+ElifStmntAST::ElifStmntAST(): ASTList(ASTKind::LIST_ELIF_STMNT, false) {}
+
+ConditionStmntPtr ElifStmntAST::condition() {
+  if (children_.empty())
+    throw ASTException("no sub AST in elif AST");
+  if (children_[0]->kind_ != ASTKind::LIST_CONDITION_STMNT)
+    throw ASTException("error AST type for elif condition");
+  return std::dynamic_pointer_cast<ConditionStmntAST>(children_[0]);
+}
+
+ASTreePtr ElifStmntAST::thenBlock() {
+  if (children_.size() < 2)
+    throw ASTException("not found then block in elif AST");
+  return children_[1];
+}
+
+std::string ElifStmntAST::info() {
+  std::string result = "(elif ";
+  result += condition()->info();
+  result += " ";
+  result += thenBlock()->info();
+  result += ")";
+  return result;
+}
+
+ObjectPtr ElifStmntAST::eval(EnvPtr env) {
+  ObjectPtr condResult = condition()->eval(env);
+  if (condResult->kind_ != ObjKind::BOOL)
+    throw ASTEvalException("error type for elif predicate");
+  if (std::dynamic_pointer_cast<BoolObject>(condResult)->b_) {
     return thenBlock()->eval(env);
   }
   else {
-    auto eb = elseBlock();
-    if (eb == nullptr)
-      return nullptr;
-    else
-      return eb->eval(env);
+    return nullptr;
   }
 }
 
@@ -365,10 +526,12 @@ ObjectPtr IfStmntAST::eval(EnvPtr env) {
 
 WhileStmntAST::WhileStmntAST(): ASTList(ASTKind::LIST_WHILE_STMNT, false) {}
 
-ASTreePtr WhileStmntAST::condition() {
+ConditionStmntPtr WhileStmntAST::condition() {
   if (children_.empty())
-    throw ASTException("get while AST condition failed");
-  return children_[0];
+    throw ASTException("no sub AST in while AST");
+  if (children_[0]->kind_ != ASTKind::LIST_CONDITION_STMNT)
+    throw ASTException("error AST kind for while condition");
+  return std::dynamic_pointer_cast<ConditionStmntAST>(children_[0]);
 }
 
 ASTreePtr WhileStmntAST::body() {

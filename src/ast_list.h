@@ -132,24 +132,71 @@ public:
 };
 using BlockStmntPtr = std::shared_ptr<BlockStmntAST>;
 
+/*****************************条件判断**********************************/
+
+class ConditionStmntAST: public ASTList {
+public:
+  ConditionStmntAST();
+  //该节点作为虚节点存在，总是只有一个子节点，打印信息时把子节点信息打印即可
+  std::string info() override;
+  ObjectPtr eval(EnvPtr env) override;
+};
+using ConditionStmntPtr =  std::shared_ptr<ConditionStmntAST>;
+
+/******************************与逻辑***********************************/
+
+class AndLogicAST: public ASTList {
+public:
+  AndLogicAST();
+  ConditionStmntPtr leftExpr();
+  ConditionStmntPtr rightExpr();
+  std::string info() override;
+  ObjectPtr eval(EnvPtr env) override;
+};
+using AndLogicPtr = std::shared_ptr<AndLogicAST>;
+
+/*****************************或逻辑************************************/
+
+class OrLogicAST: public ASTList {
+public:
+  OrLogicAST();
+  ConditionStmntPtr leftExpr();
+  ConditionStmntPtr rightExpr();
+  std::string info() override;
+  ObjectPtr eval(EnvPtr env) override;
+};
+using OrLogicPtr = std::shared_ptr<OrLogicAST>;
+
 /******************************if块*************************************/
 
 class IfStmntAST: public ASTList {
 public:
   IfStmntAST();
-  ASTreePtr condition();
+  ConditionStmntPtr condition();
   ASTreePtr thenBlock();
   ASTreePtr elseBlock();
   std::string info() override;
   ObjectPtr eval(EnvPtr env) override;
 };
 
+/****************************elif块************************************/
+
+class ElifStmntAST: public ASTList {
+public:
+  ElifStmntAST();
+  ConditionStmntPtr condition();
+  ASTreePtr thenBlock();
+  std::string info() override;
+  ObjectPtr eval(EnvPtr env) override;
+};
+using ElifStmntPtr = std::shared_ptr<ElifStmntAST>;
+
 /****************************while块***********************************/
 
 class WhileStmntAST: public ASTList {
 public:
   WhileStmntAST();
-  ASTreePtr condition();
+  ConditionStmntPtr condition();
   ASTreePtr body();
   std::string info() override;
   ObjectPtr eval(EnvPtr env) override;

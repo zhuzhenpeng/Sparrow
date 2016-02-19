@@ -14,6 +14,10 @@ void BasicParser::init() {
   auto statement = Parser::rule();
   auto postfix = Parser::rule();
   auto block = Parser::rule(ASTKind::LIST_BLOCK_STMNT);
+  auto elif = Parser::rule(ASTKind::LIST_ELIF_STMNT);
+  auto condition = Parser::rule(ASTKind::LIST_CONDITION_STMNT);
+  auto andLogic = Parser::rule(ASTKind::LIST_AND_LOGIC);
+  auto orLogic = Parser::rule(ASTKind::LIST_OR_LOGIC);
 
   //param
   auto param = Parser::rule()->id(reserved_);
@@ -95,18 +99,37 @@ void BasicParser::init() {
   //statement
   statement->orPR({
         //if
-        Parser::rule(ASTKind::LIST_IF_STMNT)->custom("if", true)->commomPR(expr)\
-        ->commomPR(block)->optionPR(
+        Parser::rule(ASTKind::LIST_IF_STMNT)->custom("if", true)->commomPR(condition)\
+        ->commomPR(block)->repeatPR(elif)->\
+        optionPR(
             Parser::rule()->custom("else", true)->commomPR(block)
           ),
         
         //while
         Parser::rule(ASTKind::LIST_WHILE_STMNT)->custom("while", true)\
-        ->commomPR(expr)->commomPR(block),
+        ->commomPR(condition)->commomPR(block),
         
         //普通的算术表达式
         simple
       });
+
+  //elif
+  elif->custom("elif", true)->commomPR(condition)->commomPR(block);
+
+  //condition
+  condition->orPR({
+        Parser::rule()->commomPR(expr),
+        Parser::rule()->commomPR(andLogic),
+        Parser::rule()->commomPR(orLogic)
+      });
+
+  //and_logic
+  andLogic->custom("and", true)->custom("(", true)->commomPR(condition)\
+    ->custom(",", true)->commomPR(condition)->custom(")", true);
+
+  //or_logic
+  orLogic->custom("or", true)->custom("(", true)->commomPR(condition)\
+    ->custom(",", true)->commomPR(condition)->custom(")", true);
 
   //member
   auto member = Parser::rule()->orPR({def, simple});
@@ -144,12 +167,15 @@ ASTreePtr BasicParser::parse(Lexer &lexer) {
 }
 
 void BasicParser::initReserved() {
-  //符号不用添加进来，符号被作为ID处理
+  //以下符号不当作ID处理
+  //运算符是当作ID处理的，不需要添加进来
   reserved_.insert(";");
   reserved_.insert("}");    
   reserved_.insert(")");
   reserved_.insert("]");
   reserved_.insert("\\n");
+  reserved_.insert("and");
+  reserved_.insert("or");
 }
 
 void BasicParser::initOperators() {

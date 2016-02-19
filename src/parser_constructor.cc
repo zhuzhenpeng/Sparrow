@@ -49,8 +49,20 @@ ASTreePtr ASTFactory::getListInstance(ASTKind kind) {
     case ASTKind::LIST_BLOCK_STMNT:
       result = std::make_shared<BlockStmntAST>();
       break;
+    case ASTKind::LIST_CONDITION_STMNT:
+      result = std::make_shared<ConditionStmntAST>();
+      break;
+    case ASTKind::LIST_AND_LOGIC:
+      result = std::make_shared<AndLogicAST>();
+      break;
+    case ASTKind::LIST_OR_LOGIC:
+      result = std::make_shared<OrLogicAST>();
+      break;
     case ASTKind::LIST_IF_STMNT:
       result = std::make_shared<IfStmntAST>();
+      break;
+    case ASTKind::LIST_ELIF_STMNT:
+      result = std::make_shared<ElifStmntAST>();
       break;
     case ASTKind::LIST_WHILE_STMNT:
       result = std::make_shared<WhileStmntAST>();
