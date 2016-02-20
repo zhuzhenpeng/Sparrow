@@ -89,7 +89,7 @@ using BoolObjectPtr = std::shared_ptr<BoolObject>;
 
 class FuncObject: public Object {
 public:
-  FuncObject(const std::string &funcionName, std::shared_ptr<ParameterListAST> params, 
+  FuncObject(const std::string &functionName, std::shared_ptr<ParameterListAST> params, 
       std::shared_ptr<BlockStmntAST> block, EnvPtr env);
   std::shared_ptr<ParameterListAST> params() const;
   std::shared_ptr<BlockStmntAST> block() const;
@@ -202,6 +202,7 @@ public:
   void setOuterEnv(EnvPtr outer);
 
   //由内到外搜寻获取环境内指定变量，如果找不到则返回空
+  //对于$开头的全局变量，只从最外层的环境查找
   ObjectPtr get(const std::string &name);
 
   //把变量放入环境中

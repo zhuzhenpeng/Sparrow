@@ -22,10 +22,10 @@
  *              | NULL
  * postfix    : "." IDENTIFIER | "(" args ")" | "[" expr "]"
  * simple     : expr
- * statement  : "if" condition block elif* ["else" block]
+ * statement  : "if" condition block EOL elif* ["else" block]
  *              | "while" condition block
  *              | simple
- * elif       : "elif" condition block
+ * elif       : "elif" condition block EOL
  * condition  : expr
  *              | and_logic
  *              | or_logic

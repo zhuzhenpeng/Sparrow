@@ -23,13 +23,20 @@ EnvPtr FuncObject::runtimeEnv() const {
 ClassInfo::ClassInfo(std::shared_ptr<ClassStmntAST> stmnt, EnvPtr env):
   Object(ObjKind::CLASS_INFO), definition_(stmnt), env_(env) {
 
-  ObjectPtr obj = env->get(stmnt->superClassName());
-  if (obj == nullptr)   
+  std::string superClassName = stmnt->superClassName();
+  if (superClassName.empty())
     return;
-  else if (obj->kind_ == ObjKind::CLASS_INFO)
-    superClass_ = std::static_pointer_cast<ClassInfo>(obj);
-  else
-    throw EnvException("unknown super class: " + stmnt->superClassName());
+
+  try {
+    ObjectPtr obj = env->get(superClassName);
+    if (obj->kind_ == ObjKind::CLASS_INFO)
+      superClass_ = std::static_pointer_cast<ClassInfo>(obj);
+    else
+      throw EnvException(superClassName + " is not a valid class");   
+  }
+  catch (EnvException e) {
+    throw EnvException("not found super class: " + stmnt->superClassName());
+  }
 }
 
 std::string ClassInfo::name() {
@@ -63,7 +70,13 @@ void ClassInstance::write(const std::string &member, ObjectPtr value) {
 
 ObjectPtr ClassInstance::read(const std::string &member) {
   checkAccessValid(member);
-  return env_->get(member);
+  try {
+    ObjectPtr result = env_->get(member);
+    return result;
+  }
+  catch (EnvException e) {
+    throw EnvException("not found variable " + member + " in object");
+  }
 }
 
 bool ClassInstance::checkAccessValid(const std::string &member) {
@@ -113,7 +126,7 @@ void CommonEnv::setOuterEnv(EnvPtr outer) {
 ObjectPtr CommonEnv::get(const std::string &name) {
   auto env = locateEnv(name);
   if (env == nullptr)
-    return nullptr;
+    throw EnvException("not found the variable: " + name);
   else 
     return env->env_[name];
 }
@@ -134,12 +147,30 @@ std::string CommonEnv::info() {
 }
 
 EnvPtr CommonEnv::locateEnv(const std::string &name) {
-  if (env_.find(name) != env_.end()) 
-    return this->shared_from_this();
-  else if (outerEnv_ == nullptr)
+  if (name.empty())
     return nullptr;
-  else
-    return outerEnv_->locateEnv(name);
+
+  //全局变量查找，只去全局环境中查找
+  if (name[0] == '$') {
+    if (outerEnv_ != nullptr) {   //只有全局环境才没有外部环境
+      return outerEnv_->locateEnv(name);
+    }
+    else {
+      if (env_.find(name) != env_.end())
+        return this->shared_from_this();   
+      else
+        return nullptr;
+    }
+  }
+  //普通变量查找
+  else {
+    if (env_.find(name) != env_.end()) 
+      return this->shared_from_this();
+    else if (outerEnv_ == nullptr)
+      return nullptr;
+    else
+      return outerEnv_->locateEnv(name);
+  }
 }
 
 void CommonEnv::putNew(const std::string &name, ObjectPtr obj) {

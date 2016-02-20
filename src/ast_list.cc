@@ -723,9 +723,9 @@ ClassBodyPtr ClassStmntAST::body() {
 }
 
 ObjectPtr ClassStmntAST::eval(EnvPtr env) {
-    ClassInfoPtr newClass = std::make_shared<ClassInfo>(shared_from_this(), env);
-      env->put(name(), newClass);
-        return newClass;
+  ClassInfoPtr newClass = std::make_shared<ClassInfo>(shared_from_this(), env);
+  env->put(name(), newClass);
+  return newClass;
 }
 
 std::string ClassStmntAST::info() {

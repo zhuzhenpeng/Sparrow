@@ -100,7 +100,7 @@ void BasicParser::init() {
   statement->orPR({
         //if
         Parser::rule(ASTKind::LIST_IF_STMNT)->custom("if", true)->commomPR(condition)\
-        ->commomPR(block)->repeatPR(elif)->\
+        ->commomPR(block)->custom("\\n", true)->repeatPR(elif)->\
         optionPR(
             Parser::rule()->custom("else", true)->commomPR(block)
           ),
@@ -114,7 +114,7 @@ void BasicParser::init() {
       });
 
   //elif
-  elif->custom("elif", true)->commomPR(condition)->commomPR(block);
+  elif->custom("elif", true)->commomPR(condition)->commomPR(block)->custom("\\n", true);
 
   //condition
   condition->orPR({
