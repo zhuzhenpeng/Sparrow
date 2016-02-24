@@ -87,7 +87,11 @@ void BasicParser::init() {
 
   //postfix
   postfix->orPR({
-      Parser::rule(ASTKind::LIST_DOT)->custom(".", true)->id(reserved_),
+      Parser::rule(ASTKind::LIST_DOT)->custom(".", true)->orPR({
+          Parser::rule(ASTKind::LIST_NEW)->custom("new", true)->custom("(", true)->\
+          commomPR(args)->custom(")", true),
+          Parser::rule()->id(reserved_)
+        }),
       Parser::rule()->custom("(", true)->commomPR(args)->custom(")", true),
       Parser::rule(ASTKind::LIST_ARRAY_REF)->custom("[", true)->commomPR(expr)->custom("]", true)
       });
@@ -158,7 +162,8 @@ void BasicParser::init() {
         Parser::rule(ASTKind::LIST_NULL_STMNT)
       })->orPR({
                 Parser::rule()->custom(";", true), 
-                Parser::rule()->custom("\\n", true)
+                Parser::rule()->custom("\\n", true),
+                Parser::rule(ASTKind::LIST_NULL_STMNT)
               });
 }
 

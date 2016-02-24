@@ -15,6 +15,14 @@
 std::unique_ptr<Lexer> lexer;
 std::unique_ptr<BasicParser> parser;
 
+//初始化每个环境，为环境添加上一些常见变量
+void init(EnvPtr env) {
+  env->put("nil", std::make_shared<NoneObject>());
+  env->put("true", std::make_shared<BoolObject>(true));
+  env->put("false", std::make_shared<BoolObject>(false));
+  NativeFuncInitializer::initialize(env);     //每个模块都初始化原生函数
+}
+
 //后序遍历树并解析
 void run(std::map<std::string, EnvPtr> &env, ParseOrderTreeNodePtr node) {
   if (node == nullptr)
@@ -28,7 +36,7 @@ void run(std::map<std::string, EnvPtr> &env, ParseOrderTreeNodePtr node) {
     throw PreprocessException("fatal error, not found environment for " + node->absolutePath);
 
   EnvPtr currEnv = env[node->absolutePath];
-  NativeFuncInitializer::initialize(currEnv);     //每个模块都初始化原生函数
+  init(currEnv);
 
   lexer->parseFile(node->absolutePath);
   while (lexer->peek(0)->getKind() != TokenKind::TK_EOF) {

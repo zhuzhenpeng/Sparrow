@@ -64,8 +64,9 @@ std::string ClassInfo::info() {
 ClassInstance::ClassInstance(EnvPtr env): Object(ObjKind::CLASS_INSTANCE), env_(env){}
 
 void ClassInstance::write(const std::string &member, ObjectPtr value) {
-  if (checkAccessValid(member))
-    env_->put(member, value);
+  //if (checkAccessValid(member))
+  //允许自由改变对象内部的值
+  env_->put(member, value);
 }
 
 ObjectPtr ClassInstance::read(const std::string &member) {

@@ -261,9 +261,9 @@ public:
 
 /***************************函数实参********************************/
 
-class Arguments: public PostfixAST {
+class ArgumentsAST: public PostfixAST {
 public:
-  Arguments();
+  ArgumentsAST();
   size_t size() const;
   
   //函数调用发生在这里
@@ -274,6 +274,7 @@ private:
   //调用原生函数
   ObjectPtr invokeNative(EnvPtr env, NativeFuncPtr func);
 };
+using ArgumentsPtr = std::shared_ptr<ArgumentsAST>;
 
 /**************************闭包**********************************/
 
@@ -314,7 +315,7 @@ public:
 };
 using ClassStmntPtr = std::shared_ptr<ClassStmntAST>;
 
-/**********************对象的域访问(.xx)***********************/
+/**************************域访问(.xx)***********************/
 
 class Dot: public PostfixAST {
 public:
@@ -332,12 +333,33 @@ public:
 
 private:
   //创建并初始化对象
-  ObjectPtr newInstance(ClassInfoPtr ci);
+  InstancePtr newInstance(ClassInfoPtr ci);
 
   //初始化对象，env是对象自身的环境
   void initInstance(ClassInfoPtr ci, EnvPtr env);
 };
 using DotPtr = std::shared_ptr<Dot>;
+
+/**********************类new创建实例***************************/
+
+class NewAST: public PostfixAST{
+public:
+  NewAST(); 
+
+  //caller是类元信息
+  //函数返回一个新创建的实例
+  ObjectPtr eval(EnvPtr env, ObjectPtr caller) override;
+
+private:
+  ArgumentsPtr getArguments() const;
+
+  //创建并初始化对象
+  InstancePtr newInstance(ClassInfoPtr ci);
+
+  //初始化对象，env是对象自身的环境
+  void initInstance(ClassInfoPtr ci, EnvPtr env);
+};
+using NewASTPtr = std::shared_ptr<NewAST>;
 
 /*******************数组字面量*******************************/
 

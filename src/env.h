@@ -1,6 +1,8 @@
 #ifndef SPARROW_ENV_H_
 #define SPARROW_ENV_H_
 
+#include <iostream>
+
 #include <memory>
 #include <string>
 #include <map>
@@ -17,15 +19,16 @@ using EnvPtr = std::shared_ptr<CommonEnv>;
 /******************************解析时变量类型****************************/
 enum class ObjKind {
   ENV = 0,
-  INT = 1, 
-  FLOAT = 2,
-  STRING = 3, 
-  BOOL = 4,
-  FUNCTION = 5,
-  NATIVE_FUNC = 6,
-  CLASS_INFO = 7,
-  CLASS_INSTANCE = 8,
-  Array = 9
+  NONE = 1,
+  INT = 2, 
+  FLOAT = 3,
+  STRING = 4, 
+  BOOL = 5,
+  FUNCTION = 6,
+  NATIVE_FUNC = 7,
+  CLASS_INFO = 8,
+  CLASS_INSTANCE = 9,
+  Array = 10
 };
 
 class Object {
@@ -36,6 +39,17 @@ public:
   ObjKind kind_;
 };
 using ObjectPtr = std::shared_ptr<Object>;
+
+/******************************空类型***********************************/
+
+class NoneObject: public Object {
+public:
+  NoneObject(): Object(ObjKind::NONE) {}
+  std::string info() override {
+    return "None";
+  }
+};
+using NoneObjectPtr = std::shared_ptr<NoneObject>;
 
 /******************************Int 类型 ********************************/
 class IntObject: public Object {
@@ -102,6 +116,10 @@ private:
   std::string funcName_;
   std::shared_ptr<ParameterListAST> params_;
   std::shared_ptr<BlockStmntAST> block_;
+
+  //外部环境，一般作为函数运行时环境的上层
+  //对于普通函数而言，它就是该unit的全局环境
+  //对于类函数而言，它是某个实例的内部环境
   EnvPtr env_;
 };
 using FuncPtr = std::shared_ptr<FuncObject>;
@@ -170,6 +188,11 @@ public:
   ObjectPtr read(const std::string &member);
 
   std::string info() override;
+
+  EnvPtr getEnvironment() {
+    return env_;
+  }
+
 private:
   bool checkAccessValid(const std::string &member);
 private:
@@ -201,7 +224,7 @@ public:
 
   void setOuterEnv(EnvPtr outer);
 
-  //由内到外搜寻获取环境内指定变量，如果找不到则返回空
+  //由内到外搜寻获取环境内指定变量，如果找不到抛出异常
   //对于$开头的全局变量，只从最外层的环境查找
   ObjectPtr get(const std::string &name);
 

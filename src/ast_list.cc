@@ -622,13 +622,13 @@ ObjectPtr DefStmntAST::eval(EnvPtr env) {
 
 /***************************实参***********************************/
 
-Arguments::Arguments(): PostfixAST(ASTKind::LIST_ARGUMENTS, false) {}
+ArgumentsAST::ArgumentsAST(): PostfixAST(ASTKind::LIST_ARGUMENTS, false) {}
 
-size_t Arguments::size() const {
+size_t ArgumentsAST::size() const {
   return children_.size();
 }
 
-ObjectPtr Arguments::eval(EnvPtr env, ObjectPtr caller) {
+ObjectPtr ArgumentsAST::eval(EnvPtr env, ObjectPtr caller) {
   if (caller->kind_ != ObjKind::FUNCTION && caller->kind_ != ObjKind::NATIVE_FUNC)
     throw ASTEvalException("bad function for eval");
 
@@ -650,7 +650,7 @@ ObjectPtr Arguments::eval(EnvPtr env, ObjectPtr caller) {
   return result;
 }
 
-ObjectPtr Arguments::invokeNative(EnvPtr env, NativeFuncPtr func) {
+ObjectPtr ArgumentsAST::invokeNative(EnvPtr env, NativeFuncPtr func) {
   if (size() != func->paramNum())
     throw ASTEvalException("error function call, not match the number of parameters");
 
@@ -738,6 +738,14 @@ std::string ClassStmntAST::info() {
 Dot::Dot(): PostfixAST(ASTKind::LIST_DOT, false) {}
 
 std::string Dot::name() {
+  if (children_.empty())
+    throw ASTException("not found dot target name");
+
+  //如果.new则认为准备创建实例
+  if (children_[0]->kind_ == ASTKind::LIST_NEW)
+    return "new";
+
+  //其它则认为访问某个域中的变量
   auto nameLeaf = std::dynamic_pointer_cast<ASTLeaf>(children_[0]);
   if (nameLeaf == nullptr)
     throw ASTException("get dot target name failed, unknown type for first child");
@@ -751,10 +759,15 @@ std::string Dot::info() {
 ObjectPtr Dot::eval(__attribute__((unused))EnvPtr env, ObjectPtr caller) {
   std::string member = name();
   if (caller->kind_ == ObjKind::CLASS_INFO) {
-    if (member == "new")
-      return newInstance(std::dynamic_pointer_cast<ClassInfo>(caller));
-    else
+    if (member == "new") {
+      NewASTPtr newAST = std::dynamic_pointer_cast<NewAST>(children_[0]);
+      return newAST->eval(env, caller);
+      //InstancePtr newObject = newInstance(std::dynamic_pointer_cast<ClassInfo>(caller));
+      //return newObject->read("init");   //返回初始化函数
+    }
+    else {
       throw ASTEvalException("unknow operation for class: " + member);
+    }
   } 
   else if (caller->kind_ == ObjKind::CLASS_INSTANCE) {
     auto instance = std::dynamic_pointer_cast<ClassInstance>(caller);
@@ -769,10 +782,11 @@ ObjectPtr Dot::eval(__attribute__((unused))EnvPtr env, ObjectPtr caller) {
   }
 }
 
-//利用闭包的方式来实现对象
-ObjectPtr Dot::newInstance(ClassInfoPtr ci) {
+//利用闭包的方式来实现对象，每个对象有一个自己的环境
+InstancePtr Dot::newInstance(ClassInfoPtr ci) {
   EnvPtr instanceEnv = std::make_shared<CommonEnv>(ci->getEnvitonment());
   InstancePtr obj = std::make_shared<ClassInstance>(instanceEnv);
+  instanceEnv->put("self", obj);    //TODO：循环引用，无法释放资源
   initInstance(ci, instanceEnv);
   return obj;
 }
@@ -781,7 +795,58 @@ void Dot::initInstance(ClassInfoPtr ci, EnvPtr env) {
   //递归由父类往下初始化
   if (ci->superClass() != nullptr)
     initInstance(ci->superClass(), env);
-  ci->body()->eval(env);
+  ci->body()->eval(env);    //把类元信息中的语句在对象的环境中执行
+
+  //如果未定义init函数，则抛出异常
+  try {
+    env->get("init");
+  } catch (EnvException e) {
+    throw EnvException("class " + ci->name() + " not found init function");
+  }
+}
+
+/**********************类new创建实例***************************/
+
+NewAST::NewAST(): PostfixAST(ASTKind::LIST_NEW, false) {}
+
+ObjectPtr NewAST::eval(__attribute__((unused))EnvPtr env, ObjectPtr caller) {
+  InstancePtr newObject = newInstance(std::dynamic_pointer_cast<ClassInfo>(caller));
+  auto initFunc = newObject->read("init");   //获取初始化函数
+  auto arguments = getArguments();
+  //调用初始化函数，并返回新的对象
+  arguments->eval(newObject->getEnvironment(), initFunc);
+  return newObject;
+}
+
+ArgumentsPtr NewAST::getArguments() const {
+  if (children_.empty())
+    throw ASTException("get new arguments failed, not found child AST");
+  if (children_[0]->kind_ != ASTKind::LIST_ARGUMENTS)
+    throw ASTException("get new arguments failed, invalid child AST type");
+  return std::dynamic_pointer_cast<ArgumentsAST>(children_[0]);
+}
+
+//利用闭包的方式来实现对象，每个对象有一个自己的环境
+InstancePtr NewAST::newInstance(ClassInfoPtr ci) {
+  EnvPtr instanceEnv = std::make_shared<CommonEnv>(ci->getEnvitonment());
+  InstancePtr obj = std::make_shared<ClassInstance>(instanceEnv);
+  instanceEnv->put("self", obj);    //TODO：循环引用，无法释放资源
+  initInstance(ci, instanceEnv);
+  return obj;
+}
+
+void NewAST::initInstance(ClassInfoPtr ci, EnvPtr env) {
+  //递归由父类往下初始化
+  if (ci->superClass() != nullptr)
+    initInstance(ci->superClass(), env);
+  ci->body()->eval(env);    //把类元信息中的语句在对象的环境中执行
+
+  //如果未定义init函数，则抛出异常
+  try {
+    env->get("init");
+  } catch (EnvException e) {
+    throw EnvException("class " + ci->name() + " not found init function");
+  }
 }
 
 /*******************数组字面量*******************************/
