@@ -361,6 +361,25 @@ private:
 };
 using NewASTPtr = std::shared_ptr<NewAST>;
 
+/*******************return表达式*****************************/
+
+class ReturnAST: public ASTList {
+public:
+  ReturnAST();
+
+  //计算出结果后抛出异常给上层处理
+  ObjectPtr eval(EnvPtr env) override;
+
+  std::string info() override;
+};
+using ReturnASTPtr = std::shared_ptr<ReturnAST>;
+
+class ASTReturnException: public ASTEvalException {
+public:
+  ASTReturnException(ObjectPtr result): ASTEvalException("return"), result_(result) {}
+  ObjectPtr result_;
+};
+
 /*******************数组字面量*******************************/
 
 class ArrayLiteralAST: public ASTList {

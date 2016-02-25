@@ -25,6 +25,7 @@
  * simple     : expr
  * statement  : "if" condition block EOL {elif} ["else" block]
  *              | "while" condition block
+ *              | "return" expr
  *              | simple
  * elif       : "elif" condition block EOL
  * condition  : expr
@@ -42,6 +43,8 @@
  * 1. program允许以NULL作为分割符，主要是为了if块的“换行{”格式问题，if语句会把program中的
  *    EOL Token吞掉；
  *    一般情况下，应该使用换行或者分号
+ *
+ * 2. simple其实可以被expr替代
  */
 
 class BasicParser {

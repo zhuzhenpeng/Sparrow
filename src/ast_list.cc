@@ -646,8 +646,13 @@ ObjectPtr ArgumentsAST::eval(EnvPtr env, ObjectPtr caller) {
   //每次调用函数，都有创建一个新的内部环境
   EnvPtr funcEnv = func->runtimeEnv();
   params->eval(funcEnv, env, children_);
-  auto result = func->block()->eval(funcEnv);
-  return result;
+  try {
+    func->block()->eval(funcEnv);
+  }
+  catch(ASTReturnException &e) {
+    return e.result_;
+  }
+  return nullptr;
 }
 
 ObjectPtr ArgumentsAST::invokeNative(EnvPtr env, NativeFuncPtr func) {
@@ -847,6 +852,25 @@ void NewAST::initInstance(ClassInfoPtr ci, EnvPtr env) {
   } catch (EnvException e) {
     throw EnvException("class " + ci->name() + " not found init function");
   }
+}
+
+/*******************return表达式*****************************/
+
+ReturnAST::ReturnAST(): ASTList(ASTKind::LIST_RETURN, false) {}
+
+ObjectPtr ReturnAST::eval(EnvPtr env) {
+  if (children_.empty())
+    throw ASTEvalException("invalid return statement");
+
+  ObjectPtr result = children_[0]->eval(env);
+  throw ASTReturnException(result);
+}
+
+std::string ReturnAST::info() {
+  if (children_.empty())
+    throw ASTEvalException("invalid return statement");
+  
+  return "return " + children_[0]->info();
 }
 
 /*******************数组字面量*******************************/

@@ -22,6 +22,7 @@ public:
   ASTEvalException(const std::string &msg): ASTException(msg) {}
 };
 
+
 /******************************AST迭代器接口*****************************/
 template <typename Item>
 class Iterator {
@@ -73,8 +74,9 @@ enum class ASTKind {
   LIST_CLASS_STMNT = 2018,
   LIST_DOT = 2019,
   LIST_NEW = 2020,
-  LIST_ARRAY_LITERAL = 2021,
-  LIST_ARRAY_REF = 2022 
+  LIST_RETURN = 2021,
+  LIST_ARRAY_LITERAL = 2022,
+  LIST_ARRAY_REF = 2023 
 };
 
 /*********************AST的基类，用于定义接口****************************/

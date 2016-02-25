@@ -94,6 +94,9 @@ ASTreePtr ASTFactory::getListInstance(ASTKind kind) {
     case ASTKind::LIST_NEW:
       result = std::make_shared<NewAST>();
       break;
+    case ASTKind::LIST_RETURN:
+      result = std::make_shared<ReturnAST>();
+      break;
     case ASTKind::LIST_ARRAY_REF:
       result = std::make_shared<ArrayRefAST>();
       break;

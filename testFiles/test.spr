@@ -1,0 +1,72 @@
+print("test function")
+def fact(n) {
+  f = 1
+  while n > 0 {
+    f = f * n
+    n = n - 1  
+  }
+  return f
+}
+result = fact(3)
+print("6 succes")
+
+print("test fib")
+def fib(n) {
+  if n < 2 {
+    return n  
+  } 
+  else {
+    return fib(n - 1) + fib(n - 2) 
+  }
+}
+result = fib(10)
+print("55 success")
+
+print("test class")
+class Position {
+  x = y = 0
+
+  def init() {
+    
+  }
+
+  def move (nx, ny) {
+    x = nx
+    y = ny   
+  } 
+}
+p = Position.new()
+p.move(3, 4)
+p.x = 10
+print(p.x + p.y)
+print("14 success")
+
+if 1 > 2 {
+  print ("1 > 2")    
+}
+elif 3 < 2{
+  print ("3 < 2")  
+}
+elif 3 < 2 {
+  print ("3 < 2")  
+}
+else {
+  print ("else test successfully")  
+}
+
+true = (1 < 2)
+false = (1 > 2)
+
+if or(true, false) {
+  print("or test successfully");    
+}
+else {
+  print("or test failed")    
+}
+
+if and(true, false) {
+  print("and test failed")  
+}
+else {
+  print("and test successfully")  
+}

@@ -113,6 +113,9 @@ void BasicParser::init() {
         Parser::rule(ASTKind::LIST_WHILE_STMNT)->custom("while", true)\
         ->commomPR(condition)->commomPR(block),
         
+        //return 语句
+        Parser::rule(ASTKind::LIST_RETURN)->custom("return", true)->commomPR(expr),
+
         //普通的算术表达式
         simple
       });
