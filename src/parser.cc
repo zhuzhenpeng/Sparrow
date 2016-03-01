@@ -189,6 +189,9 @@ void BasicParser::initReserved() {
 void BasicParser::initOperators() {
   operators_.insert({"=", {1, Precedence::RIGHT}});
   operators_.insert({"==",{2, Precedence::LEFT}});
+  operators_.insert({"!=", {2, Precedence::LEFT}});
+  operators_.insert({">=", {2, Precedence::LEFT}});
+  operators_.insert({"<=", {2, Precedence::LEFT}});
   operators_.insert({">", {2, Precedence::LEFT}});
   operators_.insert({"<", {2, Precedence::LEFT}});
   operators_.insert({"+", {3, Precedence::LEFT}});

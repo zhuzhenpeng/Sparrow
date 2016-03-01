@@ -213,9 +213,25 @@ private:
 };
 using ArrayPtr = std::shared_ptr<Array>;
 
+/****************************符号表********************************/
+////记录符号在当前环境的位置
+//class Symbols;
+//using SymbolsPtr = std::shared_ptr<Symbols>;
+//class Symbols {
+//public:
+  //Symbols();
+
+  ////获取符号的位置，如果没有则返回-1
+  //int locate(const std::string &name);
+
+//private:
+  ////符号和下标的哈希表
+  //std::map<std::string, int>symIndex_;
+//};
+
 /****************************环境***********************************/
 
-//使用辞典实现存储，待优化，用于前期快速实现
+//通用环境，map记录变量名和下标，值存储在数组之中
 class CommonEnv :public std::enable_shared_from_this<CommonEnv>, public Object{
 public:
   CommonEnv();
@@ -236,6 +252,9 @@ public:
   //检查变量是否在当前的环境
   bool isExistInCurrentEnv(const std::string &name);
 
+  //返回变量在当前环境的下表，如果不存在于当前环境，则返回-1
+  int getSymbolsIndex(const std::string &name);
+
   std::string info() override;
 
 private:
@@ -250,33 +269,12 @@ private:
   EnvPtr outerEnv_ = nullptr;
 
   //当前环境的键值
-  std::map<std::string, ObjectPtr> env_;
+  std::map<std::string, size_t> index_;
+
+  //存储值的数组
+  std::vector<ObjectPtr> values_;
 };
 
-/****************************符号表********************************/
-////记录符号与其位置关系
-//struct Location {
-  //int nest = -1;  //嵌套层数
-  //int index = -1; //所在位置，即数组下标
-//};
-
-//class Symbols;
-//using SymbolsPtr = std::shared_ptr<Symbols>;
-//class Symbols {
-//public:
-  //Symbols();
-  //Symbols(SymbolsPtr outer);
-
-  ////获取符号的位置
-  //Location locate(const std::string &name);
-
-//private:
-  ////外层符号表
-  //SymbolsPtr outer_;
-
-  ////符号和下标的哈希表
-  //std::map<std::string, int>symIndex_;
-//};
 /********************************异常******************************/
 
 class EnvException: public std::exception {

@@ -1,0 +1,114 @@
+//该文件用来测试语言的statement语法，如if，while
+
+print("==========")
+print("测试statement")
+print("如果通过测试不输出任何信息")
+
+if false {
+  print("failed 1")
+}
+
+if 1 > 2 {
+  print("failed 2")
+}
+
+if and(true, false) {
+  print("failed 3")
+}
+
+if or(false, false) {
+  print("failed 4")
+}
+
+if and(and(true, true), false) {
+  print("failed 5")
+}
+
+if or(and(true, false), false) {
+  print("failed 6")
+}
+
+if and(2 > 1, false) {
+  print("failed 7")
+}
+
+if or(1 > 2, 2 > 3) {
+  print("failed 8")
+}
+
+num = 10
+if true {
+  num = num + 1  
+}
+if num != 11 {
+  print("failed 9")
+}
+
+num = 10
+if false {
+  print("failed 10")
+}
+elif num > 11 {
+  print("failed 11")
+}
+elif and(num > 11, num == 10) {
+  print("failed 12")
+}
+elif or(num == 10, num > 11){
+  num = 100  
+}
+if (num != 100) {
+  print("failed 12")
+}
+
+num = 10
+if num != 10 {
+  print("failed 13")
+}
+else {
+  num = 11  
+}
+if (num != 11) {
+  print("failed 14")
+}
+
+num = 10
+while num < 20 {
+  num = num + 2  
+}
+if num != 20 {
+  print("failed 15")
+}
+
+num = 10
+while and(num < 20, false) {
+  print("failed 16")
+}
+if num != 10 {
+  print("failed 17")
+}
+
+num = 10
+while or(num <= 20, false) {
+  num = num + 1  
+}
+if num != 21 {
+  print("failed 18")
+}
+
+result = 0
+i = 0
+while i < 5 {
+  j = 0
+  while j < 10 {
+    result = result + 1 
+    j = j + 1
+  }  
+  i = i + 1
+}
+if or(result != 50, false) {
+  print("failed 19")
+  print(result)
+}
+
+print("==========")

@@ -1,5 +1,0 @@
-require foo as bar_foo
-
-bar_foo.a = 101
-print(bar_foo.fooInstance.age)
-

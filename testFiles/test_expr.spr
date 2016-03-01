@@ -1,0 +1,84 @@
+//该测试文件用来测试语言的基本功能
+//如三种基本类型、以及一些运算符
+
+//该文件正常的输出
+print("==========")
+print("测试基本表达式")
+print("如果通过测试只输出三个字符串：空串、z、sparrow language:")
+
+//整型
+int_value = 10
+if int_value != 10 {
+  print("failed 1")
+}
+
+//浮点型
+float_value = 2.2
+if float_value != 2.2 {
+  print("failed 2")
+}
+
+float_value2 = 22
+if float_value2 != 22 {
+  print("failed 3")
+}
+
+
+//字符串
+str_value = ""
+print(str_value)
+
+str_value2 = "z"
+print(str_value2)
+
+str_value3 = "sparrow language"
+print(str_value3)
+
+
+//运算符
+add = int_value + 2
+if add != 12 {
+  print("failed 4")
+}
+
+add = float_value + 1.1
+if add != 3.3 {
+  print("failed 5")
+}
+
+add = int_value + float_value
+if add != 12.2 {
+  print("failed 6")
+}
+
+minus = int_value - 2
+if minus != 8 {
+  print("failed 7")
+}
+
+minus = float_value - 1.1
+if minus != 1.1 {
+  print("failed 8")
+}
+
+minus = int_value - float_value
+if minus != 7.8 {
+  print("failed 9")
+}
+
+multi = int_value * 3
+if multi != 30 {
+  print("failed 10")
+}
+
+multi = float_value * 3
+if multi != 6.6 {
+  print("failed 11")
+}
+
+multi = int_value * float_value
+if multi != 22 {
+  print("failed 12")
+}
+
+print("==========")

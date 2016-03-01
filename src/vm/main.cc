@@ -44,13 +44,13 @@ void run(std::map<std::string, EnvPtr> &env, ParseOrderTreeNodePtr node) {
 
     if (tree != nullptr) {
       //std::cout << "[" << static_cast<int>(tree->kind_) << "]" << std::endl;
-      std::cout << tree->info() << std::endl;
+      //std::cout << tree->info() << std::endl;
     }
 
     if (tree != nullptr) {
       auto result = tree->eval(currEnv);
       if (result != nullptr && result->kind_ == ObjKind::INT) {
-        std::cout << std::static_pointer_cast<IntObject>(result)->value_ << std::endl;
+        //std::cout << std::static_pointer_cast<IntObject>(result)->value_ << std::endl;
       }
     }
   }

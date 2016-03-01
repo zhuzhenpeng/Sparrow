@@ -330,13 +330,6 @@ public:
   //如果是对象的实例，访问某个对象的成员变量、方法
   //否则报错
   ObjectPtr eval(EnvPtr env, ObjectPtr caller) override;
-
-private:
-  //创建并初始化对象
-  InstancePtr newInstance(ClassInfoPtr ci);
-
-  //初始化对象，env是对象自身的环境
-  void initInstance(ClassInfoPtr ci, EnvPtr env);
 };
 using DotPtr = std::shared_ptr<Dot>;
 

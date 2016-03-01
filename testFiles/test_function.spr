@@ -1,0 +1,58 @@
+//该文件用来测试语言的函数、闭包功能
+
+print("==========")
+print("测试函数和闭包")
+print("如果通过测试不输出任何信息")
+
+def fact(n) {
+  f = 1
+  while n > 0 {
+    f = f * n
+    n = n - 1  
+  }
+  return f
+}
+result = fact(4)
+if result != 24 {
+  print("failed 1")
+  print(result)
+}
+
+def fib(n) {
+  if n < 2 {
+    return n  
+  } 
+  else {
+    return fib(n - 1) + fib(n - 2) 
+  }
+}
+result = fib(10)
+if result != 55 {
+  print("failed 2")
+  print(result)
+}
+
+//返回闭包
+def create_lamb(n) {
+  return lamb (num) {
+    return n + num 
+  }
+}
+add_lamb = create_lamb(10)
+result = add_lamb(5)
+if result != 15 {
+  print("failed 3")  
+}
+
+//入参是闭包
+a_func = lamb(a, b) {
+            return a * b 
+         }
+def use_lamb(func, a, b) {
+  return func(a, b)
+}
+result = use_lamb(a_func, 2, 3)
+if result != 6 {
+  print("failed 4")  
+}
+print("==========")

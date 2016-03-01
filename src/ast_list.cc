@@ -2,6 +2,8 @@
 #include "ast_leaf.h"
 #include "debugger.h"
 
+#include <cmath>
+
 /**************************AST内部（非叶子）节点******************************/
 
 ASTList::ASTList(ASTKind kind, bool ignore): ASTree(kind), ignore_(ignore) {}
@@ -252,6 +254,12 @@ ObjectPtr BinaryExprAST::computeInt(int left, const std::string &op, int right) 
     return std::make_shared<IntObject>(left % right);
   else if (op == "==")
     return std::make_shared<BoolObject>(left == right);
+  else if (op == "!=")
+    return std::make_shared<BoolObject>(left != right);
+  else if (op == ">=")
+    return std::make_shared<BoolObject>(left >= right);
+  else if (op == "<=")
+    return std::make_shared<BoolObject>(left <= right);
   else if (op == ">")
     return std::make_shared<BoolObject>(left > right);
   else if (op == "<")
@@ -262,6 +270,7 @@ ObjectPtr BinaryExprAST::computeInt(int left, const std::string &op, int right) 
 
 ObjectPtr BinaryExprAST::computeFloat(double left, const std::string &op, double right) {
   //%运算符属于非法运算符
+  double diff = std::abs(left - right);
   if (op == "+")
     return std::make_shared<FloatObject>(left + right);
   else if (op == "-")
@@ -271,13 +280,19 @@ ObjectPtr BinaryExprAST::computeFloat(double left, const std::string &op, double
   else if (op == "/")
     return std::make_shared<FloatObject>(left / right);
   else if (op == "==")
-    return std::make_shared<BoolObject>(left == right);
+    return std::make_shared<BoolObject>(diff <= 1e-10);
+  else if (op == "!=")
+    return std::make_shared<BoolObject>(diff > 1e-10);
+  else if (op == ">=")
+    return std::make_shared<BoolObject>(left >= right);
+  else if (op == "<=")
+    return std::make_shared<BoolObject>(left <= right);
   else if (op == ">")
     return std::make_shared<BoolObject>(left > right);
   else if (op == "<")
     return std::make_shared<BoolObject>(left < right);
   else
-    throw ASTEvalException("bad operators for bianry expr");
+    throw ASTEvalException("bad operators for bianry expr: " + op);
 }
 
 ObjectPtr BinaryExprAST::setInstanceField(InstancePtr obj, const std::string &filedName, 
@@ -767,8 +782,6 @@ ObjectPtr Dot::eval(__attribute__((unused))EnvPtr env, ObjectPtr caller) {
     if (member == "new") {
       NewASTPtr newAST = std::dynamic_pointer_cast<NewAST>(children_[0]);
       return newAST->eval(env, caller);
-      //InstancePtr newObject = newInstance(std::dynamic_pointer_cast<ClassInfo>(caller));
-      //return newObject->read("init");   //返回初始化函数
     }
     else {
       throw ASTEvalException("unknow operation for class: " + member);
@@ -784,29 +797,6 @@ ObjectPtr Dot::eval(__attribute__((unused))EnvPtr env, ObjectPtr caller) {
   }
   else {
     throw ASTEvalException("bad member access: " + member);
-  }
-}
-
-//利用闭包的方式来实现对象，每个对象有一个自己的环境
-InstancePtr Dot::newInstance(ClassInfoPtr ci) {
-  EnvPtr instanceEnv = std::make_shared<CommonEnv>(ci->getEnvitonment());
-  InstancePtr obj = std::make_shared<ClassInstance>(instanceEnv);
-  instanceEnv->put("self", obj);    //TODO：循环引用，无法释放资源
-  initInstance(ci, instanceEnv);
-  return obj;
-}
-
-void Dot::initInstance(ClassInfoPtr ci, EnvPtr env) {
-  //递归由父类往下初始化
-  if (ci->superClass() != nullptr)
-    initInstance(ci->superClass(), env);
-  ci->body()->eval(env);    //把类元信息中的语句在对象的环境中执行
-
-  //如果未定义init函数，则抛出异常
-  try {
-    env->get("init");
-  } catch (EnvException e) {
-    throw EnvException("class " + ci->name() + " not found init function");
   }
 }
 
@@ -842,10 +832,14 @@ InstancePtr NewAST::newInstance(ClassInfoPtr ci) {
 
 void NewAST::initInstance(ClassInfoPtr ci, EnvPtr env) {
   //递归由父类往下初始化
-  if (ci->superClass() != nullptr)
-    initInstance(ci->superClass(), env);
-  ci->body()->eval(env);    //把类元信息中的语句在对象的环境中执行
+  if (ci->superClass() != nullptr) {
+    EnvPtr superEnv = std::make_shared<CommonEnv>(ci->superClass()->getEnvitonment());
+    env->put("super", superEnv);
+    initInstance(ci->superClass(), superEnv);
+    env->setOuterEnv(superEnv);
+  }
 
+  ci->body()->eval(env);    //把类元信息中的语句在对象的环境中执行
   //如果未定义init函数，则抛出异常
   try {
     env->get("init");

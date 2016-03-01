@@ -1,6 +1,8 @@
 #include "env.h"
 #include "ast_list.h"
 
+#include "debugger.h"
+
 /*****************************函数 类型******************************/
 FuncObject::FuncObject(const std::string &functionName, 
     std::shared_ptr<ParameterListAST> params, 
@@ -129,7 +131,7 @@ ObjectPtr CommonEnv::get(const std::string &name) {
   if (env == nullptr)
     throw EnvException("not found the variable: " + name);
   else 
-    return env->env_[name];
+    return env->values_[env->index_[name]];
 }
 
 void CommonEnv::put(const std::string &name, ObjectPtr obj) {
@@ -140,7 +142,14 @@ void CommonEnv::put(const std::string &name, ObjectPtr obj) {
 }
 
 bool CommonEnv::isExistInCurrentEnv(const std::string &name) {
-  return env_.find(name) != env_.end();
+  return index_.find(name) != index_.end();
+}
+
+int CommonEnv::getSymbolsIndex(const std::string &name) {
+  if (index_.find(name) == index_.end())
+    return -1;
+  else
+    return index_[name];
 }
 
 std::string CommonEnv::info() {
@@ -157,7 +166,7 @@ EnvPtr CommonEnv::locateEnv(const std::string &name) {
       return outerEnv_->locateEnv(name);
     }
     else {
-      if (env_.find(name) != env_.end())
+      if (index_.find(name) != index_.end())
         return this->shared_from_this();   
       else
         return nullptr;
@@ -165,7 +174,7 @@ EnvPtr CommonEnv::locateEnv(const std::string &name) {
   }
   //普通变量查找
   else {
-    if (env_.find(name) != env_.end()) 
+    if (index_.find(name) != index_.end()) 
       return this->shared_from_this();
     else if (outerEnv_ == nullptr)
       return nullptr;
@@ -175,5 +184,6 @@ EnvPtr CommonEnv::locateEnv(const std::string &name) {
 }
 
 void CommonEnv::putNew(const std::string &name, ObjectPtr obj) {
-  env_[name] = obj;
+  values_.push_back(obj);
+  index_[name] = values_.size() - 1;
 }
