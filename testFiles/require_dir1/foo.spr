@@ -1,0 +1,19 @@
+require bar as bar
+Bar = bar.Bar
+
+$foo_value = 20
+
+$foo_str = "foo"
+
+class Foo extends Bar {
+  foo_ = nil
+  
+  def init(bar) {
+    super.init(bar)
+    foo_ = 20  
+  } 
+
+  def value() {
+    return foo_ + bar_  
+  }
+}

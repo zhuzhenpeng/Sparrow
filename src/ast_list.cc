@@ -223,7 +223,7 @@ ObjectPtr BinaryExprAST::otherOp(ObjectPtr left, const std::string &op, ObjectPt
     double rightFloat = std::static_pointer_cast<IntObject>(right)->value_;
     return computeFloat(leftFloat, op, rightFloat);
   }
-  else {
+  else if (left->kind_ == ObjKind::STRING && right->kind_ == ObjKind::STRING){
     auto strLeft = std::static_pointer_cast<StrObject>(left);
     auto strRight = std::static_pointer_cast<StrObject>(right);
     if (op == "+") {
@@ -235,9 +235,18 @@ ObjectPtr BinaryExprAST::otherOp(ObjectPtr left, const std::string &op, ObjectPt
       else
         return std::make_shared<BoolObject>(false);
     }
+    else if (op == "!=") {
+      if (strLeft->str_ != strRight->str_)
+        return std::make_shared<BoolObject>(true);
+      else
+        return std::make_shared<BoolObject>(false);
+    }
     else {
       throw ASTEvalException("bad type for str operation");
     }
+  }
+  else {
+    throw ASTEvalException("invalid type for binary operation");
   }
 }
 
@@ -825,21 +834,25 @@ ArgumentsPtr NewAST::getArguments() const {
 InstancePtr NewAST::newInstance(ClassInfoPtr ci) {
   EnvPtr instanceEnv = std::make_shared<CommonEnv>(ci->getEnvitonment());
   InstancePtr obj = std::make_shared<ClassInstance>(instanceEnv);
-  instanceEnv->put("self", obj);    //TODO：循环引用，无法释放资源
+  //instanceEnv->put("self", obj);    //TODO：循环引用，无法释放资源
   initInstance(ci, instanceEnv);
   return obj;
 }
 
 void NewAST::initInstance(ClassInfoPtr ci, EnvPtr env) {
+  EnvPtr superEnv = nullptr;
   //递归由父类往下初始化
   if (ci->superClass() != nullptr) {
-    EnvPtr superEnv = std::make_shared<CommonEnv>(ci->superClass()->getEnvitonment());
+    superEnv = std::make_shared<CommonEnv>(ci->superClass()->getEnvitonment());
     env->put("super", superEnv);
     initInstance(ci->superClass(), superEnv);
-    env->setOuterEnv(superEnv);
   }
 
   ci->body()->eval(env);    //把类元信息中的语句在对象的环境中执行
+  if (superEnv != nullptr) {
+    //要执行完了eval才能更改外部环境，否则覆盖了父类的同名方法，导致出bug
+    env->setOuterEnv(superEnv);  
+  }
   //如果未定义init函数，则抛出异常
   try {
     env->get("init");

@@ -87,8 +87,6 @@ READ_NEW_LINE:
       goto READ_NEW_LINE; 
     }
     else {
-      std::cout << "source: " << results[3].str() << std::endl
-        << "source alias: " << results[5].str() << std::endl;
       unit.relativePath = formatRequireForm(results[3].str());
       unit.alias = results[5].str();
       return true;

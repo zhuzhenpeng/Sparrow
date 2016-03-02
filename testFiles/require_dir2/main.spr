@@ -1,0 +1,25 @@
+require foo as foo
+require bar as bar
+
+require bar as bar
+
+print("==========")
+print("测试require重复包含")
+
+//重复包含了bar模块
+//解释器应该只解析一边，bar模块中的全局变量值在foo模块中的修改应该要生效
+
+if bar.$bar_value != 20 {
+  print("failed 1")  
+}
+
+if bar.$bar_str != "foo_bar" {
+  print("failed 2")  
+}
+
+if bar.$foo != "new value" {
+  print("failed 3")  
+}
+
+print("==========")
+

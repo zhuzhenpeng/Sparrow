@@ -1,0 +1,28 @@
+require foo as foo
+require bar as bar
+
+
+print("==========")
+print("测试require循环包含")
+
+//先包含foo，而foo包含bar，bar比foo先解析
+//因此bar对foo变量的修改无效
+//但foo对bar变量的修改有效
+
+if foo.$foo_value != 10 {
+  print("failed 1")  
+}
+
+if foo.$foo_str != "foo" {
+  print("failed 2")  
+}
+
+if bar.$bar_value != 2 {
+  print("failed 3") 
+}
+
+if bar.$bar_str != "bar2" {
+  print("failed 4")  
+}
+
+print("==========")

@@ -1,0 +1,8 @@
+require bar as bar
+
+bar.$bar_value = 20
+
+bar.$bar_str = "foo_bar"
+
+//为bar模块添加新的变量值
+bar.$foo = "new value"

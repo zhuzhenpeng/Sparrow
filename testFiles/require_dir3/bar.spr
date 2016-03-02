@@ -1,0 +1,7 @@
+require foo as foo
+
+$bar_value = 20
+$bar_str = "bar"
+
+foo.$foo_value = 1
+foo.$foo_str = "foo2"

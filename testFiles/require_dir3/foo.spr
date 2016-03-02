@@ -1,0 +1,8 @@
+require bar as bar
+
+$foo_value = 10
+$foo_str = "foo"
+
+bar.$bar_value = 2
+bar.$bar_str = "bar2"
+

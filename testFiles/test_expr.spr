@@ -4,7 +4,6 @@
 //该文件正常的输出
 print("==========")
 print("测试基本表达式")
-print("如果通过测试只输出三个字符串：空串、z、sparrow language:")
 
 //整型
 int_value = 10
@@ -26,14 +25,19 @@ if float_value2 != 22 {
 
 //字符串
 str_value = ""
-print(str_value)
+if (str_value != "") {
+  print("failed 1")  
+}
 
 str_value2 = "z"
-print(str_value2)
+if (str_value2 != "z") {
+  print("failed 2")  
+}
 
 str_value3 = "sparrow language"
-print(str_value3)
-
+if (str_value3 != "sparrow language") {
+  print("failed 3")  
+}
 
 //运算符
 add = int_value + 2

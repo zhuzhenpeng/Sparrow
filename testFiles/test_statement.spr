@@ -2,7 +2,6 @@
 
 print("==========")
 print("测试statement")
-print("如果通过测试不输出任何信息")
 
 if false {
   print("failed 1")

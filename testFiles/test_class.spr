@@ -2,7 +2,6 @@
 
 print("==========")
 print("测试类")
-print("如果通过测试不输出任何信息")
 
 class Person {
   //姓名
@@ -15,7 +14,6 @@ class Person {
   sex_ = nil  
 
   def init(name, age, sex) {
-    print("shit1")
     name_ = name
     age_ = age
     sex_ = sex  
@@ -28,25 +26,52 @@ class Person {
   def set_age(age) {
     age_ = age  
   }
-
-  def info() {
-    print("Person")  
-  }
 }
 
 class Student extends Person {
   //学号
   student_id_ = 000
+
+  //测试同名成员
+  name_ = "Student"
   
   def init(name, age, sex, stu_id) {
-    print("shit2")
-    super.info()
     super.init(name, age, sex)
     student_id_ = stu_id
   }  
+
+  //测试同名函数
+  def set_age(age) {
+    //不需要做任何事，使得修改age失效  
+  }
 }
 
 z = Student.new("zzp", 22, "man", 123)
-print(z.get_age())
+
+//访问成员
+if (z.name_ != "Student") {
+  print("failed 1")  
+  print(z.name_)
+}
+if (z.age_ != 22) {
+  print("failed 2")  
+}
+if (z.sex_ != "man") {
+  print("failed 3")  
+}
+if (z.student_id_ != 123) {
+  print("failed 4")  
+}
+
+//调用父类方法
+if (z.get_age() != 22) {
+  print("failed 5")  
+}
+
+//访问同名方法
+z.set_age(100)
+if (z.get_age() != 22) {
+  print("failed 6")  
+}
 
 print("==========")

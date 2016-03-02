@@ -72,7 +72,7 @@ void ClassInstance::write(const std::string &member, ObjectPtr value) {
 }
 
 ObjectPtr ClassInstance::read(const std::string &member) {
-  checkAccessValid(member);
+  //checkAccessValid(member);
   try {
     ObjectPtr result = env_->get(member);
     return result;
@@ -127,6 +127,9 @@ void CommonEnv::setOuterEnv(EnvPtr outer) {
 }
 
 ObjectPtr CommonEnv::get(const std::string &name) {
+  if (name == "self")
+    return shared_from_this();
+
   auto env = locateEnv(name);
   if (env == nullptr)
     throw EnvException("not found the variable: " + name);

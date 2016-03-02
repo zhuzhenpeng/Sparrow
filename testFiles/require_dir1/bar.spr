@@ -1,0 +1,12 @@
+$bar_value = 10
+
+$bar_str = "bar"
+
+class Bar {
+  bar_ = nil
+  
+  def init(num) {
+    bar_ = num
+  }  
+}
+

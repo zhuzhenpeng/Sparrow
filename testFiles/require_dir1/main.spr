@@ -1,0 +1,29 @@
+require foo as foo
+require bar as bar
+
+print("==========")
+print("测试require")
+
+if foo.$foo_value != 20 {
+  print("failed 1")  
+}
+
+if foo.$foo_str != "foo" {
+  print("failed 2")  
+}
+
+if bar.$bar_value != 10 {
+  print("failed 3")  
+}
+
+if bar.$bar_str != "bar" {
+  print("failed 4")  
+}
+
+instance = foo.Foo.new(4)
+if instance.value() != 24 {
+  print("failed 5")  
+  print(instance.value())
+}
+
+print("==========")
