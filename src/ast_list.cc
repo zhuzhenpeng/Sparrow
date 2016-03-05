@@ -45,6 +45,11 @@ ObjectPtr ASTList::eval(__attribute__((unused)) EnvPtr env) {
   throw ASTEvalException("call error, not evalable for AST list");
 }
 
+void ASTList::preProcess(SymbolsPtr symbols) {
+  for (auto &child: children_)
+    child->prePorcess(symbols);
+}
+
 std::vector<ASTreePtr>& ASTList::children() {
   return children_;
 }

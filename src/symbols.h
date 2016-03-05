@@ -43,8 +43,14 @@ private:
   std::vector<T> constPool_;
 };
 using IntSymbolsPtr = std::shared_ptr<ConstantSymbols<int>>;
+extern IntSymbolsPtr g_IntSymbols;
+
 using FloatSymbolsPtr = std::shared_ptr<ConstantSymbols<double>>;
+extern FloatSymbolsPtr g_FloatSymbols;
+
 using StrSymbolsPtr = std::shared_ptr<ConstantSymbols<std::string>>;
+extern StrSymbolsPtr g_StrSymbols;
+
 
 /**************************通用符号表******************************/
 class Symbols;
@@ -57,7 +63,7 @@ public:
   //获取局部变量在函数运行时环境的位置
   //如果该变量为全局变量，则返回-1
   //如果该变量为闭包上层函数的临时变量，返回-2
-  size_t getRuntimeIndex(const std::string &name);
+  int getRuntimeIndex(const std::string &name);
 
 private:
   //定位符号所在的符号表，如果找不到返回空指针

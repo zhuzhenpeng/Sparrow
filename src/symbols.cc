@@ -1,9 +1,17 @@
 #include "symbols.h"
 
+/**********************三种类型的全局符号表************************/
+IntSymbolsPtr g_IntSymbols = std::make_shared<ConstantSymbols<int>>();
+
+FloatSymbolsPtr g_FloatSymbols = std::make_shared<ConstantSymbols<double>>();
+
+StrSymbolsPtr g_StrSymbols = std::make_shared<ConstantSymbols<std::string>>();
+
+/**************************通用符号表******************************/
 Symbols::Symbols(SymbolsPtr outer, bool isFunc): 
    isFuncSymbols_(isFunc), outer_(outer) {}
 
-size_t Symbols::getRuntimeIndex(const std::string &name) {
+int Symbols::getRuntimeIndex(const std::string &name) {
   //a.变量名是$开头的，返回-1
   //b.如果该符号表不是函数的，那么把变量插入，返回-1
   //c.如果该符号表是函数的，且在当前环境找到，返回相应下标

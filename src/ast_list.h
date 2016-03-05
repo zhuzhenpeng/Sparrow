@@ -53,6 +53,8 @@ public:
   //抛出异常
   ObjectPtr eval(EnvPtr env) override;
 
+  void preProcess(SymbolsPtr symbols);
+
   std::vector<ASTreePtr>& children();
 
   bool ignore() const;

@@ -5,6 +5,7 @@
 #include <string>
 #include <exception>
 #include "env.h"
+#include "symbols.h"
 
 /******************************AST相关的异常****************************/
 class ASTException: public std::exception {
@@ -17,6 +18,13 @@ private:
   std::string errMsg_;
 };
 
+//预处理异常
+class ASTPreProcessException: public ASTException {
+public:
+  ASTPreProcessException(const std::string &msg): ASTException(msg) {}
+};
+
+//运行时异常
 class ASTEvalException: public ASTException {
 public:
   ASTEvalException(const std::string &msg): ASTException(msg) {}
@@ -101,6 +109,11 @@ public:
 
   //解析执行该节点并返回结果值，入参为环境变量
   virtual ObjectPtr eval(EnvPtr env) = 0;
+
+  //编译、运行预处理，为某些节点生成所需的上下文信息，比如符号表
+  virtual void prePorcess(__attribute__((unused))SymbolsPtr symbols) {
+    //默认情况下不需要进行任何处理
+  }
 
 public:
   //AST类型
