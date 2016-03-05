@@ -26,8 +26,17 @@ public:
 
   TokenPtr getToken() const;
 
+  void setIndex(size_t index);
+
+  size_t getIndex() const;
+
 protected:
   TokenPtr token_;
+  
+  //在符号表中的下标
+  //整型、浮点数、字符串分别对应三个常量池
+  //Id所指向的变量如果是局部变量，则是局部变量槽的下标，否则没有意义
+  size_t index_ = -1;
 };
 
 /*********************IntToken对应的叶子节点***************************/
@@ -58,6 +67,11 @@ public:
   std::string info() override;
   ObjectPtr eval(EnvPtr env) override;
   std::string getId() const;
+  bool isLocal() const;
+  void setLocal(bool flag);
+private:
+  //是否是局部变量的标志
+  bool isLocal_ = false;
 };
 
 /*********************StrToken对应的叶子节点*************************/

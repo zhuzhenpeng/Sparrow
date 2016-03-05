@@ -28,6 +28,14 @@ TokenPtr ASTLeaf::getToken() const {
   return token_;
 }
 
+void ASTLeaf::setIndex(size_t index) {
+  index_ = index;
+}
+
+size_t ASTLeaf::getIndex() const {
+  return index_;
+}
+
 /*********************IntToken对应的叶子节点***************************/
 
 IntTokenAST::IntTokenAST(TokenPtr token): ASTLeaf(ASTKind::LEAF_INT, token) {}
@@ -74,6 +82,14 @@ ObjectPtr IdTokenAST::eval(EnvPtr env) {
 
 std::string IdTokenAST::getId() const {
   return token_->getText();
+}
+
+bool IdTokenAST::isLocal() const {
+  return isLocal_;
+}
+
+void IdTokenAST::setLocal(bool flag) {
+  isLocal_ = flag;
 }
 
 /*********************StrToken对应的叶子节点*************************/

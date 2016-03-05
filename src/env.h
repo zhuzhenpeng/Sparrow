@@ -213,22 +213,6 @@ private:
 };
 using ArrayPtr = std::shared_ptr<Array>;
 
-/****************************符号表********************************/
-////记录符号在当前环境的位置
-//class Symbols;
-//using SymbolsPtr = std::shared_ptr<Symbols>;
-//class Symbols {
-//public:
-  //Symbols();
-
-  ////获取符号的位置，如果没有则返回-1
-  //int locate(const std::string &name);
-
-//private:
-  ////符号和下标的哈希表
-  //std::map<std::string, int>symIndex_;
-//};
-
 /****************************环境***********************************/
 
 //通用环境，map记录变量名和下标，值存储在数组之中
