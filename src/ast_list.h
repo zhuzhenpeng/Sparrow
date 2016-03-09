@@ -53,7 +53,7 @@ public:
   //抛出异常
   ObjectPtr eval(EnvPtr env) override;
 
-  void preProcess(SymbolsPtr symbols);
+  void preProcess(SymbolsPtr symbols) override;
 
   std::vector<ASTreePtr>& children();
 
@@ -220,6 +220,9 @@ public:
   std::string paramName(size_t i);
   size_t size() const;
 
+  //为形参分配空间
+  void preProcess(SymbolsPtr symbols) override;
+
   //继承自父类的eval接口废弃，抛出异常
   ObjectPtr eval(__attribute__((unused)) EnvPtr env) override {
     throw ASTEvalException("error call for Parameter List AST eval, abandoned");
@@ -228,6 +231,10 @@ public:
   //根据入参设置函数运行时环境
   //该语法树记录形参名字，实参数据由外部args传入
   void eval(EnvPtr funcEnv, EnvPtr callerEnv, const std::vector<ASTreePtr> &args);
+
+private:
+  //形参位置
+  std::vector<size_t> paramsOffset_;
 };
 using ParameterListPtr = std::shared_ptr<ParameterListAST>;
 
@@ -241,9 +248,20 @@ public:
   BlockStmntPtr block();
   std::string info() override;
 
+  //确定运行时环境局部变量的大小
+  void preProcess(SymbolsPtr symbols) override;
+
   //生成一个函数对象，放入当前的环境中
   //返回空指针
   ObjectPtr eval(EnvPtr env) override;
+
+  //获取函数运行时环境的局部变量所占空间大小
+  static size_t getLocalVarSize(SymbolsPtr outer, ParameterListPtr params, 
+      BlockStmntPtr block);
+
+private:
+  //函数局部变量所需大小
+  size_t localVarSize_;
 };
 
 /************************后缀表达式接口*****************************/
@@ -286,7 +304,16 @@ public:
   ParameterListPtr parameterList();
   BlockStmntPtr block();
   std::string info() override;
+
+  //确定函数运行时环境局部变量的大小
+  void preProcess(SymbolsPtr symbols) override;
+
+  //返回一个函数对象
   ObjectPtr eval(EnvPtr env) override;
+
+private:
+  //函数运行时环境的局部变量大小
+  size_t localVarSize_;
 };
 
 /*************************类************************************/

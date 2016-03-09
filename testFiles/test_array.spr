@@ -1,0 +1,28 @@
+//该文件用来测试数组
+
+print("==========")
+print("测试数组")
+
+my_arr = [1, "str", [2, "str2"]]
+
+if my_arr[0] != 1 {
+  print("failed 1")
+  print(my_arr[0])    
+}
+
+if my_arr[1] != "str" {
+  print("failed 2")
+  print(my_arr[1])  
+}
+
+if my_arr[2][0] != 2 {
+  print("failed 3")  
+  print(my_arr[2][0])
+}
+
+if my_arr[2][1] != "str2" {
+  print("failed 4")
+  print(my_arr[2][1])  
+}
+
+print("==========")

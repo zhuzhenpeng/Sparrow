@@ -42,16 +42,18 @@ void run(std::map<std::string, EnvPtr> &env, ParseOrderTreeNodePtr node) {
   while (lexer->peek(0)->getKind() != TokenKind::TK_EOF) {
     auto tree = parser->parse(*lexer);
 
+    //打印树的信息
     if (tree != nullptr) {
       //std::cout << "[" << static_cast<int>(tree->kind_) << "]" << std::endl;
       //std::cout << tree->info() << std::endl;
     }
 
+    //遍历运行树
     if (tree != nullptr) {
+      SymbolsPtr currTreeSymbols = std::make_shared<Symbols>(nullptr, false);
+      tree->preProcess(currTreeSymbols);
+
       auto result = tree->eval(currEnv);
-      if (result != nullptr && result->kind_ == ObjKind::INT) {
-        //std::cout << std::static_pointer_cast<IntObject>(result)->value_ << std::endl;
-      }
     }
   }
 }

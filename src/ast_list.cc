@@ -47,7 +47,7 @@ ObjectPtr ASTList::eval(__attribute__((unused)) EnvPtr env) {
 
 void ASTList::preProcess(SymbolsPtr symbols) {
   for (auto &child: children_)
-    child->prePorcess(symbols);
+    child->preProcess(symbols);
 }
 
 std::vector<ASTreePtr>& ASTList::children() {
@@ -153,7 +153,8 @@ ObjectPtr BinaryExprAST::eval(EnvPtr env) {
 ObjectPtr BinaryExprAST::assignOp(EnvPtr env, ObjectPtr rightValue) {
   auto leftTree = leftFactor();
   if (leftTree->kind_ == ASTKind::LEAF_Id) {
-    env->put(std::dynamic_pointer_cast<IdTokenAST>(leftTree)->getId(), rightValue);
+    auto idToken = std::dynamic_pointer_cast<IdTokenAST>(leftTree);
+    idToken->assign(env, rightValue);
     return rightValue;
   }
   else if (leftTree->kind_ == ASTKind::LIST_PRIMARY_EXPR) {
@@ -615,10 +616,18 @@ size_t ParameterListAST::size() const {
   return children_.size();
 }
 
+void ParameterListAST::preProcess(SymbolsPtr symbols) {
+  paramsOffset_.clear();
+  for(size_t i = 0; i < size(); ++i)
+    paramsOffset_.push_back(symbols->getRuntimeIndex(paramName(i)));
+  //MyDebugger::print(paramsOffset_.size(), __FILE__, __LINE__);
+}
+
 void ParameterListAST::eval(EnvPtr funcEnv, EnvPtr callerEnv, 
     const std::vector<ASTreePtr> &args) {
+  //MyDebugger::print(paramsOffset_.size(), __FILE__, __LINE__);
   for (size_t i = 0; i < args.size(); ++i) {
-    funcEnv->put(paramName(i), args[i]->eval(callerEnv));
+    funcEnv->put(paramsOffset_[i], args[i]->eval(callerEnv));
   }
 }
 
@@ -643,10 +652,24 @@ std::string DefStmntAST::info() {
     children_[2]->info() + ")";
 }
 
+void DefStmntAST::preProcess(SymbolsPtr symbols) {
+  localVarSize_ = getLocalVarSize(symbols, parameterList(), block());
+}
+
 ObjectPtr DefStmntAST::eval(EnvPtr env) {
-  auto funcObj = std::make_shared<FuncObject>(funcName(), parameterList(), block(), env);
+  auto funcObj = std::make_shared<FuncObject>(funcName(), localVarSize_,
+                                parameterList(), block(), env);
   env->put(funcName(), funcObj);
   return nullptr;
+}
+
+size_t DefStmntAST::getLocalVarSize(SymbolsPtr outer, 
+    ParameterListPtr params, BlockStmntPtr block) {
+  //运行时符号表
+  SymbolsPtr runTimeSymbols = std::make_shared<Symbols>(outer, true);
+  params->preProcess(runTimeSymbols);
+  block->preProcess(runTimeSymbols);
+  return runTimeSymbols->getSymbolSize();
 }
 
 /***************************实参***********************************/
@@ -672,7 +695,7 @@ ObjectPtr ArgumentsAST::eval(EnvPtr env, ObjectPtr caller) {
     throw ASTEvalException("error function call, not match the number of parameters");
   }
 
-  //每次调用函数，都有创建一个新的内部环境
+  //每次调用函数，都有创建一个新的环境，数组环境
   EnvPtr funcEnv = func->runtimeEnv();
   params->eval(funcEnv, env, children_);
   try {
@@ -711,9 +734,15 @@ std::string LambAST::info() {
   return "(lamb " + parameterList()->info() + " " + block()->info() + ")";
 }
 
+void LambAST::preProcess(SymbolsPtr symbols) {
+  localVarSize_ = DefStmntAST::getLocalVarSize(symbols, parameterList(), 
+      block());
+}
+
 ObjectPtr LambAST::eval(EnvPtr env) {
-  //lambda创建的闭包都用closure来表示它的函数名
-  return std::make_shared<FuncObject>("closure", parameterList(), block(), env);
+  //lambda创建的闭包都用CLOSURE来表示它的函数名
+  return std::make_shared<FuncObject>("CLOSURE", localVarSize_,
+      parameterList(), block(), env);
 }
 
 /************************类************************************/
@@ -837,9 +866,8 @@ ArgumentsPtr NewAST::getArguments() const {
 
 //利用闭包的方式来实现对象，每个对象有一个自己的环境
 InstancePtr NewAST::newInstance(ClassInfoPtr ci) {
-  EnvPtr instanceEnv = std::make_shared<CommonEnv>(ci->getEnvitonment());
+  EnvPtr instanceEnv = std::make_shared<MapEnv>(ci->getEnvitonment());
   InstancePtr obj = std::make_shared<ClassInstance>(instanceEnv);
-  //instanceEnv->put("self", obj);    //TODO：循环引用，无法释放资源
   initInstance(ci, instanceEnv);
   return obj;
 }
@@ -848,7 +876,7 @@ void NewAST::initInstance(ClassInfoPtr ci, EnvPtr env) {
   EnvPtr superEnv = nullptr;
   //递归由父类往下初始化
   if (ci->superClass() != nullptr) {
-    superEnv = std::make_shared<CommonEnv>(ci->superClass()->getEnvitonment());
+    superEnv = std::make_shared<MapEnv>(ci->superClass()->getEnvitonment());
     env->put("super", superEnv);
     initInstance(ci->superClass(), superEnv);
   }

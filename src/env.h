@@ -101,26 +101,37 @@ using BoolObjectPtr = std::shared_ptr<BoolObject>;
 
 /*****************************函数 类型******************************/
 
-class FuncObject: public Object {
+class FuncObject: public Object, public std::enable_shared_from_this<FuncObject>{
 public:
-  FuncObject(const std::string &functionName, std::shared_ptr<ParameterListAST> params, 
+  FuncObject(const std::string &functionName, size_t size, 
+      std::shared_ptr<ParameterListAST> params, 
       std::shared_ptr<BlockStmntAST> block, EnvPtr env);
+
   std::shared_ptr<ParameterListAST> params() const;
   std::shared_ptr<BlockStmntAST> block() const;
-  EnvPtr runtimeEnv() const;
+  EnvPtr runtimeEnv();
   
   std::string info() override {
     return "Func: " + funcName_;
   }
+
+  std::string funcName() const{
+    return funcName_;
+  }
+
 private:
   std::string funcName_;
-  std::shared_ptr<ParameterListAST> params_;
-  std::shared_ptr<BlockStmntAST> block_;
+
+  //函数运行时环境局部变量所需空间大小
+  size_t localVarSize_;
 
   //外部环境，一般作为函数运行时环境的上层
   //对于普通函数而言，它就是该unit的全局环境
   //对于类函数而言，它是某个实例的内部环境
   EnvPtr env_;
+
+  std::shared_ptr<ParameterListAST> params_;
+  std::shared_ptr<BlockStmntAST> block_;
 };
 using FuncPtr = std::shared_ptr<FuncObject>;
 
@@ -215,47 +226,110 @@ using ArrayPtr = std::shared_ptr<Array>;
 
 /****************************环境***********************************/
 
-//通用环境，map记录变量名和下标，值存储在数组之中
+//----------------------通用环境接口
 class CommonEnv :public std::enable_shared_from_this<CommonEnv>, public Object{
 public:
+  
   CommonEnv();
 
   CommonEnv(EnvPtr outer);
 
+  //设置外部环境
   void setOuterEnv(EnvPtr outer);
+
+  //获取上层环境
+  EnvPtr getOuterEnv() const;
 
   //由内到外搜寻获取环境内指定变量，如果找不到抛出异常
   //对于$开头的全局变量，只从最外层的环境查找
-  ObjectPtr get(const std::string &name);
+  virtual ObjectPtr get(const std::string &name) = 0;
+
+  //获取指定位置的变量
+  virtual ObjectPtr get(size_t index) = 0;
 
   //把变量放入环境中
   //如果是新的变量，或在当前环境中可以找到该环境，那么就放入该环境
   //否则向外寻找变量所在的环境，并更新它的值
-  void put(const std::string &name, ObjectPtr obj);
+  virtual void put(const std::string &name, ObjectPtr obj) = 0;
+
+  //向环境中指定位置放入变量
+  //只用于函数运行时环境的局部变量，需要事先确定局部变量的位置
+  virtual void put(size_t index, ObjectPtr obj) = 0;
 
   //检查变量是否在当前的环境
-  bool isExistInCurrentEnv(const std::string &name);
+  virtual bool isExistInCurrentEnv(const std::string &name) = 0;
 
-  //返回变量在当前环境的下表，如果不存在于当前环境，则返回-1
-  int getSymbolsIndex(const std::string &name);
+  //获取当前环境的指定值
+  virtual ObjectPtr getCurr(const std::string &name) = 0;
 
-  std::string info() override;
+  //向当前环境插入新的变量
+  virtual void putCurr(const std::string &name, ObjectPtr obj) = 0;
 
-private:
-  //定位变量所在环境，如果找不到则返回空
+protected:
+  //定位一个变量的位置
+  //如果该变量不存在于任何环境，则返回空指针
   EnvPtr locateEnv(const std::string &name);
 
-  //插入新的变量
-  void putNew(const std::string &name, ObjectPtr obj);
+  //获取最外层的环境
+  EnvPtr getOutestEnv();
 
-private:
-  //外层环境
+protected:
   EnvPtr outerEnv_ = nullptr;
+};
 
-  //当前环境的键值
-  std::map<std::string, size_t> index_;
+//----------------------使用map实现的环境
+//----------------------全局环境、对象环境
+class MapEnv: public CommonEnv {
+public:
+  MapEnv();
 
-  //存储值的数组
+  MapEnv(EnvPtr outer);
+
+  ObjectPtr get(const std::string &name) override;
+
+  ObjectPtr get(size_t index) override;
+
+  void put(const std::string &name, ObjectPtr obj) override;
+
+  void put(size_t index, ObjectPtr obj) override;
+
+  bool isExistInCurrentEnv(const std::string &name) override;
+
+  ObjectPtr getCurr(const std::string &name) override;
+  
+  void putCurr(const std::string &name, ObjectPtr obj) override;
+
+  std::string info() override;
+private:
+  std::map<std::string, ObjectPtr> values_;
+
+
+};
+
+//---------------------使用数组实现的环境
+//---------------------函数运行时的局部环境
+class ArrayEnv: public CommonEnv {
+public:
+  ArrayEnv(EnvPtr outer, FuncPtr function, size_t size);
+
+  ObjectPtr get(const std::string &name) override;
+
+  ObjectPtr get(size_t index) override;
+
+  void put(const std::string &name, ObjectPtr obj) override;
+
+  void put(size_t index, ObjectPtr obj) override;
+
+  bool isExistInCurrentEnv(const std::string &name) override;
+
+  ObjectPtr getCurr(const std::string &name) override;
+  
+  void putCurr(const std::string &name, ObjectPtr obj) override;
+
+  std::string info() override;
+private:
+  FuncPtr function_ = nullptr;
+
   std::vector<ObjectPtr> values_;
 };
 

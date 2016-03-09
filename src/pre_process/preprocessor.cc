@@ -50,7 +50,7 @@ void Preprocessor::DFSRequire(std::map<std::string, EnvPtr> &env,
 
   //如果当前unit还未被引用或解析过，那么为它创建环境(只发生在程序入口所在的unit)
   if (env.find(unitAbPath) == env.end())
-    env[unitAbPath] = std::make_shared<CommonEnv>();
+    env[unitAbPath] = std::make_shared<MapEnv>();
   EnvPtr currEnv = env[unitAbPath];
 
   RequireUnit requireUnit;  //引用unit
@@ -58,7 +58,7 @@ void Preprocessor::DFSRequire(std::map<std::string, EnvPtr> &env,
     std::string requireAbPath = currUnitAbPathPrefix + requireUnit.relativePath;
     //如果引用的unit还未被引用或解析过，那么为它创建环境
     if (env.find(requireAbPath) == env.end())
-      env[requireAbPath] = std::make_shared<CommonEnv>();
+      env[requireAbPath] = std::make_shared<MapEnv>();
 
     //把引用unit放入当前环境中
     currEnv->put(requireUnit.alias, env[requireAbPath]);

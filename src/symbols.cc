@@ -16,7 +16,7 @@ int Symbols::getRuntimeIndex(const std::string &name) {
   //b.如果该符号表不是函数的，那么把变量插入，返回-1
   //c.如果该符号表是函数的，且在当前环境找到，返回相应下标
   //d.如果该符号表是函数的，在当前环境找不到，尝试向上寻找，如果找到：
-  //  上层环境是全局返回-1，上层环境是函数环境返回-2;
+  //  上层环境是全局返回-1，上层环境是函数环境返回（-2 - 下标）
   //  否则在当前符号表插入并返回相应下标  
   
   if (name[0] == '$')
@@ -38,11 +38,15 @@ int Symbols::getRuntimeIndex(const std::string &name) {
     }
     else {
       if (varLocation->isFuncSymbols_)
-        return -2;
+        return (-2 - varLocation->getRuntimeIndex(name));
       else
         return -1;
     }
   }
+}
+
+size_t Symbols::getSymbolSize() const {
+  return symbolsIndex_.size();
 }
 
 SymbolsPtr Symbols::locateSymbol(SymbolsPtr symbol, const std::string &name) {

@@ -62,8 +62,11 @@ public:
 
   //获取局部变量在函数运行时环境的位置
   //如果该变量为全局变量，则返回-1
-  //如果该变量为闭包上层函数的临时变量，返回-2
+  //如果该变量为闭包上层函数的临时变量，返回（-2 - 下标），结果值 + 2可反向逆推
   int getRuntimeIndex(const std::string &name);
+
+  //获取符号表大小
+  size_t getSymbolSize() const;
 
 private:
   //定位符号所在的符号表，如果找不到返回空指针
@@ -79,4 +82,5 @@ private:
   //变量以及它保存的位置，即使是全局变量也会分配位置（这些位置信息是没用的）
   std::map<std::string, size_t> symbolsIndex_;
 };
+
 #endif

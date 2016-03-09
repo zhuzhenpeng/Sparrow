@@ -26,9 +26,9 @@ ObjectPtr ASTLeaf::eval(__attribute__((unused)) EnvPtr env) {
   throw ASTEvalException("error call: not evalable for AST leaf");
 }
 
-void ASTLeaf::preProcess(__attribute__((unused))SymbolsPtr symbols) {
-  throw ASTPreProcessException("error call: unimplement for AST preprocess");
-}
+//void ASTLeaf::preProcess(__attribute__((unused))SymbolsPtr symbols) {
+  //throw ASTPreProcessException("error call: unimplement for AST preprocess");
+//}
 
 TokenPtr ASTLeaf::getToken() const {
   return token_;
@@ -91,7 +91,33 @@ std::string IdTokenAST::info() {
 }
 
 ObjectPtr IdTokenAST::eval(EnvPtr env) {
-  return env->get(getId()); 
+  if (kind_ == IdKind::LOCAL) {
+    return env->get(index_);
+  }
+  else if (kind_ == IdKind::CLOSURE) {
+    EnvPtr outerFuncEnv = env->getOuterEnv();
+    if (outerFuncEnv == nullptr)
+      throw ASTEvalException("null outer function env");
+    return outerFuncEnv->get(index_);
+  }
+  else {
+    return env->get(getId());
+  } 
+}
+
+void IdTokenAST::assign(EnvPtr env, ObjectPtr value) {
+  if (kind_ == IdKind::LOCAL) {
+    env->put(index_, value);
+  }
+  else if (kind_ == IdKind::CLOSURE) {
+    EnvPtr outerFuncEnv = env->getOuterEnv();
+    if (outerFuncEnv == nullptr)
+      throw ASTEvalException("null outer function env");
+    outerFuncEnv->put(index_, value);
+  }
+  else {
+    env->put(getId(), value);
+  }
 }
 
 std::string IdTokenAST::getId() const {
@@ -103,12 +129,13 @@ void IdTokenAST::preProcess(SymbolsPtr symbols) {
   if (result == -1) {
     kind_ = IdKind::GLOBAL;
   }
-  else if (result == -2) {
-    kind_ = IdKind::CLOSURE;
-  }
-  else {
+  else if (result >= 0) {
     kind_ = IdKind::LOCAL;
     index_ = result;
+  }
+  else {
+    kind_ = IdKind::CLOSURE;
+    index_ = result + 2;    //该变量在上层环境的位置
   }
 }
 

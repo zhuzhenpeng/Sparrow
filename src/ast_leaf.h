@@ -25,7 +25,7 @@ public:
   ObjectPtr eval(EnvPtr env) override;
   
   //抛出调用异常
-  void preProcess(__attribute__((unused))SymbolsPtr symbols);
+  //void preProcess(__attribute__((unused))SymbolsPtr symbols) override;
 
   TokenPtr getToken() const;
 
@@ -53,7 +53,7 @@ public:
 
   //把数值填入常量池，并记录下相应的坐标
   //不需要用到入参符号表，而是全局整型数常量符号表
-  void preProcess(__attribute__((unused))SymbolsPtr symbols);
+  void preProcess(__attribute__((unused))SymbolsPtr symbols) override;
 };
 
 /*********************FloatToken对应的叶子节点************************/
@@ -67,7 +67,7 @@ public:
   
   //把数值填入常量池，并记录下相应的坐标
   //不需要用到入参符号表，而是的全局浮点数常量符号表
-  void preProcess(__attribute__((unused))SymbolsPtr symbols);
+  void preProcess(__attribute__((unused))SymbolsPtr symbols) override;
 };
 
 /*********************IdToken对应的叶子节点***************************/
@@ -84,10 +84,13 @@ public:
   ObjectPtr eval(EnvPtr env) override;
   std::string getId() const;
 
+  //赋值操作
+  void assign(EnvPtr env, ObjectPtr value);
+
   //检查该id指向变量的性质：全局变量、局部变量、闭包引用的外部函数变量
   //设置变量的属性
   //如果是局部变量，记录下该变量在运行时环境的位置信息
-  void preProcess(SymbolsPtr symbols);
+  void preProcess(SymbolsPtr symbols) override;
 
   IdKind kind_ = IdKind::UNKNOWN;
 };
@@ -102,7 +105,7 @@ public:
   
   //把字符串填入常量池，并记录下相应的坐标
   //不需要用到入参符号表，而是全局字符串常量符号表
-  void preProcess(__attribute__((unused))SymbolsPtr symbols);
+  void preProcess(__attribute__((unused))SymbolsPtr symbols) override;
 };
 
 #endif
