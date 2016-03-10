@@ -23,6 +23,7 @@
  * postfix    : "." "new" "(" args ")"
  *              | "." IDENTIFIER | "(" args ")" | "[" expr "]"
  * simple     : expr
+ * use        : "use" IDENTIFIER "=" IDENTIFIER
  * statement  : "if" condition block EOL {elif} ["else" block]
  *              | "while" condition block
  *              | "return" expr
@@ -36,7 +37,7 @@
  * member     : def | simple
  * class_body : "{" [member] {(";" | EOL) [member]} "}"
  * def_class  : "class" IDENTIFIER ["extends" IDENTIFIER ] class_body
- * program    : [def_class | def | statement] (";" | EOL | NULL)
+ * program    : [def_class | def | use | statement ] (";" | EOL | NULL)
  */
 
 /*语法规则备忘
@@ -44,7 +45,7 @@
  *    EOL Token吞掉；
  *    一般情况下，应该使用换行或者分号
  *
- * 2. simple其实可以被expr替代
+ * 2. simple和expr是一致的，但为了方便构造解析器，所以用simple取代简单的expr
  */
 
 class BasicParser {

@@ -103,6 +103,9 @@ ASTreePtr ASTFactory::getListInstance(ASTKind kind) {
     case ASTKind::LIST_ARRAY_LITERAL:
       result = std::make_shared<ArrayLiteralAST>();
       break;
+    case ASTKind::LIST_USING:
+      result = std::make_shared<UsingAST>();
+      break;
     default:
       throw ParseException("get null AST list instance");
       break;

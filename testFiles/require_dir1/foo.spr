@@ -1,5 +1,5 @@
 require bar as bar
-Bar = bar.Bar
+use Bar = bar.Bar
 
 $foo_value = 20
 

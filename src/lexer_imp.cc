@@ -102,6 +102,7 @@ void LexerImp::parseNextLine() {
   for (std::sregex_iterator it(line.begin(), line.end(), parsePattern_), endIt;
       it != endIt; ++it) {
     const std::smatch &results = *it;
+    //此句可打印出每个匹配的token内容
     //std::cout << "match: " << it->str() << std::endl;
 
     if (!results[1].matched)    //空格

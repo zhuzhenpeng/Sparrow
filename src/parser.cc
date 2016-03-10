@@ -96,6 +96,10 @@ void BasicParser::init() {
       Parser::rule(ASTKind::LIST_ARRAY_REF)->custom("[", true)->commomPR(expr)->custom("]", true)
       });
 
+  //use
+  auto use = Parser::rule(ASTKind::LIST_USING)->custom("use", true)->\
+               id(reserved_)->custom("=", true)->id(reserved_)->\
+               custom(".", true)->id(reserved_);
 
   //simple
   auto simple = Parser::rule(ASTKind::LIST_PRIMARY_EXPR)->commomPR(expr);
@@ -161,6 +165,7 @@ void BasicParser::init() {
   program_->orPR({
         defClass,
         def,
+        use,
         statement,
         Parser::rule(ASTKind::LIST_NULL_STMNT)
       })->orPR({

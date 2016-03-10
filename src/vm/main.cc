@@ -15,12 +15,12 @@
 std::unique_ptr<Lexer> lexer;
 std::unique_ptr<BasicParser> parser;
 
-//初始化每个环境，为环境添加上一些常见变量
-void init(EnvPtr env) {
+//初始化每个unit的符号表和环境，为环境添加上一些常见变量
+void init(EnvPtr env, SymbolsPtr symbols) {
   env->put("nil", std::make_shared<NoneObject>());
   env->put("true", std::make_shared<BoolObject>(true));
   env->put("false", std::make_shared<BoolObject>(false));
-  NativeFuncInitializer::initialize(env);     //每个模块都初始化原生函数
+  NativeFuncInitializer::initialize(env, symbols);     //每个模块都初始化原生函数
 }
 
 //后序遍历树并解析
@@ -35,8 +35,11 @@ void run(std::map<std::string, EnvPtr> &env, ParseOrderTreeNodePtr node) {
   if (env.find(node->absolutePath) == env.end())
     throw PreprocessException("fatal error, not found environment for " + node->absolutePath);
 
+  //初始化符号表和环境
   EnvPtr currEnv = env[node->absolutePath];
-  init(currEnv);
+  SymbolsPtr currSymbols = std::make_shared<Symbols>(nullptr, SymbolsKind::UNIT);
+  currEnv->setUnitSymbols(currSymbols);
+  init(currEnv, currSymbols);
 
   lexer->parseFile(node->absolutePath);
   while (lexer->peek(0)->getKind() != TokenKind::TK_EOF) {
@@ -50,8 +53,7 @@ void run(std::map<std::string, EnvPtr> &env, ParseOrderTreeNodePtr node) {
 
     //遍历运行树
     if (tree != nullptr) {
-      SymbolsPtr currTreeSymbols = std::make_shared<Symbols>(nullptr, false);
-      tree->preProcess(currTreeSymbols);
+      tree->preProcess(currSymbols);
 
       auto result = tree->eval(currEnv);
     }

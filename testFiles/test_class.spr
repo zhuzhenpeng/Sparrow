@@ -44,6 +44,11 @@ class Student extends Person {
   def set_age(age) {
     //不需要做任何事，使得修改age失效  
   }
+
+  //测试使用父类成员
+  def set_sex(sex) {
+    sex_ = sex  
+  }
 }
 
 z = Student.new("zzp", 22, "man", 123)
@@ -82,11 +87,27 @@ else {
 if z.get_age() != 22 {
   print("failed 5")  
 }
+else {
+  print("success 5")  
+}
 
 //访问同名方法
 z.set_age(100)
 if z.get_age() != 22 {
   print("failed 6")  
+}
+else {
+  print("success 6")  
+}
+
+//使用父类成员
+z.set_sex("boy")
+if z.sex_ != "boy" {
+  print("failed 7")  
+  print(z.sex_)
+}
+else {
+  print("success 7")
 }
 
 print("==========")

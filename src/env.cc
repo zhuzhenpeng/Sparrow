@@ -220,19 +220,28 @@ std::string MapEnv::info() {
 
 ArrayEnv::ArrayEnv(EnvPtr outer, FuncPtr function, size_t size): 
   CommonEnv(outer) {
+  if (function == nullptr)
+    throw ASTEvalException("function invalid while construct runtime env");
+
   function_ = function;
+  funcName_ = function->funcName();
+
   values_.clear();
   for (size_t i = 0; i < size; ++i)
     values_.push_back(nullptr);
-  if (function_ == nullptr)
-    throw ASTEvalException("function invalid while construct runtime env");
 }
 
 ObjectPtr ArrayEnv::get(const std::string &name) {
+  //类成员函数，self返回上级环境（对象环境）
+  if (name == "self")
+    return outerEnv_; 
+
   //如果是函数调用自己，则直接返回
-  if (name == function_->funcName()) {
+  if (name == funcName_) {
     //MyDebugger::print("call itself", __FILE__, __LINE__);
-    return function_;
+    if (function_.expired())
+      throw ASTEvalException("not found function while calling itself");
+    return function_.lock();
   }
 
   auto env = locateEnv(name);

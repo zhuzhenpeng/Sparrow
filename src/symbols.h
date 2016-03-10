@@ -5,11 +5,23 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <exception>
 
 /*符号表：
  * 在遍历AST时，保存常量在常量池的位置信息
  * 记录局部变量在函数运行时环境的位置信息
  */
+
+/**************************符号表异常******************************/
+class SymbolsException: public std::exception {
+public:
+  SymbolsException(const std::string &msg): msg_(msg) {}
+  const char* what() const noexcept override {
+    return msg_.c_str();
+  }
+private:
+  std::string msg_;
+};
 
 /**************************常量符号表******************************/
 template <typename T>
@@ -53,34 +65,50 @@ extern StrSymbolsPtr g_StrSymbols;
 
 
 /**************************通用符号表******************************/
+enum class SymbolsKind {
+  UNKNOWN, UNIT, CLASS, FUNCTION
+};
+
 class Symbols;
 using SymbolsPtr = std::shared_ptr<Symbols>;
 
 class Symbols {
 public:
-  Symbols(SymbolsPtr outer, bool isFunc);
+  Symbols(SymbolsPtr outer, SymbolsKind kind);
 
   //获取局部变量在函数运行时环境的位置
-  //如果该变量为全局变量，则返回-1
+  //如果该变量为全局变量或类变量，则返回-1
   //如果该变量为闭包上层函数的临时变量，返回（-2 - 下标），结果值 + 2可反向逆推
   int getRuntimeIndex(const std::string &name);
 
   //获取符号表大小
   size_t getSymbolSize() const;
 
+  //添加某个类的符号表
+  //只有当当前符号表时unit的符号表时才有效
+  void putClassSymbols(const std::string &className, SymbolsPtr symbols);
+
+  //获取某个类的符号表
+  //只有当当前符号表是unit的符号表时才有效
+  SymbolsPtr getClassSymbols(const std::string &className); 
+
 private:
   //定位符号所在的符号表，如果找不到返回空指针
   SymbolsPtr locateSymbol(SymbolsPtr symbol, const std::string &name);
   
 private:
-  //是否是函数的符号表
-  bool isFuncSymbols_;
+  //符号表类型
+  SymbolsKind kind_ = SymbolsKind::UNKNOWN;
 
   //上一层符号表
   SymbolsPtr outer_;
 
   //变量以及它保存的位置，即使是全局变量也会分配位置（这些位置信息是没用的）
   std::map<std::string, size_t> symbolsIndex_;
+
+  //类符号表<类名，符号表>
+  //只有当当前符号表是unit的符号表时才会使用该项
+  std::map<std::string, SymbolsPtr> classSymbols_;
 };
 
 #endif

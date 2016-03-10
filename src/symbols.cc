@@ -8,8 +8,8 @@ FloatSymbolsPtr g_FloatSymbols = std::make_shared<ConstantSymbols<double>>();
 StrSymbolsPtr g_StrSymbols = std::make_shared<ConstantSymbols<std::string>>();
 
 /**************************通用符号表******************************/
-Symbols::Symbols(SymbolsPtr outer, bool isFunc): 
-   isFuncSymbols_(isFunc), outer_(outer) {}
+Symbols::Symbols(SymbolsPtr outer, SymbolsKind kind):
+   kind_(kind), outer_(outer) {}
 
 int Symbols::getRuntimeIndex(const std::string &name) {
   //a.变量名是$开头的，返回-1
@@ -22,7 +22,7 @@ int Symbols::getRuntimeIndex(const std::string &name) {
   if (name[0] == '$')
     return -1;
 
-  if (!isFuncSymbols_) {
+  if (kind_ != SymbolsKind::FUNCTION) {
     symbolsIndex_.insert({name, -1});
     return -1;
   }
@@ -37,7 +37,7 @@ int Symbols::getRuntimeIndex(const std::string &name) {
       return index;
     }
     else {
-      if (varLocation->isFuncSymbols_)
+      if (varLocation->kind_ == SymbolsKind::FUNCTION)
         return (-2 - varLocation->getRuntimeIndex(name));
       else
         return -1;
@@ -47,6 +47,22 @@ int Symbols::getRuntimeIndex(const std::string &name) {
 
 size_t Symbols::getSymbolSize() const {
   return symbolsIndex_.size();
+}
+
+void Symbols::putClassSymbols(const std::string &className, 
+    SymbolsPtr symbols) {
+  if (kind_ != SymbolsKind::UNIT)
+    throw SymbolsException("cannot put class symbols into un-unit symbols");
+  classSymbols_.insert({className, symbols});
+}
+
+SymbolsPtr Symbols::getClassSymbols(const std::string &className) {
+  if (kind_ != SymbolsKind::UNIT)
+    throw SymbolsException("cannot get class symbols from un-unit symbols");
+  if (classSymbols_.find(className) != classSymbols_.end())
+    return classSymbols_[className];
+  else
+    throw SymbolsException("not found class: [" + className + "] symbols");
 }
 
 SymbolsPtr Symbols::locateSymbol(SymbolsPtr symbol, const std::string &name) {

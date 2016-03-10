@@ -2,9 +2,10 @@
 
 #include <iostream>
 
-void NativeFuncInitializer::initialize(EnvPtr global) {
+void NativeFuncInitializer::initialize(EnvPtr unit, SymbolsPtr symbols) {
   auto print = std::make_shared<NativePrint>();
-  global->put(print->name(), print);
+  unit->put(print->name(), print);
+  symbols->getRuntimeIndex(print->name());
 }
 
 NativePrint::NativePrint(): NativeFunction("print", 1) {}

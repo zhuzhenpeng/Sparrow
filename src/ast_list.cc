@@ -4,6 +4,7 @@
 
 #include <cmath>
 
+
 /**************************AST内部（非叶子）节点******************************/
 
 ASTList::ASTList(ASTKind kind, bool ignore): ASTree(kind), ignore_(ignore) {}
@@ -56,6 +57,70 @@ std::vector<ASTreePtr>& ASTList::children() {
 
 bool ASTList::ignore() const {
   return ignore_;
+}
+
+/**************************using导入类*************************************/
+UsingAST::UsingAST(): ASTList(ASTKind::LIST_USING, false) {}
+
+//把引用的类的符号表导入到当前模块的符号表中
+void UsingAST::preProcess(SymbolsPtr symbols) {
+  symbols->getRuntimeIndex(alias());
+}
+
+ObjectPtr UsingAST::eval(EnvPtr env) {
+  std::string referedUnitName = srcUnit();
+  std::string referedClassName = srcClassName();
+  //获取引用模块的符号表 
+  EnvPtr referedEnv = std::dynamic_pointer_cast<CommonEnv>(env->\
+                      get(referedUnitName));
+  SymbolsPtr classSymbols = referedEnv->getUnitSymbols()->\
+                            getClassSymbols(referedClassName);
+  if (classSymbols == nullptr) 
+    throw ASTEvalException("not found refered class: " + 
+        referedUnitName + "." + referedClassName + " symbols");
+  
+  //当前unit的符号表放入该类的符号表 
+  SymbolsPtr currSymbols = env->getUnitSymbols();
+  currSymbols->putClassSymbols(alias(), classSymbols);
+
+  //把引用类放入当前环境中
+  env->put(alias(), referedEnv->get(referedClassName));
+  return nullptr;
+}
+
+std::string UsingAST::info() {
+  return "using " + alias() + " as " + srcUnit() + "," + srcClassName();
+}
+
+std::string UsingAST::alias() {
+  if (children_.size() < 1)
+    throw ASTException("get using alias failed");
+  auto aliasTree = std::dynamic_pointer_cast<IdTokenAST>(children_[0]);
+  if (aliasTree == nullptr)
+    throw ASTException("invalid child for alias tree");
+  return aliasTree->getId();
+}
+
+std::string UsingAST::srcUnit() {
+  if (children_.size() < 2)
+    throw ASTException("get using source unit failed");
+  auto srcTree = std::dynamic_pointer_cast<IdTokenAST>(children_[1]);
+  if (srcTree == nullptr)
+    throw ASTException("invalid child for source unit tree");
+  return srcTree->getId();
+  //std::string refered = srcTree->getId();
+  //return refered.substr(0, refered.find("."));
+}
+
+std::string UsingAST::srcClassName() {
+  if (children_.size() < 3)
+    throw ASTException("get using source class name failed");
+  auto srcTree = std::dynamic_pointer_cast<IdTokenAST>(children_[2]);
+  if (srcTree == nullptr)
+    throw ASTException("invalid child for source class name tree");
+  return srcTree->getId();
+  //std::string refered = srcTree->getId();
+  //return refered.substr(refered.find(".") + 1, refered.size());
 }
 
 /**************************元表达式****************************************/
@@ -668,7 +733,7 @@ ObjectPtr DefStmntAST::eval(EnvPtr env) {
 size_t DefStmntAST::getLocalVarSize(SymbolsPtr outer, 
     ParameterListPtr params, BlockStmntPtr block) {
   //运行时符号表
-  SymbolsPtr runTimeSymbols = std::make_shared<Symbols>(outer, true);
+  SymbolsPtr runTimeSymbols = std::make_shared<Symbols>(outer, SymbolsKind::FUNCTION);
   params->preProcess(runTimeSymbols);
   block->preProcess(runTimeSymbols);
   return runTimeSymbols->getSymbolSize();
@@ -757,7 +822,7 @@ ObjectPtr ClassBodyAST::eval(EnvPtr env) {
   return nullptr;
 }
 
-////ClassStmnt
+//----------------ClassStmnt
 
 ClassStmntAST::ClassStmntAST(): ASTList(ASTKind::LIST_CLASS_STMNT, false) {}
 
@@ -788,10 +853,24 @@ ClassBodyPtr ClassStmntAST::body() {
 }
 
 void ClassStmntAST::preProcess(SymbolsPtr symbols) {
-  //auto result = symbols->getRuntimeIndex(name());
-  //MyDebugger::print(result, __FILE__, __LINE__);
-  symbols->getRuntimeIndex("super");
-  SymbolsPtr classSymbols = std::make_shared<Symbols>(symbols, false);
+  symbols->getRuntimeIndex(name());
+  SymbolsPtr classSymbols = nullptr;
+
+  //如果有父类，那么父类的符号表作为上层符号表
+  std::string superClass = superClassName();
+  if (!superClass.empty()) {
+    SymbolsPtr superSymbols = symbols->getClassSymbols(superClass);
+    classSymbols = std::make_shared<Symbols>(superSymbols, 
+                                              SymbolsKind::CLASS);
+    classSymbols->getRuntimeIndex("super");
+  }
+  else {
+    classSymbols = std::make_shared<Symbols>(symbols, SymbolsKind::CLASS);
+  }
+
+  classSymbols->getRuntimeIndex("self");
+  //把类的符号信息放入当前unit中
+  symbols->putClassSymbols(name(), classSymbols);
   body()->preProcess(classSymbols);
 }
 
@@ -887,6 +966,7 @@ void NewAST::initInstance(ClassInfoPtr ci, EnvPtr env) {
   //递归由父类往下初始化
   if (ci->superClass() != nullptr) {
     superEnv = std::make_shared<MapEnv>(ci->superClass()->getEnvitonment());
+    //实现super父类环境的语义
     env->put("super", superEnv);
     initInstance(ci->superClass(), superEnv);
   }

@@ -8,6 +8,9 @@
 #include <map>
 #include <vector>
 #include <exception>
+#include <memory>
+
+#include "symbols.h"
 
 class ParameterListAST;
 class BlockStmntAST;
@@ -265,6 +268,14 @@ public:
   //向当前环境插入新的变量
   virtual void putCurr(const std::string &name, ObjectPtr obj) = 0;
 
+  SymbolsPtr getUnitSymbols() const {
+    return unitSymbols_;
+  }
+
+  void setUnitSymbols(SymbolsPtr symbols) {
+    unitSymbols_ = symbols;
+  }
+
 protected:
   //定位一个变量的位置
   //如果该变量不存在于任何环境，则返回空指针
@@ -275,6 +286,9 @@ protected:
 
 protected:
   EnvPtr outerEnv_ = nullptr;
+  
+  //当前环境的符号表
+  SymbolsPtr unitSymbols_;
 };
 
 //----------------------使用map实现的环境
@@ -300,9 +314,9 @@ public:
   void putCurr(const std::string &name, ObjectPtr obj) override;
 
   std::string info() override;
+
 private:
   std::map<std::string, ObjectPtr> values_;
-
 
 };
 
@@ -328,7 +342,9 @@ public:
 
   std::string info() override;
 private:
-  FuncPtr function_ = nullptr;
+  std::weak_ptr<FuncObject> function_;
+
+  std::string funcName_;
 
   std::vector<ObjectPtr> values_;
 };

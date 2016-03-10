@@ -2,11 +2,12 @@
 #define SPARROW_NATIVE_FUNC_H_
 
 #include "env.h"
+#include "symbols.h"
 
 //初始化
 class NativeFuncInitializer {
 public:
-  static void initialize(EnvPtr global);
+  static void initialize(EnvPtr unit, SymbolsPtr symbols);
 };
 
 //打印函数

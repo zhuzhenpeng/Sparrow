@@ -86,7 +86,8 @@ enum class ASTKind {
   LIST_NEW = 2020,
   LIST_RETURN = 2021,
   LIST_ARRAY_LITERAL = 2022,
-  LIST_ARRAY_REF = 2023 
+  LIST_ARRAY_REF = 2023,
+  LIST_USING = 2024,
 };
 
 /*********************AST的基类，用于定义接口****************************/

@@ -67,6 +67,28 @@ protected:
   bool ignore_;
 };
 
+/**************************using导入类*************************************/
+class UsingAST: public ASTList {
+public:
+  UsingAST();
+
+  void preProcess(SymbolsPtr symbols) override;
+
+  ObjectPtr eval(EnvPtr env) override;
+
+  std::string info() override;
+
+private:
+  //导入的类的别名
+  std::string alias();
+
+  //导入模块源
+  std::string srcUnit();
+
+  //导入的类名
+  std::string srcClassName();
+};
+
 /**************************元表达式****************************************/
 class PostfixAST;
 class PrimaryExprAST: public ASTList {
@@ -84,6 +106,7 @@ public:
   
   //计算子表达式，如a.b.c则从左往右依次计算
   ObjectPtr evalSubExpr(EnvPtr env, size_t nest);
+
 };
 using PrimaryExprPtr = std::shared_ptr<PrimaryExprAST>;
 
