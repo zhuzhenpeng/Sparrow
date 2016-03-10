@@ -53,14 +53,29 @@ if z.name_ != "Student" {
   print("failed 1")  
   print(z.name_)
 }
+else {
+  print("success 1")  
+}
+
 if z.age_ != 22 {
   print("failed 2")  
 }
+else {
+  print("success 2")  
+}
+
 if z.sex_ != "man" {
   print("failed 3")  
 }
+else {
+  print("success 3")
+}
+
 if z.student_id_ != 123 {
   print("failed 4")  
+}
+else {
+  print("success 4")  
 }
 
 //调用父类方法

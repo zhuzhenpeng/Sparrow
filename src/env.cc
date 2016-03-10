@@ -230,8 +230,10 @@ ArrayEnv::ArrayEnv(EnvPtr outer, FuncPtr function, size_t size):
 
 ObjectPtr ArrayEnv::get(const std::string &name) {
   //如果是函数调用自己，则直接返回
-  if (name == function_->funcName())
+  if (name == function_->funcName()) {
+    //MyDebugger::print("call itself", __FILE__, __LINE__);
     return function_;
+  }
 
   auto env = locateEnv(name);
   if (env == nullptr)
@@ -246,9 +248,10 @@ ObjectPtr ArrayEnv::get(size_t index) {
   return values_[index];
 }
 
-void ArrayEnv::put(const std::string &__attribute__((unused))name, 
-    ObjectPtr __attribute__((unused))obj) {
-  throw ASTEvalException("can not put object by name in array environment");
+void ArrayEnv::put(const std::string &name, ObjectPtr obj) {
+  if (outerEnv_ == nullptr)
+    throw ASTEvalException("not found outer env for array env");
+  outerEnv_ ->put(name, obj);
 }
 
 void ArrayEnv::put(size_t index, ObjectPtr obj) {

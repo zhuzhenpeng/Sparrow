@@ -92,15 +92,19 @@ std::string IdTokenAST::info() {
 
 ObjectPtr IdTokenAST::eval(EnvPtr env) {
   if (kind_ == IdKind::LOCAL) {
+    //MyDebugger::print("local", __FILE__, __LINE__);
+    //MyDebugger::print(getId());
     return env->get(index_);
   }
   else if (kind_ == IdKind::CLOSURE) {
     EnvPtr outerFuncEnv = env->getOuterEnv();
     if (outerFuncEnv == nullptr)
       throw ASTEvalException("null outer function env");
+    //MyDebugger::print("closure", __FILE__, __LINE__);
     return outerFuncEnv->get(index_);
   }
   else {
+    //MyDebugger::print("global", __FILE__, __LINE__);
     return env->get(getId());
   } 
 }

@@ -89,6 +89,7 @@ ObjectPtr PrimaryExprAST::evalSubExpr(EnvPtr env, size_t nest) {
     result = postfix(nest)->eval(env, caller);
   }
   else {
+    //MyDebugger::print("--", __FILE__, __LINE__);
     result = operand()->eval(env);
   }
   return result;
@@ -653,6 +654,7 @@ std::string DefStmntAST::info() {
 }
 
 void DefStmntAST::preProcess(SymbolsPtr symbols) {
+  symbols->getRuntimeIndex(funcName());
   localVarSize_ = getLocalVarSize(symbols, parameterList(), block());
 }
 
@@ -783,6 +785,14 @@ ClassBodyPtr ClassStmntAST::body() {
   if (body == nullptr)
     throw ASTEvalException("get class body failed");
   return body;
+}
+
+void ClassStmntAST::preProcess(SymbolsPtr symbols) {
+  //auto result = symbols->getRuntimeIndex(name());
+  //MyDebugger::print(result, __FILE__, __LINE__);
+  symbols->getRuntimeIndex("super");
+  SymbolsPtr classSymbols = std::make_shared<Symbols>(symbols, false);
+  body()->preProcess(classSymbols);
 }
 
 ObjectPtr ClassStmntAST::eval(EnvPtr env) {

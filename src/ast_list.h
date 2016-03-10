@@ -74,7 +74,7 @@ public:
   PrimaryExprAST();
   ObjectPtr eval(EnvPtr env) override;
 
-  //nest表示从外往内数的第几层，如果是最外层，则为0
+  //nest表示从外往内数的第几层，如果是最外(右)层，则为0
   //用于.作用域访问或数组的下表访问
   std::shared_ptr<PostfixAST> postfix(size_t nest);
   bool hasPostfix(size_t nest);
@@ -337,6 +337,9 @@ public:
 
   //返回类定义体
   ClassBodyPtr body();
+
+  //将类名放到全局符号表中
+  void preProcess(SymbolsPtr symbols) override;
 
   ObjectPtr eval(EnvPtr env) override;
 
