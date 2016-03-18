@@ -26,10 +26,6 @@ ObjectPtr ASTLeaf::eval(__attribute__((unused)) EnvPtr env) {
   throw ASTEvalException("error call: not evalable for AST leaf");
 }
 
-//void ASTLeaf::preProcess(__attribute__((unused))SymbolsPtr symbols) {
-  //throw ASTPreProcessException("error call: unimplement for AST preprocess");
-//}
-
 TokenPtr ASTLeaf::getToken() const {
   return token_;
 }
@@ -98,6 +94,8 @@ ObjectPtr IdTokenAST::eval(EnvPtr env) {
     return env->get(index_);
   }
   else if (kind_ == IdKind::CLOSURE) {
+    //闭包变量的环境的上层环境是函数运行时局部环境，即使函数结束运行了
+    //还是存储着，直接引用即可
     EnvPtr outerFuncEnv = env->getOuterEnv();
     if (outerFuncEnv == nullptr)
       throw ASTEvalException("null outer function env");

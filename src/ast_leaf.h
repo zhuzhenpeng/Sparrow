@@ -24,9 +24,6 @@ public:
   //抛出调用异常
   ObjectPtr eval(EnvPtr env) override;
   
-  //抛出调用异常
-  //void preProcess(__attribute__((unused))SymbolsPtr symbols) override;
-
   TokenPtr getToken() const;
 
   void setIndex(size_t index);

@@ -157,6 +157,7 @@ public:
     return "native function: " + funcName_;
   }
 
+  //所有的原生函数子类通过实现该接口实现其功能
   virtual ObjectPtr invoke(const std::vector<ObjectPtr> &params) = 0;
 
 protected:

@@ -53,6 +53,7 @@ void run(std::map<std::string, EnvPtr> &env, ParseOrderTreeNodePtr node) {
 
     //遍历运行树
     if (tree != nullptr) {
+      //预处理生成符号表
       tree->preProcess(currSymbols);
 
       auto result = tree->eval(currEnv);
