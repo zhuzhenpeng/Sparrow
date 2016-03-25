@@ -1,0 +1,120 @@
+#ifndef SPARROW_VM_H_
+#define SPARROW_VM_H_
+
+/**虚拟机运行时所需的组件
+ * 1.栈帧，每次发生函数调用时，都将一个栈帧压入调用栈，栈帧存储着该函数运行时局部变量，
+ *   指令计数器，以及对函数字节码的引用
+ * 2.调用栈，存储栈帧的地方
+ * 3.操作数栈，任何一个指令的操作数都存放在此
+ * 4.字节码解释器
+ */
+
+#include <string>
+#include <exception>
+#include <stack>
+#include <memory>
+#include "../env.h"
+
+/*****************************异常************************************/
+class VMException: std::exception {
+public:
+  VMException(const std::string &msg): errMsg_(msg) {}
+  const char* what() const noexcept {
+    return errMsg_.c_str();
+  }
+private:
+  std::string errMsg_;
+};
+
+/*****************************栈帧************************************/
+
+class StackFrame {
+public:
+  StackFrame(ArrayEnvPtr runtimeEnv, CodePtr codes);
+
+  //获取当前的指令，计数器加一
+  unsigned getCode();
+
+  //设置计数器
+  void setIp(unsigned ip);
+
+private:
+  //运行时局部环境
+  ArrayEnvPtr env_;
+
+  //指令计数器
+  unsigned ip_;
+
+  //字节码
+  CodePtr codes_;
+
+  //字节码的长度
+  unsigned codeSize_;
+};
+using StackFramePtr = std::shared_ptr<StackFrame>;
+
+/****************************调用栈*********************************/
+
+class CallStack {
+public:
+  CallStack(); 
+
+  //是否为空
+  bool empty() const;
+
+  //压入
+  void push(StackFramePtr stackFrame);
+
+  //返回栈顶元素
+  StackFramePtr top() const;
+
+  //弹出栈顶元素
+  void pop();
+
+private:
+  std::stack<StackFramePtr> stack_;
+};
+using CallStackPtr = std::shared_ptr<CallStack>;
+
+/************************操作数栈*********************************/
+
+class OperandStack {
+public:
+  OperandStack();
+
+  //是否为空
+  bool empty() const;
+
+  //清空栈
+  void clear();
+
+  //压入栈
+  void push(ObjectPtr obj);
+
+  //返回栈顶元素
+  ObjectPtr top() const;
+
+  //弹出栈顶元素
+  void pop();
+
+private:
+  std::stack<ObjectPtr> stack_;
+};
+using OperandStackPtr = std::shared_ptr<OperandStack>;
+
+/***********************字节码解释器****************************/
+
+class ByteCodeInterpreter {
+public:
+  ByteCodeInterpreter(CallStackPtr callStack, OperandStackPtr operandStack);
+
+  void run();
+private: 
+  CallStackPtr callStack_;
+
+  OperandStackPtr operandStack_;
+
+  StackFramePtr stackFrame_;
+};
+
+#endif

@@ -11,6 +11,7 @@
 #include <memory>
 
 #include "symbols.h"
+#include "vm/code.h"
 
 class ParameterListAST;
 class BlockStmntAST;
@@ -104,14 +105,29 @@ using BoolObjectPtr = std::shared_ptr<BoolObject>;
 
 /*****************************函数 类型******************************/
 
+class FuncObject;
+using FuncPtr = std::shared_ptr<FuncObject>;
 class FuncObject: public Object, public std::enable_shared_from_this<FuncObject>{
+
+public:
+  //指向当前正在编译的函数的指针
+  static FuncPtr complingFunc;
+
+  //获取当前正在编译的函数
+  static FuncPtr getCurrCompilingFunc();
+
 public:
   FuncObject(const std::string &functionName, size_t size, 
       std::shared_ptr<ParameterListAST> params, 
       std::shared_ptr<BlockStmntAST> block, EnvPtr env);
 
+  //获得形参AST
   std::shared_ptr<ParameterListAST> params() const;
+
+  //获得函数块AST
   std::shared_ptr<BlockStmntAST> block() const;
+
+  //获取运行时环境
   EnvPtr runtimeEnv();
   
   std::string info() override {
@@ -121,6 +137,13 @@ public:
   std::string funcName() const{
     return funcName_;
   }
+
+  CodePtr getCodes() {
+    return codes_;
+  }
+
+  //对于函数运行时所需的非局部变量，记录下它的名字并分配一个下标
+  unsigned getRuntimeIndex(const std::string &name);
 
 private:
   std::string funcName_;
@@ -135,8 +158,13 @@ private:
 
   std::shared_ptr<ParameterListAST> params_;
   std::shared_ptr<BlockStmntAST> block_;
+
+  //函数编译后的字节码
+  CodePtr codes_;
+
+  //非局部变量名称
+  std::vector<std::string> outerNames_;
 };
-using FuncPtr = std::shared_ptr<FuncObject>;
 
 /****************************原生函数********************************/
 
@@ -318,8 +346,8 @@ public:
 
 private:
   std::map<std::string, ObjectPtr> values_;
-
 };
+using MapEnvPtr = std::shared_ptr<MapEnv>;
 
 //---------------------使用数组实现的环境
 //---------------------函数运行时的局部环境
@@ -349,6 +377,7 @@ private:
 
   std::vector<ObjectPtr> values_;
 };
+using ArrayEnvPtr = std::shared_ptr<ArrayEnv>;
 
 /********************************异常******************************/
 

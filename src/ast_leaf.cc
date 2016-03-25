@@ -1,6 +1,7 @@
 #include "ast_leaf.h"
 
 #include "symbols.h"
+#include "ast_list.h"
 
 /************************AST叶节点，没有子节点**************************/
 
@@ -58,6 +59,11 @@ void IntTokenAST::preProcess(__attribute__((unused))SymbolsPtr symbols) {
   index_ = g_IntSymbols->getIndex(getValue());
 }
 
+void IntTokenAST::compile() {
+  auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  codes->iconst(index_);
+}
+
 /*********************FloatToken对应的叶子节点************************/
 
 FloatTokenAST::FloatTokenAST(TokenPtr token): ASTLeaf(ASTKind::LEAF_FLOAT, token) {}
@@ -76,6 +82,11 @@ double FloatTokenAST::getValue() const {
 
 void FloatTokenAST::preProcess(__attribute__((unused))SymbolsPtr symbols) {
   index_ = g_FloatSymbols->getIndex(getValue());
+}
+
+void FloatTokenAST::compile() {
+  auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  codes->fconst(index_);
 }
 
 /*********************IdToken对应的叶子节点***************************/
@@ -142,6 +153,36 @@ void IdTokenAST::preProcess(SymbolsPtr symbols) {
   }
 }
 
+void IdTokenAST::compile() {
+  auto func = FuncObject::getCurrCompilingFunc();
+  auto codes = func->getCodes();
+  if (kind_ == IdKind::GLOBAL) {
+    unsigned index = func->getRuntimeIndex(getId());
+    codes->gload(index);
+  } 
+  else if (kind_ == IdKind::CLOSURE) {
+    codes->cload(index_);
+  }
+  else {
+    codes->load(index_);
+  }
+}
+
+void IdTokenAST::complieAssign() {
+  auto func = FuncObject::getCurrCompilingFunc();
+  auto codes = func->getCodes();
+  if (kind_ == IdKind::GLOBAL) {
+    unsigned index = func->getRuntimeIndex(getId());
+    codes->gstore(index);
+  } 
+  else if (kind_ == IdKind::CLOSURE) {
+    codes->cstore(index_);
+  }
+  else {
+    codes->store(index_);
+  }
+}
+
 /*********************StrToken对应的叶子节点*************************/
 
 StrTokenAST::StrTokenAST(TokenPtr token): ASTLeaf(ASTKind::LEAF_STR, token) {}
@@ -160,4 +201,9 @@ std::string StrTokenAST::getContent() const {
 
 void StrTokenAST::preProcess(__attribute__((unused))SymbolsPtr symbols) {
   index_ = g_StrSymbols->getIndex(getContent());
+}
+
+void StrTokenAST::compile() {
+  auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  codes->sconst(index_);
 }

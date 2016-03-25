@@ -51,6 +51,8 @@ public:
   //把数值填入常量池，并记录下相应的坐标
   //不需要用到入参符号表，而是全局整型数常量符号表
   void preProcess(__attribute__((unused))SymbolsPtr symbols) override;
+
+  void compile() override;
 };
 
 /*********************FloatToken对应的叶子节点************************/
@@ -65,6 +67,8 @@ public:
   //把数值填入常量池，并记录下相应的坐标
   //不需要用到入参符号表，而是的全局浮点数常量符号表
   void preProcess(__attribute__((unused))SymbolsPtr symbols) override;
+
+  void compile() override;
 };
 
 /*********************IdToken对应的叶子节点***************************/
@@ -89,6 +93,10 @@ public:
   //如果是局部变量，记录下该变量在运行时环境的位置信息
   void preProcess(SymbolsPtr symbols) override;
 
+  void compile() override;
+
+  void complieAssign();
+
   IdKind kind_ = IdKind::UNKNOWN;
 };
 
@@ -103,6 +111,8 @@ public:
   //把字符串填入常量池，并记录下相应的坐标
   //不需要用到入参符号表，而是全局字符串常量符号表
   void preProcess(__attribute__((unused))SymbolsPtr symbols) override;
+
+  void compile() override;
 };
 
 #endif

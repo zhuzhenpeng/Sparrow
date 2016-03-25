@@ -38,6 +38,10 @@ enum Instruction {
   //将结果压入栈中或将栈顶元素弹出对其进行赋值
   GLOAD, GSTORE, 
 
+  //操作闭包变量，根据下表从局部环境的上层环境查找
+  //将结果压入栈或将栈顶元素弹出对其进行赋值
+  CLOAD, CSTORE,
+
   //操作局部变量，根据下标从局部环境中查找，
   //将结果压入栈中或将栈顶元素弹出对其进行赋值
   LOAD, STORE, 
@@ -51,6 +55,9 @@ enum Instruction {
   
   //弹出栈顶元素的值
   POP,
+
+  //弹出栈顶元素，取其负值并压入栈
+  NEG,
   
   //中止程序
   HALT
@@ -87,7 +94,7 @@ public:
 
   unsigned fconst(unsigned index);
 
-  unsigned call(unsigned index);
+  unsigned call(unsigned paramNum);
 
   unsigned ret();
 
@@ -101,6 +108,10 @@ public:
 
   unsigned gstore(unsigned index);
 
+  unsigned cload(unsigned index);
+
+  unsigned cstore(unsigned index);
+
   unsigned load(unsigned index);
 
   unsigned store(unsigned index);
@@ -111,11 +122,24 @@ public:
 
   unsigned pop();
 
+  unsigned neg();
+
   unsigned halt();
 
   //获取代码
-  const std::vector<unsigned> &getCodes() const;
+  std::vector<unsigned> &getCodes();
 
+  //获取编译时使用的下一个位置
+  unsigned nextPosition();
+
+  //设置某个位置的字节码
+  void set(size_t index, unsigned code);
+
+  //获取某个位置的字节码
+  unsigned get(size_t index) const;
+
+  //返回字节码的长度
+  unsigned getCodeSize();
 private:
   unsigned push(unsigned code);
 

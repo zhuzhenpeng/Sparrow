@@ -32,6 +32,11 @@ public:
   ASTEvalException(const std::string &msg): ASTException(msg) {}
 };
 
+//编译时异常
+class ASTCompilingException: public ASTException {
+public:
+  ASTCompilingException(const std::string &msg): ASTException(msg) {}
+};
 
 /******************************AST迭代器接口*****************************/
 template <typename Item>
@@ -113,8 +118,13 @@ public:
   //解析执行该节点并返回结果值，入参为环境变量
   virtual ObjectPtr eval(EnvPtr env) = 0;
 
-  //编译、运行预处理，为某些节点生成所需的上下文信息，比如符号表
+  //预处理，为某些节点生成所需的上下文信息，比如符号表
   virtual void preProcess(__attribute__((unused))SymbolsPtr symbols) {
+    //默认情况下不需要进行任何处理
+  }
+
+  //编译生成机器代码
+  virtual void compile() {
     //默认情况下不需要进行任何处理
   }
 

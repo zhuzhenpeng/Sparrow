@@ -1,8 +1,9 @@
 #include "ast_list.h"
 #include "ast_leaf.h"
-#include "debugger.h"
 
 #include <cmath>
+#include "env.h"
+#include "debugger.h"
 
 
 /**************************AST内部（非叶子）节点******************************/
@@ -160,6 +161,20 @@ ObjectPtr PrimaryExprAST::evalSubExpr(EnvPtr env, size_t nest) {
   return result;
 }
 
+void PrimaryExprAST::compile() {
+  compileSubExpr(0);
+}
+
+void PrimaryExprAST::compileSubExpr(size_t nest) {
+  if (hasPostfix(nest)) {
+    compileSubExpr(nest + 1);
+    postfix(nest)->compile();
+  }
+  else {
+    operand()->compile();
+  }
+}
+
 /**************************负值表达式*************************************/
 
 NegativeExprAST::NegativeExprAST(): ASTList(ASTKind::LIST_NEGETIVE_EXPR, false) {}
@@ -179,8 +194,14 @@ ObjectPtr NegativeExprAST::eval(EnvPtr env) {
     return std::make_shared<FloatObject>(-positive);
   }
   else {
-    throw ASTEvalException("bad type for -");
+    throw ASTEvalException("bad type for negative expr to eval");
   }
+}
+
+void NegativeExprAST::compile() {
+  children_[1]->compile();
+  auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  codes->neg();
 }
 
 /***********************二元表达式******************************************/
@@ -213,6 +234,24 @@ ObjectPtr BinaryExprAST::eval(EnvPtr env) {
     ObjectPtr leftValue = leftFactor()->eval(env);
     ObjectPtr rightValue = rightFactor()->eval(env);
     return otherOp(leftValue, op, rightValue);
+  }
+}
+
+void BinaryExprAST::compile() {
+  std::string op = getOperator();
+  if (op == "=") {
+    auto leftTree = leftFactor();
+    if (leftTree->kind_ != ASTKind::LEAF_Id)
+      throw ASTCompilingException("invalid left factor for assign");
+    auto id = std::dynamic_pointer_cast<IdTokenAST>(leftTree);
+    //先编译右子树，在编译左子树
+    rightFactor()->compile();
+    id->complieAssign();
+  }
+  else {
+    leftFactor()->compile();
+    rightFactor()->compile();
+    compileOtherOp(op);
   }
 }
 
@@ -389,6 +428,34 @@ void BinaryExprAST::checkValid() {
   }
 }
 
+void BinaryExprAST::compileOtherOp(const std::string &op) {
+  auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  if (op == "+")
+    codes->add();
+  else if (op == "-")
+    codes->sub();
+  else if (op == "*")
+    codes->mul();
+  else if (op == "/")
+    codes->div();
+  else if (op == "%")
+    codes->mod();
+  else if (op == "==")
+    codes->eq();
+  else if (op == "<")
+    codes->lt();
+  else if (op == ">")
+    codes->bt();
+  else if (op == "<=")
+    codes->le();
+  else if (op == ">=")
+    codes->be();
+  else if (op == "!=")
+    codes->neq();
+  else
+    throw ASTCompilingException("unknown operation for compiling: " + op);
+}
+
 /*****************************条件判断**********************************/
 
 ConditionStmntAST::ConditionStmntAST(): ASTList(ASTKind::LIST_CONDITION_STMNT, false) {}
@@ -554,20 +621,16 @@ ObjectPtr IfStmntAST::eval(EnvPtr env) {
   auto ifCond = condition()->eval(env);
   if (ifCond->kind_ != ObjKind::BOOL)
     throw ASTEvalException("error type for if condition part");
+
+  unsigned elifBlockNum = 0;
   if (std::static_pointer_cast<BoolObject>(ifCond)->b_) {
     return thenBlock()->eval(env);
   }
-  else if (children_.size() >= 3 && children_[2]->kind_ == ASTKind::LIST_ELIF_STMNT) {
-    for (size_t i = 2; i < children_.size(); ++i) {
-      //避免执行了else逻辑，每次遍历要判断下AST类型
-      if (children_[i]->kind_ == ASTKind::LIST_ELIF_STMNT) {
-        auto result = children_[i]->eval(env);
-        if (result != nullptr)
-          return result;
-      }
-      else {
-        break;
-      }
+  else if ((elifBlockNum = countElifBlock()) != 0) {
+    for(size_t index = 2, count = 0; count < elifBlockNum; ++index, ++count) {
+      auto result = children_[index]->eval(env);
+      if (result != nullptr)  //结果不为空，说明执行了相应的elif块
+        return result;
     }
   }
 
@@ -577,6 +640,76 @@ ObjectPtr IfStmntAST::eval(EnvPtr env) {
     return nullptr;
   else
     return eb->eval(env);
+}
+
+void IfStmntAST::compile() {
+  CodePtr codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  condition()->compile();
+  ifBrfPosition = codes->brf(0);   //0只是个占位符，需要代码全部编译完才能确定位置
+  thenBlock()->compile();
+  blockBrPosition = codes->br(0);
+  
+  unsigned elifBlockNum = countElifBlock();
+  if (elifBlockNum) {
+    for(size_t index = 2, count = 0; count < elifBlockNum; ++index, ++count)
+      children_[index]->compile();
+  }
+  auto eb = elseBlock();
+  if (eb == nullptr) {
+    elseblockPosition = 0;    //elseblock起始地址为0作为没有elseblock的标志
+    endPosition = codes->nextPosition();
+  }
+  else {
+    elseblockPosition = codes->nextPosition();
+    eb->compile();
+    endPosition = codes->nextPosition();
+  }
+
+  /***把占位符修正过来***/
+  //1. ifBrfPosition跳转到elif（如果有），否则else（如果有），否则跳转到结束位置
+  if (elifBlockNum) {
+    ElifStmntPtr elif = std::dynamic_pointer_cast<ElifStmntAST>(children_[2]);
+    codes->set(ifBrfPosition, elif->conditionPosition);
+  }
+  else if (elseblockPosition != 0) {
+    codes->set(ifBrfPosition, elseblockPosition); 
+  }
+  else {
+    codes->set(ifBrfPosition, endPosition);
+  }
+  //2. blockBrPosition跳转到结束位置
+  codes->set(blockBrPosition, endPosition);
+  //3. 每个elif块，都修正它们的elifBrfPostiion，以及blockBrPositon，逻辑同上
+  for(size_t index = 2, count = 0; count < elifBlockNum; ++index, ++count) {
+    ElifStmntPtr elif = std::dynamic_pointer_cast<ElifStmntAST>(children_[index]);
+    if (elifBlockNum - count > 1) {
+      //有下一个elif块
+      ElifStmntPtr nextElif = std::dynamic_pointer_cast<ElifStmntAST>(children_[index+1]);
+      codes->set(elif->elifBrfPosition, nextElif->conditionPosition);
+    }
+    else if (elseblockPosition != 0) {
+      codes->set(elif->elifBrfPosition, elseblockPosition);
+    }
+    else {
+      codes->set(elif->elifBrfPosition, endPosition);
+    }
+
+    codes->set(elif->blockBrPosition, endPosition);
+  }//end of for
+}
+
+unsigned IfStmntAST::countElifBlock() {
+  if (children_.size() >= 3 && children_[2]->kind_ == ASTKind::LIST_ELIF_STMNT) {
+    int result = 0;
+    for(size_t i = 2; i < children_.size(); ++i) {
+      if(children_[i]->kind_ == ASTKind::LIST_ELIF_STMNT)
+        ++result;
+    }
+    return result;
+  }
+  else {
+    return 0;
+  }
 }
 
 /******************************elif块**********************************/
@@ -616,6 +749,15 @@ ObjectPtr ElifStmntAST::eval(EnvPtr env) {
   else {
     return nullptr;
   }
+}
+
+void ElifStmntAST::compile() {
+  CodePtr codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  conditionPosition = codes->nextPosition();
+  condition()->compile();
+  elifBrfPosition = codes->brf(0);  //0是占位符
+  thenBlock()->compile();
+  blockBrPosition = codes->br(0);
 }
 
 /****************************while块***********************************/
@@ -659,6 +801,17 @@ ObjectPtr WhileStmntAST::eval(EnvPtr env) {
       result = body()->eval(env);
     }
   }
+}
+
+void WhileStmntAST::compile() {
+  CodePtr codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  unsigned conditionPosition = codes->nextPosition();
+  condition()->compile();
+  unsigned whileBrfPosition = codes->brf(0);  //0是占位符
+  body()->compile();
+  codes->br(conditionPosition);
+  unsigned endPosition = codes->nextPosition();
+  codes->set(whileBrfPosition, endPosition);
 }
 
 /****************************Null块************************************/
@@ -718,6 +871,10 @@ std::string DefStmntAST::info() {
     children_[2]->info() + ")";
 }
 
+void DefStmntAST::compile() {
+  block()->compile();
+}
+
 void DefStmntAST::preProcess(SymbolsPtr symbols) {
   symbols->getRuntimeIndex(funcName());
   localVarSize_ = getLocalVarSize(symbols, parameterList(), block());
@@ -727,6 +884,11 @@ ObjectPtr DefStmntAST::eval(EnvPtr env) {
   auto funcObj = std::make_shared<FuncObject>(funcName(), localVarSize_,
                                 parameterList(), block(), env);
   env->put(funcName(), funcObj);
+
+  //编译当前函数
+  FuncObject::getCurrCompilingFunc() = funcObj;
+  compile();
+
   return nullptr;
 }
 
@@ -783,6 +945,13 @@ ObjectPtr ArgumentsAST::invokeNative(EnvPtr env, NativeFuncPtr func) {
     params.push_back(t->eval(env));
 
   return func->invoke(params);
+}
+
+void ArgumentsAST::compile() {
+  for (auto iter = children_.rbegin(); iter != children_.rend(); ++iter)
+    (*iter)->compile();
+  auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  codes->call(size());
 }
 
 /**************************闭包**********************************/

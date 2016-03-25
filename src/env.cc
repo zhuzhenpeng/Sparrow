@@ -4,6 +4,12 @@
 #include "debugger.h"
 
 /*****************************函数 类型******************************/
+FuncPtr FuncObject::complingFunc = nullptr;
+
+FuncPtr FuncObject::getCurrCompilingFunc() {
+  return complingFunc;
+}
+
 FuncObject::FuncObject(const std::string &functionName, size_t size,
     std::shared_ptr<ParameterListAST> params, 
     std::shared_ptr<BlockStmntAST> block, EnvPtr env):
@@ -20,6 +26,15 @@ std::shared_ptr<BlockStmntAST> FuncObject::block() const {
 
 EnvPtr FuncObject::runtimeEnv() {
   return std::make_shared<ArrayEnv>(env_, shared_from_this(), localVarSize_);
+}
+
+unsigned FuncObject::getRuntimeIndex(const std::string &name) {
+  for(size_t i = 0; i < outerNames_.size(); ++i) {
+    if (outerNames_[i] == name)
+      return i;
+  }
+  outerNames_.push_back(name);
+  return outerNames_.size() - 1;
 }
 
 /***************************类元信息*********************************/

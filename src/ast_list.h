@@ -67,7 +67,7 @@ protected:
   bool ignore_;
 };
 
-/**************************using导入类*************************************/
+/****************************use导入类*************************************/
 class UsingAST: public ASTList {
 public:
   UsingAST();
@@ -107,6 +107,10 @@ public:
   //计算子表达式，如a.b.c则从左往右依次计算
   ObjectPtr evalSubExpr(EnvPtr env, size_t nest);
 
+  void compile() override;
+
+private:
+  void compileSubExpr(size_t nest);
 };
 using PrimaryExprPtr = std::shared_ptr<PrimaryExprAST>;
 
@@ -117,6 +121,7 @@ public:
   NegativeExprAST();
   std::string info() override;
   ObjectPtr eval(EnvPtr env) override;
+  void compile() override;
 };
 
 /*****************************二元表达式***********************************/
@@ -128,6 +133,7 @@ public:
   ASTreePtr rightFactor();
   std::string getOperator();
   ObjectPtr eval(EnvPtr env) override;
+  void compile() override;
 private:
   //赋值操作，仅当操作符为等号时
   ObjectPtr assignOp(EnvPtr env, ObjectPtr rightValue);
@@ -143,6 +149,9 @@ private:
 
   //对象字段赋值
   ObjectPtr setInstanceField(InstancePtr obj, const std::string &filedName, ObjectPtr rvalue);
+
+  //除了赋值操作符以外的运算符编译成字节码
+  void compileOtherOp(const std::string &op);
   
 private:
   void checkValid();
@@ -202,6 +211,23 @@ public:
   ASTreePtr elseBlock();
   std::string info() override;
   ObjectPtr eval(EnvPtr env) override;
+  void compile() override;
+
+  //if的条件跳转在字节码中的位置
+  size_t ifBrfPosition;
+  
+  //thenblock结束后无条件跳转在字节码中的位置
+  size_t blockBrPosition;
+
+  //elseblock的起始地址
+  size_t elseblockPosition;
+
+  //if块字节码的结束地址（elseblock的下一个位置）
+  size_t endPosition;
+
+private:
+  //判断是否有elif块，如果没有返回0，如果有返回数量
+  unsigned countElifBlock();
 };
 
 /****************************elif块************************************/
@@ -213,6 +239,16 @@ public:
   ASTreePtr thenBlock();
   std::string info() override;
   ObjectPtr eval(EnvPtr env) override;
+  void compile() override;
+  
+  //condition的起始地址
+  size_t conditionPosition;
+
+  //elif跳转位置在字节码中的地址
+  size_t elifBrfPosition;
+
+  //thenblock结束后无条件跳转在字节码中的位置
+  size_t blockBrPosition;
 };
 using ElifStmntPtr = std::shared_ptr<ElifStmntAST>;
 
@@ -225,6 +261,7 @@ public:
   ASTreePtr body();
   std::string info() override;
   ObjectPtr eval(EnvPtr env) override;
+  void compile() override;
 };
 
 /****************************Null块************************************/
@@ -271,6 +308,8 @@ public:
   BlockStmntPtr block();
   std::string info() override;
 
+  void compile() override;
+
   //确定运行时环境局部变量的大小
   void preProcess(SymbolsPtr symbols) override;
 
@@ -312,6 +351,9 @@ public:
   //函数调用发生在这里
   //caller为函数对象
   ObjectPtr eval(EnvPtr env, ObjectPtr caller) override;
+
+  //逆序把实参压入栈，并压入调用指令
+  void compile() override;
 
 private:
   //调用原生函数

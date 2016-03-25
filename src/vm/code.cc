@@ -59,9 +59,9 @@ unsigned Code::fconst(unsigned index) {
   return push(index);
 }
 
-unsigned Code::call(unsigned index) {
+unsigned Code::call(unsigned paramNum) {
   push(CALL);
-  return push(index);
+  return push(paramNum);
 }
 
 unsigned Code::ret() {
@@ -93,9 +93,68 @@ unsigned Code::gstore(unsigned index) {
   return push(index);
 }
 
+unsigned Code::cload(unsigned index) {
+  push(CLOAD);
+  return push(index);
+}
+
+unsigned Code::cstore(unsigned index) {
+  push(CSTORE);
+  return push(index);
+}
+
+unsigned Code::load(unsigned index) {
+  push(LOAD); 
+  return push(index);
+}
+
+unsigned Code::store(unsigned index) {
+  push(STORE);
+  return push(index);
+}
+
+unsigned Code::nativeCall(unsigned index) {
+  push(NATIVE_CALL);
+  return push(index);
+}
+
+unsigned Code::nil() {
+  return push(NIL);
+}
+
+unsigned Code::pop() {
+  return push(POP);
+}
+
+unsigned Code::neg() {
+  return push(NEG);
+}
+
+unsigned Code::halt() {
+  return push(HALT);
+}
+
+std::vector<unsigned>& Code::getCodes() {
+  return codes_;
+}
+
 unsigned Code::push(unsigned code) {
   codes_.push_back(code);
   return codes_.size() - 1;
 }
 
+unsigned Code::nextPosition() {
+  return codes_.size();
+}
 
+void Code::set(size_t index, unsigned code) {
+  codes_[index] = code;
+}
+
+unsigned Code::get(size_t index) const {
+  return codes_[index];
+}
+
+unsigned Code::getCodeSize() {
+  return codes_.size();
+}
