@@ -30,13 +30,19 @@ private:
 
 class StackFrame {
 public:
-  StackFrame(ArrayEnvPtr runtimeEnv, CodePtr codes);
+  StackFrame(FuncPtr funcObj);
+
+  //初始化形参
+  void initParams(const std::vector<ObjectPtr> &arguments);
 
   //获取当前的指令，计数器加一
   unsigned getCode();
 
   //设置计数器
   void setIp(unsigned ip);
+
+  //是否已经结束
+  bool isEnd();
 
 private:
   //运行时局部环境
@@ -71,6 +77,9 @@ public:
   //弹出栈顶元素
   void pop();
 
+  //返回栈顶元素，并弹出
+  StackFramePtr getAndPop();
+
 private:
   std::stack<StackFramePtr> stack_;
 };
@@ -97,6 +106,9 @@ public:
   //弹出栈顶元素
   void pop();
 
+  //返回栈顶元素，并弹出
+  ObjectPtr getAndPop();
+
 private:
   std::stack<ObjectPtr> stack_;
 };
@@ -109,6 +121,20 @@ public:
   ByteCodeInterpreter(CallStackPtr callStack, OperandStackPtr operandStack);
 
   void run();
+
+private:
+  //运算时类型转换
+  void arithmeticTypeCast(ObjectPtr a, ObjectPtr b, Instruction op);
+
+  //整型运算操作
+  void intArithmeticOp(IntObjectPtr a, IntObjectPtr b, Instruction op);
+
+  //浮点型运算操作
+  void floatArithmeticOp(FloatObjectPtr a, FloatObjectPtr b, Instruction op);
+
+  //字符串型运算操作
+  void strArithmeticOp(StrObjectPtr a, StrObjectPtr b, Instruction op);
+
 private: 
   CallStackPtr callStack_;
 

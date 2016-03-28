@@ -42,6 +42,13 @@ public:
     }
   }
 
+  //获取常量池中的变量
+  T get(size_t index) {
+    if (index >= constPool_.size())
+      throw SymbolsException("const value access out of range");
+    return constPool_[index];
+  }
+  
   //获取常量池
   std::vector<T> &getConstantPool() const {
     return constPool_;

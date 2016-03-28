@@ -461,6 +461,8 @@ public:
   ObjectPtr eval(EnvPtr env) override;
 
   std::string info() override;
+
+  void compile() override;
 };
 using ReturnASTPtr = std::shared_ptr<ReturnAST>;
 

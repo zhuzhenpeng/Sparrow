@@ -876,6 +876,7 @@ void DefStmntAST::compile() {
 }
 
 void DefStmntAST::preProcess(SymbolsPtr symbols) {
+  //将函数名注册到外部的符号表中
   symbols->getRuntimeIndex(funcName());
   localVarSize_ = getLocalVarSize(symbols, parameterList(), block());
 }
@@ -896,6 +897,7 @@ size_t DefStmntAST::getLocalVarSize(SymbolsPtr outer,
     ParameterListPtr params, BlockStmntPtr block) {
   //运行时符号表
   SymbolsPtr runTimeSymbols = std::make_shared<Symbols>(outer, SymbolsKind::FUNCTION);
+  //参数总是局部变量中的头几个，这在字节码中，实参赋值时用到了这个潜规则
   params->preProcess(runTimeSymbols);
   block->preProcess(runTimeSymbols);
   return runTimeSymbols->getSymbolSize();
@@ -1159,7 +1161,7 @@ ReturnAST::ReturnAST(): ASTList(ASTKind::LIST_RETURN, false) {}
 
 ObjectPtr ReturnAST::eval(EnvPtr env) {
   if (children_.empty())
-    throw ASTEvalException("invalid return statement");
+    throw ASTEvalException("invalid return statement for eval");
 
   ObjectPtr result = children_[0]->eval(env);
   throw ASTReturnException(result);
@@ -1170,6 +1172,15 @@ std::string ReturnAST::info() {
     throw ASTEvalException("invalid return statement");
   
   return "return " + children_[0]->info();
+}
+
+void ReturnAST::compile() {
+  auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  if (children_.empty())
+    throw ASTCompilingException("invalid return statement for compiling");
+
+  children_[0]->compile();
+  codes->ret();
 }
 
 /*******************数组字面量*******************************/

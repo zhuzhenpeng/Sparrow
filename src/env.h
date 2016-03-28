@@ -77,6 +77,7 @@ public:
 public:
   double value_;
 };
+using FloatObjectPtr = std::shared_ptr<FloatObject>;
 
 /******************************Str 类型********************************/
 class StrObject: public Object {
