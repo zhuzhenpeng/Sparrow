@@ -44,6 +44,18 @@ public:
   //是否已经结束
   bool isEnd();
 
+  //获取非局部变量
+  ObjectPtr getOuterObj(unsigned nameIndex);
+
+  //获取局部变量
+  ObjectPtr getLocalObj(unsigned index);
+
+  //设置非局部变量
+  void setOuterObj(unsigned nameIndex, ObjectPtr obj);
+
+  //设置局部变量
+  void setLocalObj(unsigned index, ObjectPtr obj); 
+
 private:
   //运行时局部环境
   ArrayEnvPtr env_;
@@ -56,6 +68,9 @@ private:
 
   //字节码的长度
   unsigned codeSize_;
+
+  //非局部变量的名称
+  const std::vector<std::string> &outerNames_;
 };
 using StackFramePtr = std::shared_ptr<StackFrame>;
 

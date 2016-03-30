@@ -37,6 +37,10 @@ unsigned FuncObject::getRuntimeIndex(const std::string &name) {
   return outerNames_.size() - 1;
 }
 
+const std::vector<std::string> &FuncObject::getOuterNames() const {
+  return outerNames_;
+}
+
 /***************************类元信息*********************************/
 ClassInfo::ClassInfo(std::shared_ptr<ClassStmntAST> stmnt, EnvPtr env):
   Object(ObjKind::CLASS_INFO), definition_(stmnt), env_(env) {

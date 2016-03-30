@@ -146,6 +146,8 @@ public:
   //对于函数运行时所需的非局部变量，记录下它的名字并分配一个下标
   unsigned getRuntimeIndex(const std::string &name);
 
+  const std::vector<std::string> &getOuterNames() const;
+
 private:
   std::string funcName_;
 

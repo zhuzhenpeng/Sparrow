@@ -6,7 +6,7 @@
 
 /*****************************栈帧************************************/
 
-StackFrame::StackFrame(FuncPtr funcObj) {
+StackFrame::StackFrame(FuncPtr funcObj):outerNames_(funcObj->getOuterNames()) {
   env_ = funcObj->runtimeEnv();
   codes_ = funcObj->getCodes();
   codeSize_ = codes_->getCodeSize();
@@ -32,6 +32,25 @@ void StackFrame::setIp(unsigned ip) {
   ip_ = ip;
 }
 
+bool StackFrame::isEnd() {
+  return ip_ >= codeSize_;
+}
+
+ObjectPtr StackFrame::getOuterObj(unsigned nameIndex) {
+  return env_->get(outerNames_[nameIndex]);
+}
+
+ObjectPtr StackFrame::getLocalObj(unsigned index) {
+  return env_->get(index);
+}
+
+void StackFrame::setOuterObj(unsigned nameIndex, ObjectPtr obj) {
+  env_->put(outerNames_[nameIndex], obj);
+}
+
+void StackFrame::setLocalObj(unsigned index, ObjectPtr obj) {
+  env_->put(index, obj);
+}
 
 /****************************调用栈*********************************/
 
@@ -246,6 +265,7 @@ void ByteCodeInterpreter::strArithmeticOp(StrObjectPtr a, StrObjectPtr b, Instru
 void ByteCodeInterpreter::run() {
   while (!callStack_->empty()) {
     stackFrame_ = callStack_->top();
+
     //对于不带return语句的函数，运行到最后一句时函数结束
     if (stackFrame_->isEnd()) {
       callStack_->pop();
@@ -311,7 +331,108 @@ void ByteCodeInterpreter::run() {
       }
       case RET:
       {
-        
+        callStack_->pop();
+        break;
+      }
+      case BR:
+      {
+        unsigned position = stackFrame_->getCode();
+        stackFrame_->setIp(position);
+        break;
+      }
+      case BRT:
+      {
+        unsigned position = stackFrame_->getCode();
+        ObjectPtr condObj = operandStack_->getAndPop();
+        if (condObj->kind_ != ObjKind::BOOL)
+          throw VMException("Invald type for predicate");
+        BoolObjectPtr cond = std::dynamic_pointer_cast<BoolObject>(condObj);
+        if (cond->b_)
+          stackFrame_->setIp(position);
+        break;
+      }
+      case BRF:
+      {
+        unsigned position = stackFrame_->getCode();
+        ObjectPtr condObj = operandStack_->getAndPop();
+        if (condObj->kind_ != ObjKind::BOOL)
+          throw VMException("Invald type for predicate");
+        BoolObjectPtr cond = std::dynamic_pointer_cast<BoolObject>(condObj);
+        if (!cond->b_)
+          stackFrame_->setIp(position);
+        break;
+      }
+      case GLOAD:
+      case CLOAD:
+      {
+        unsigned nameIndex = stackFrame_->getCode();
+        ObjectPtr target = stackFrame_->getOuterObj(nameIndex);
+        operandStack_->push(target);
+        break;
+      }
+      case GSTORE:
+      case CSTORE:
+      {
+        unsigned nameIndex = stackFrame_->getCode();
+        ObjectPtr target = operandStack_->getAndPop();     
+        stackFrame_->setOuterObj(nameIndex, target);
+        break;
+      }
+      case LOAD:
+      {
+        unsigned index = stackFrame_->getCode();
+        ObjectPtr target = stackFrame_->getLocalObj(index);
+        operandStack_->push(target);
+        break;
+      }
+      case STORE:
+      {
+        unsigned index = stackFrame_->getCode();
+        ObjectPtr target = operandStack_->getAndPop();
+        stackFrame_->setLocalObj(index, target);
+        break;
+      }
+      case NATIVE_CALL:
+      {
+        //unsigned nativeFuncIndex = stackFrame_->getCode();
+        throw VMException("Unimplement native call");
+      }
+      case NIL:
+      {
+        operandStack_->push(nullptr);
+        break;
+      }
+      case POP:
+      {
+        operandStack_->pop();
+        break;
+      }
+      case NEG:
+      {
+        ObjectPtr obj = operandStack_->getAndPop();
+        if (obj->kind_ == ObjKind::INT) {
+          IntObjectPtr intObj = std::dynamic_pointer_cast<IntObject>(obj);
+          IntObjectPtr negObj = std::make_shared<IntObject>(-intObj->value_);
+          operandStack_->push(negObj);
+          break;
+        }
+        else if (obj->kind_ == ObjKind::FLOAT) {
+          FloatObjectPtr floatObj = std::dynamic_pointer_cast<FloatObject>(obj);
+          FloatObjectPtr negObj = std::make_shared<FloatObject>(-floatObj->value_);
+          operandStack_->push(negObj);
+          break;
+        }
+        else {
+          throw VMException("Invalid type for NEG");
+        }
+      }
+      case HALT:
+      {
+        return;
+      }
+      default:
+      {
+        throw VMException("UNKNOWN CODE");
       }
     }
   }
