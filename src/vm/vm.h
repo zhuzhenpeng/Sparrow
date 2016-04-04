@@ -56,9 +56,12 @@ public:
   //设置局部变量
   void setLocalObj(unsigned index, ObjectPtr obj); 
 
+  //返回运行时的局部环境
+  EnvPtr getEnv() const;
+
 private:
   //运行时局部环境
-  ArrayEnvPtr env_;
+  EnvPtr env_;
 
   //指令计数器
   unsigned ip_;
@@ -133,7 +136,7 @@ using OperandStackPtr = std::shared_ptr<OperandStack>;
 
 class ByteCodeInterpreter {
 public:
-  ByteCodeInterpreter(CallStackPtr callStack, OperandStackPtr operandStack);
+  ByteCodeInterpreter(FuncPtr entry);
 
   void run();
 

@@ -83,6 +83,14 @@ unsigned Code::brf(unsigned index) {
   return push(index);
 }
 
+unsigned Code::andLogic() {
+  return push(AND);
+}
+
+unsigned Code::orLogic() {
+  return push(OR);
+}
+
 unsigned Code::gload(unsigned index) {
   push(GLOAD);
   return push(index);
@@ -113,9 +121,18 @@ unsigned Code::store(unsigned index) {
   return push(index);
 }
 
-unsigned Code::nativeCall(unsigned index) {
-  push(NATIVE_CALL);
-  return push(index);
+unsigned Code::arrayGenerate(unsigned size) {
+  push(ARRAY_GENERATE);
+  return push(size);
+}
+
+unsigned Code::arrayAccess() {
+  return push(ARRAY_ACCCESS);
+}
+
+unsigned Code::lamb(unsigned lambSrcIndex) {
+  push(LAMB);
+  return push(lambSrcIndex);
 }
 
 unsigned Code::nil() {

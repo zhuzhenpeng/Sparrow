@@ -11,25 +11,32 @@
 #include "../pre_process/preprocess_exception.h"
 #include "../pre_process/preprocessor.h"
 #include "../pre_process/parse_order_tree.h"
+#include "vm.h"
 
 std::unique_ptr<Lexer> lexer;
 std::unique_ptr<BasicParser> parser;
 
 //初始化每个unit的符号表和环境，为环境添加上一些常见变量
 void init(EnvPtr env, SymbolsPtr symbols) {
+  symbols->getRuntimeIndex("nil");
   env->put("nil", std::make_shared<NoneObject>());
+
+  symbols->getRuntimeIndex("true");
   env->put("true", std::make_shared<BoolObject>(true));
+
+  symbols->getRuntimeIndex("false");
   env->put("false", std::make_shared<BoolObject>(false));
+
   NativeFuncInitializer::initialize(env, symbols);     //每个模块都初始化原生函数
 }
 
 //后序遍历树并解析
-void run(std::map<std::string, EnvPtr> &env, ParseOrderTreeNodePtr node) {
+void evalAndCompile(std::map<std::string, EnvPtr> &env, ParseOrderTreeNodePtr node) {
   if (node == nullptr)
     throw PreprocessException("fatal error, null node");
 
   for (auto child: node->children) {
-    run(env, child);
+    evalAndCompile(env, child);
   }
 
   if (env.find(node->absolutePath) == env.end())
@@ -55,7 +62,6 @@ void run(std::map<std::string, EnvPtr> &env, ParseOrderTreeNodePtr node) {
     if (tree != nullptr) {
       //预处理生成符号表
       tree->preProcess(currSymbols);
-
       auto result = tree->eval(currEnv);
     }
   }
@@ -84,9 +90,33 @@ int main(int argc, char *argv[]) {
     Preprocessor p;
     auto parseOrderTree = p.generateParsingOrder(environments, entryFile);
 
-    run(environments, parseOrderTree->getRoot());   
+    //运行全局环境中的操作，对每个函数进行编译
+    evalAndCompile(environments, parseOrderTree->getRoot());   
+
+    //通过虚拟机，从main函数开始运行程序
+    EnvPtr mainEnv = environments[parseOrderTree->getRoot()->absolutePath];
+    try {
+      ObjectPtr mainFuncObj = mainEnv->get("main");
+      if (mainFuncObj->kind_ != ObjKind::FUNCTION) {
+        std::cerr << "Invalid main function entry" << std::endl;
+        return -1;
+      }
+      MyDebugger::print("MAIN RUN", __FILE__, __LINE__);
+      FuncPtr mainFunc = std::dynamic_pointer_cast<FuncObject>(mainFuncObj);
+      ByteCodeInterpreter interpreter(mainFunc);
+      interpreter.run();
+    }
+    catch (EnvNotFoundException &e){
+      //没有main函数入口，正常退出程序
+      return 0;
+    }
+    catch (std::exception &e) {
+      std::cerr << e.what() << std::endl;
+      return -1;
+    }
   }
   catch (std::exception &e) {
     std::cerr << e.what() << std::endl;
+    return -1;
   }
 }

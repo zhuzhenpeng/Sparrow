@@ -3,13 +3,21 @@
 #include <cmath>
 #include "code.h"
 #include "../symbols.h"
+#include "../ast_list.h"
+#include "../pre_process/lamb_src.h"
+#include "../debugger.h"
 
 /*****************************栈帧************************************/
 
 StackFrame::StackFrame(FuncPtr funcObj):outerNames_(funcObj->getOuterNames()) {
   env_ = funcObj->runtimeEnv();
   codes_ = funcObj->getCodes();
+  if (codes_ == nullptr)
+    MyDebugger::print("null", __FILE__, __LINE__);
+  else
+    MyDebugger::print(codes_->getCodeSize(), __FILE__, __LINE__);
   codeSize_ = codes_->getCodeSize();
+  ip_ = 0;
 }
 
 void StackFrame::initParams(const std::vector<ObjectPtr> &arguments) {
@@ -37,6 +45,9 @@ bool StackFrame::isEnd() {
 }
 
 ObjectPtr StackFrame::getOuterObj(unsigned nameIndex) {
+  if (outerNames_.empty()) {
+    MyDebugger::print("empty outer names", __FILE__, __LINE__);
+  }
   return env_->get(outerNames_[nameIndex]);
 }
 
@@ -50,6 +61,10 @@ void StackFrame::setOuterObj(unsigned nameIndex, ObjectPtr obj) {
 
 void StackFrame::setLocalObj(unsigned index, ObjectPtr obj) {
   env_->put(index, obj);
+}
+
+EnvPtr StackFrame::getEnv() const {
+  return env_;
 }
 
 /****************************调用栈*********************************/
@@ -127,8 +142,11 @@ ObjectPtr OperandStack::getAndPop() {
 
 /***********************字节码解释器****************************/
 
-ByteCodeInterpreter::ByteCodeInterpreter(CallStackPtr callStack, OperandStackPtr operandStack):
-  callStack_(callStack), operandStack_(operandStack) {}
+ByteCodeInterpreter::ByteCodeInterpreter(FuncPtr entry) {
+  callStack_ = std::make_shared<CallStack>();
+  operandStack_ = std::make_shared<OperandStack>();
+  callStack_->push(std::make_shared<StackFrame>(entry));
+}
 
 void ByteCodeInterpreter::arithmeticTypeCast(ObjectPtr a, ObjectPtr b, Instruction op) {
   if (a->kind_ == ObjKind::INT && b->kind_ == ObjKind::INT) {
@@ -268,6 +286,7 @@ void ByteCodeInterpreter::run() {
 
     //对于不带return语句的函数，运行到最后一句时函数结束
     if (stackFrame_->isEnd()) {
+      //MyDebugger::print("finish", __FILE__, __LINE__);
       callStack_->pop();
       continue;
     }
@@ -317,17 +336,34 @@ void ByteCodeInterpreter::run() {
         for (size_t i = 0; i < paramsNum; ++i)
           params.push_back(operandStack_->getAndPop());
         //获得函数对象
+        //有可能是普通函数，也有可能是原生函数
         ObjectPtr funcObj = operandStack_->getAndPop();
-        if (funcObj->kind_ != ObjKind::FUNCTION)
+
+        if (funcObj->kind_ == ObjKind::FUNCTION) {
+          FuncPtr func = std::dynamic_pointer_cast<FuncObject>(funcObj);
+
+          //如果调用函数是没有编译过的，需要运行时编译
+          if (!func->isCompile())
+            func->compile();
+
+          //新建一个栈帧，并初始化它的形参
+          StackFramePtr newStackFrame = std::make_shared<StackFrame>(func);
+          newStackFrame->initParams(params);
+          //压入调用栈，下一轮循环将执行新的函数
+          callStack_->push(newStackFrame);
+          break;
+        }
+        else if (funcObj->kind_ == ObjKind::NATIVE_FUNC) {
+          //MyDebugger::print("Native Func Call", __FILE__, __LINE__);
+          NativeFuncPtr func = std::dynamic_pointer_cast<NativeFunction>(funcObj);
+          ObjectPtr result = func->invoke(params);
+          if (result != nullptr)
+            operandStack_->push(result);
+          break;
+        }
+        else {
           throw VMException("Invalid type for function call");
-        FuncPtr func = std::dynamic_pointer_cast<FuncObject>(funcObj);
-        //新建一个栈帧，并初始化它的形参
-        StackFramePtr newStackFrame = std::make_shared<StackFrame>(func);
-        newStackFrame->initParams(params);
-        //压入调用栈，清空操作数栈，下一轮循环将执行新的函数
-        callStack_->push(newStackFrame);
-        operandStack_->clear();
-        break;
+        }
       }
       case RET:
       {
@@ -362,8 +398,35 @@ void ByteCodeInterpreter::run() {
           stackFrame_->setIp(position);
         break;
       }
+      case AND:
+      {
+        ObjectPtr a = operandStack_->getAndPop();
+        ObjectPtr b = operandStack_->getAndPop();
+        if (a->kind_ != ObjKind::BOOL || b->kind_ != ObjKind::BOOL)
+          throw VMException("Invalid Logic Type for AND");
+        BoolObjectPtr aCond = std::dynamic_pointer_cast<BoolObject>(a);
+        BoolObjectPtr bCond = std::dynamic_pointer_cast<BoolObject>(b);
+        if (aCond->b_ && bCond->b_)
+          operandStack_->push(std::make_shared<BoolObject>(true));
+        else
+          operandStack_->push(std::make_shared<BoolObject>(false));
+        break;
+      }
+      case OR:
+      {
+        ObjectPtr a = operandStack_->getAndPop();
+        ObjectPtr b = operandStack_->getAndPop();
+        if (a->kind_ != ObjKind::BOOL || b->kind_ != ObjKind::BOOL)
+          throw VMException("Invalid Logic Type for OR");
+        BoolObjectPtr aCond = std::dynamic_pointer_cast<BoolObject>(a);
+        BoolObjectPtr bCond = std::dynamic_pointer_cast<BoolObject>(b);
+        if (aCond->b_ || bCond->b_)
+          operandStack_->push(std::make_shared<BoolObject>(true));
+        else
+          operandStack_->push(std::make_shared<BoolObject>(false));
+        break;
+      }
       case GLOAD:
-      case CLOAD:
       {
         unsigned nameIndex = stackFrame_->getCode();
         ObjectPtr target = stackFrame_->getOuterObj(nameIndex);
@@ -371,11 +434,27 @@ void ByteCodeInterpreter::run() {
         break;
       }
       case GSTORE:
-      case CSTORE:
       {
         unsigned nameIndex = stackFrame_->getCode();
         ObjectPtr target = operandStack_->getAndPop();     
         stackFrame_->setOuterObj(nameIndex, target);
+        break;
+      }
+      case CLOAD:
+      {
+        //环境并没有直接提供获取lamb变量的接口
+        //此处的处理方法是获取上一层环境（一定是Lamb所在的外部函数局部环境）来获取变量        
+        unsigned outerIndex = stackFrame_->getCode();
+        EnvPtr outerEnv = stackFrame_->getEnv()->getOuterEnv();
+        operandStack_->push(outerEnv->get(outerIndex));
+        break;        
+      }
+      case CSTORE:
+      {
+        ObjectPtr target = operandStack_->getAndPop();
+        unsigned outerIndex = stackFrame_->getCode();
+        EnvPtr outerEnv = stackFrame_->getEnv()->getOuterEnv();
+        outerEnv->put(outerIndex, target);
         break;
       }
       case LOAD:
@@ -392,10 +471,38 @@ void ByteCodeInterpreter::run() {
         stackFrame_->setLocalObj(index, target);
         break;
       }
-      case NATIVE_CALL:
+      case ARRAY_GENERATE:
       {
-        //unsigned nativeFuncIndex = stackFrame_->getCode();
-        throw VMException("Unimplement native call");
+        unsigned arraySize = stackFrame_->getCode();
+        ArrayPtr array = std::make_shared<Array>(arraySize);
+        //编译时是顺序编译的，数组后面的元素先出栈
+        for (int i = arraySize - 1; i >= 0; --i)
+          array->set(i, operandStack_->getAndPop());
+        operandStack_->push(array);
+        break;
+      }
+      case ARRAY_ACCCESS:
+      {
+        ObjectPtr indexObj = operandStack_->getAndPop();
+        if (indexObj->kind_ != ObjKind::INT)
+          throw VMException("Invalid index type for array access");
+        IntObjectPtr index = std::dynamic_pointer_cast<IntObject>(indexObj);
+        ObjectPtr arrayObj = operandStack_->getAndPop();
+        if (arrayObj->kind_ != ObjKind::Array)
+          throw VMException("Invalid array type for array access");
+        ArrayPtr array = std::dynamic_pointer_cast<Array>(arrayObj);
+        operandStack_->push(array->get(index->value_));
+        break;
+      }
+      case LAMB:
+      {
+        unsigned lambSrcIndex = stackFrame_->getCode();
+        LambASTPtr lambAST = g_LambSrcTable->getAST(lambSrcIndex);
+        FuncPtr lambFunc = lambAST->runtimeCompile(stackFrame_->getEnv());
+        //需要把lamb函数的编译状态设为义编译
+        lambFunc->setCompiled();
+        operandStack_->push(lambFunc);
+        break;
       }
       case NIL:
       {

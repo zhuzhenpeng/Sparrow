@@ -25,14 +25,17 @@ enum Instruction {
   SCONST, ICONST, FCONST, 
 
   //调用函数，将新的栈帧压入调用栈中，将栈中的入参传递给栈帧，
-  //清空栈，然后跳转到新的代码地址
+  //进入下一轮循环
   CALL, 
 
-  //函数返回，返回值（如果有）将压入栈中。弹出调用栈，恢复调用者的代码地址
+  //函数返回，返回值（如果有）将压入栈中。弹出调用栈，进入下一轮循环
   RET, 
 
   //跳转操作，分为无条件跳转，如果为真（假）则跳转
   BR, BRT, BRF, 
+
+  //与（或）逻辑，从栈中获取两个对象，执行与（或）逻辑
+  AND, OR,
 
   //操作全局（非局部）变量，根据下标从名称索引表中获取名称并从外层环境中查找，
   //将结果压入栈中或将栈顶元素弹出对其进行赋值
@@ -45,10 +48,15 @@ enum Instruction {
   //操作局部变量，根据下标从局部环境中查找，
   //将结果压入栈中或将栈顶元素弹出对其进行赋值
   LOAD, STORE, 
-  
-  //调用原生函数，根据原生函数的参数个数要求，从操作数栈中弹出相应个数的操作数，
-  //如果函数有返回值，则将返回值压栈
-  NATIVE_CALL,
+
+  //生成数组
+  ARRAY_GENERATE,
+
+  //访问数组中的某个元素
+  ARRAY_ACCCESS,
+
+  //LAMBDA表达式
+  LAMB,
   
   //向操作数栈压入空对象
   NIL, 
@@ -104,6 +112,10 @@ public:
 
   unsigned brf(unsigned index);
 
+  unsigned andLogic();
+
+  unsigned orLogic();
+
   unsigned gload(unsigned index);
 
   unsigned gstore(unsigned index);
@@ -116,7 +128,11 @@ public:
 
   unsigned store(unsigned index);
 
-  unsigned nativeCall(unsigned index);
+  unsigned arrayGenerate(unsigned size);
+
+  unsigned arrayAccess();
+
+  unsigned lamb(unsigned lambSrcIndex);
 
   unsigned nil();
 

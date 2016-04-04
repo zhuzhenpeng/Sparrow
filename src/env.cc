@@ -10,11 +10,17 @@ FuncPtr FuncObject::getCurrCompilingFunc() {
   return complingFunc;
 }
 
+void FuncObject::setCurrCompilingFunc(FuncPtr func) {
+  complingFunc = func;
+}
+
 FuncObject::FuncObject(const std::string &functionName, size_t size,
     std::shared_ptr<ParameterListAST> params, 
     std::shared_ptr<BlockStmntAST> block, EnvPtr env):
   Object(ObjKind::FUNCTION), funcName_(functionName), localVarSize_(size), 
-  env_(env), params_(params), block_(block){}
+  env_(env), params_(params), block_(block){
+  codes_ = std::make_shared<Code>();
+}
 
 std::shared_ptr<ParameterListAST> FuncObject::params() const {
   return params_;
@@ -39,6 +45,20 @@ unsigned FuncObject::getRuntimeIndex(const std::string &name) {
 
 const std::vector<std::string> &FuncObject::getOuterNames() const {
   return outerNames_;
+}
+
+bool FuncObject::isCompile() {
+  return isCompile_;
+}
+
+void FuncObject::compile() {
+  FuncObject::setCurrCompilingFunc(shared_from_this()); 
+  block_->compile();
+  setCompiled();
+}
+
+void FuncObject::setCompiled() {
+  isCompile_ = true;
 }
 
 /***************************类元信息*********************************/
@@ -198,7 +218,7 @@ ObjectPtr MapEnv::get(const std::string &name) {
 
   auto env = locateEnv(name);
   if (env == nullptr)
-    throw EnvException("not found the variable: " + name);
+    throw EnvNotFoundException(name);
   else 
     return env->getCurr(name);
 }
@@ -265,7 +285,7 @@ ObjectPtr ArrayEnv::get(const std::string &name) {
 
   auto env = locateEnv(name);
   if (env == nullptr)
-    throw EnvException("not found the variable: " + name);
+    throw EnvNotFoundException(name);
   else 
     return env->getCurr(name);
 }
@@ -279,7 +299,7 @@ ObjectPtr ArrayEnv::get(size_t index) {
 void ArrayEnv::put(const std::string &name, ObjectPtr obj) {
   if (outerEnv_ == nullptr)
     throw ASTEvalException("not found outer env for array env");
-  outerEnv_ ->put(name, obj);
+  outerEnv_->put(name, obj);
 }
 
 void ArrayEnv::put(size_t index, ObjectPtr obj) {

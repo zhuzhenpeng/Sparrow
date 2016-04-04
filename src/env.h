@@ -108,6 +108,7 @@ using BoolObjectPtr = std::shared_ptr<BoolObject>;
 
 class FuncObject;
 using FuncPtr = std::shared_ptr<FuncObject>;
+
 class FuncObject: public Object, public std::enable_shared_from_this<FuncObject>{
 
 public:
@@ -116,6 +117,9 @@ public:
 
   //获取当前正在编译的函数
   static FuncPtr getCurrCompilingFunc();
+
+  //设置当前正在编译的函数
+  static void setCurrCompilingFunc(FuncPtr func);
 
 public:
   FuncObject(const std::string &functionName, size_t size, 
@@ -148,6 +152,15 @@ public:
 
   const std::vector<std::string> &getOuterNames() const;
 
+  //函数是否已经已经编译
+  bool isCompile();
+
+  //编译该函数
+  void compile();
+
+  //把函数对象的编译状态设为已编译
+  void setCompiled();
+
 private:
   std::string funcName_;
 
@@ -159,6 +172,7 @@ private:
   //对于类函数而言，它是某个实例的内部环境
   EnvPtr env_;
 
+  //参数表和代码块的AST
   std::shared_ptr<ParameterListAST> params_;
   std::shared_ptr<BlockStmntAST> block_;
 
@@ -167,6 +181,14 @@ private:
 
   //非局部变量名称
   std::vector<std::string> outerNames_;
+
+  //是否已经编译（在虚拟机运行时）
+  //1.def的函数都是已编译的
+  //2.在全局被引用的lamb函数（即全局环境中使用lamb定义或使用产生lamb的普通函数），
+  //初次在虚拟机运行时，是未编译的（运行时被动编译，由虚拟机发现并调用FuncObj的编译）
+  //3.未在全局引用过的lamb函数，初次在虚拟机运行时，
+  //是未编译的（运行时主动编译，虚拟机找到Lamb源码并编译）
+  bool isCompile_ = false;
 };
 
 /****************************原生函数********************************/
@@ -397,6 +419,12 @@ private:
 class OutOfIndexException: public EnvException {
 public:
   OutOfIndexException(): EnvException("out of index") {};
+};
+
+class EnvNotFoundException: public EnvException {
+public:
+  EnvNotFoundException(const std::string &notFoundVarName):
+    EnvException("Not found the variable: " + notFoundVarName) {};
 };
 
 #endif

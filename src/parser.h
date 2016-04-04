@@ -24,11 +24,11 @@
  *              | "." IDENTIFIER | "(" args ")" | "[" expr "]"
  * simple     : expr
  * use        : "use" IDENTIFIER "=" IDENTIFIER
- * statement  : "if" condition block EOL {elif} ["else" block]
+ * statement  : "if" condition block {elif} ["else" block]
  *              | "while" condition block
  *              | "return" expr
  *              | simple
- * elif       : "elif" condition block EOL
+ * elif       : "elif" condition block 
  * condition  : expr
  *              | and_logic
  *              | or_logic
@@ -37,15 +37,11 @@
  * member     : def | simple
  * class_body : "{" [member] {(";" | EOL) [member]} "}"
  * def_class  : "class" IDENTIFIER ["extends" IDENTIFIER ] class_body
- * program    : [def_class | def | use | statement ] (";" | EOL | NULL)
+ * program    : [def_class | def | use | statement ] (";" | EOL)
  */
 
 /*语法规则备忘
- * 1. program允许以NULL作为分割符，主要是为了if块的“换行{”格式问题，if语句会把program中的
- *    EOL Token吞掉；
- *    一般情况下，应该使用换行或者分号
- *
- * 2. simple和expr是一致的，但为了方便构造解析器，所以用simple取代简单的expr
+ * 1. simple和expr是一致的，但为了方便构造解析器，所以用simple取代简单的expr
  */
 
 class BasicParser {

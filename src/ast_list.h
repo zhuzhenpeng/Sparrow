@@ -163,6 +163,7 @@ class BlockStmntAST: public ASTList {
 public:
   BlockStmntAST();
   ObjectPtr eval(EnvPtr env) override;
+  void compile() override;
 };
 using BlockStmntPtr = std::shared_ptr<BlockStmntAST>;
 
@@ -174,6 +175,7 @@ public:
   //该节点作为虚节点存在，总是只有一个子节点，打印信息时把子节点信息打印即可
   std::string info() override;
   ObjectPtr eval(EnvPtr env) override;
+  void compile() override;
 };
 using ConditionStmntPtr =  std::shared_ptr<ConditionStmntAST>;
 
@@ -186,6 +188,7 @@ public:
   ConditionStmntPtr rightExpr();
   std::string info() override;
   ObjectPtr eval(EnvPtr env) override;
+  void compile() override;
 };
 using AndLogicPtr = std::shared_ptr<AndLogicAST>;
 
@@ -198,6 +201,7 @@ public:
   ConditionStmntPtr rightExpr();
   std::string info() override;
   ObjectPtr eval(EnvPtr env) override;
+  void compile() override;
 };
 using OrLogicPtr = std::shared_ptr<OrLogicAST>;
 
@@ -363,7 +367,7 @@ using ArgumentsPtr = std::shared_ptr<ArgumentsAST>;
 
 /**************************闭包**********************************/
 
-class LambAST: public ASTList {
+class LambAST: public ASTList, public std::enable_shared_from_this<LambAST> {
 public:
   LambAST();
   ParameterListPtr parameterList();
@@ -376,10 +380,19 @@ public:
   //返回一个函数对象
   ObjectPtr eval(EnvPtr env) override;
 
+  void compile() override;
+
+  //运行时编译，并返回一个函数对象
+  FuncPtr runtimeCompile(EnvPtr env);
+
 private:
   //函数运行时环境的局部变量大小
   size_t localVarSize_;
+
+  //闭包在源码表中的位置
+  unsigned srcIndex_;
 };
+using LambASTPtr = std::shared_ptr<LambAST>;
 
 /*************************类************************************/
 
@@ -481,6 +494,8 @@ public:
   
   //生成定长数组
   ObjectPtr eval(EnvPtr env) override;
+
+  void compile() override;
 };
 
 /******************数组访问后缀****************************/
@@ -493,6 +508,8 @@ public:
 
   //访问指定下标的对象
   ObjectPtr eval(EnvPtr env, ObjectPtr caller) override;
+
+  void compile() override;
 };
 using ArrayRefPtr = std::shared_ptr<ArrayRefAST>;
 

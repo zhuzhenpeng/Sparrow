@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include "env.h"
+#include "pre_process/lamb_src.h"
 #include "debugger.h"
 
 
@@ -244,13 +245,14 @@ void BinaryExprAST::compile() {
     if (leftTree->kind_ != ASTKind::LEAF_Id)
       throw ASTCompilingException("invalid left factor for assign");
     auto id = std::dynamic_pointer_cast<IdTokenAST>(leftTree);
-    //先编译右子树，在编译左子树
+    //先编译右子树，再编译左子树
     rightFactor()->compile();
     id->complieAssign();
   }
   else {
-    leftFactor()->compile();
+    //先编译右子树，再编译左子树
     rightFactor()->compile();
+    leftFactor()->compile();
     compileOtherOp(op);
   }
 }
@@ -472,6 +474,11 @@ ObjectPtr ConditionStmntAST::eval(EnvPtr env) {
   return children_[0]->eval(env);
 }
 
+void ConditionStmntAST::compile() {
+  for (auto child: children_)
+    child->compile();
+}
+
 /******************************与逻辑***********************************/
 
 AndLogicAST::AndLogicAST(): ASTList(ASTKind::LIST_AND_LOGIC, false) {}
@@ -511,6 +518,14 @@ ObjectPtr AndLogicAST::eval(EnvPtr env) {
   bool result = std::dynamic_pointer_cast<BoolObject>(leftResult)->b_ &&\
                 std::dynamic_pointer_cast<BoolObject>(rightResult)->b_;
   return std::make_shared<BoolObject>(result);
+}
+
+void AndLogicAST::compile() {
+  for (auto child: children_)
+    child->compile();
+
+  auto code = FuncObject::getCurrCompilingFunc()->getCodes();
+  code->andLogic();
 }
 
 /*****************************或逻辑************************************/
@@ -554,6 +569,13 @@ ObjectPtr OrLogicAST::eval(EnvPtr env) {
   return std::make_shared<BoolObject>(result);
 }
 
+void OrLogicAST::compile() {
+  for (auto child: children_)
+    child->compile();
+
+  auto code = FuncObject::getCurrCompilingFunc()->getCodes();
+  code->orLogic();
+}
 
 /********************************块**************************************/
 
@@ -565,6 +587,11 @@ ObjectPtr BlockStmntAST::eval(EnvPtr env) {
       result = subTree->eval(env);
   }
   return result;
+}
+
+void BlockStmntAST::compile() {
+  for(auto subTree: children_)
+    subTree->compile();
 }
 
 /******************************if块*************************************/
@@ -839,7 +866,6 @@ void ParameterListAST::preProcess(SymbolsPtr symbols) {
   paramsOffset_.clear();
   for(size_t i = 0; i < size(); ++i)
     paramsOffset_.push_back(symbols->getRuntimeIndex(paramName(i)));
-  //MyDebugger::print(paramsOffset_.size(), __FILE__, __LINE__);
 }
 
 void ParameterListAST::eval(EnvPtr funcEnv, EnvPtr callerEnv, 
@@ -882,13 +908,14 @@ void DefStmntAST::preProcess(SymbolsPtr symbols) {
 }
 
 ObjectPtr DefStmntAST::eval(EnvPtr env) {
-  auto funcObj = std::make_shared<FuncObject>(funcName(), localVarSize_,
+  FuncPtr funcObj = std::make_shared<FuncObject>(funcName(), localVarSize_,
                                 parameterList(), block(), env);
   env->put(funcName(), funcObj);
 
-  //编译当前函数
-  FuncObject::getCurrCompilingFunc() = funcObj;
+  //编译当前函数，只有函数才会编译
+  FuncObject::setCurrCompilingFunc(funcObj);
   compile();
+  funcObj->setCompiled();
 
   return nullptr;
 }
@@ -975,12 +1002,29 @@ std::string LambAST::info() {
 void LambAST::preProcess(SymbolsPtr symbols) {
   localVarSize_ = DefStmntAST::getLocalVarSize(symbols, parameterList(), 
       block());
+
+  //在闭包源码表中申请一个位置并记录下来
+  srcIndex_ = g_LambSrcTable->put(shared_from_this());
 }
 
-ObjectPtr LambAST::eval(EnvPtr env) {
+ObjectPtr LambAST::eval(EnvPtr __attribute__((unused))env) {
   //lambda创建的闭包都用CLOSURE来表示它的函数名
   return std::make_shared<FuncObject>("CLOSURE", localVarSize_,
       parameterList(), block(), env);
+}
+
+void LambAST::compile() {
+  auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  codes->lamb(srcIndex_);
+}
+
+FuncPtr LambAST::runtimeCompile(EnvPtr env) {
+  FuncPtr lambFunc = std::make_shared<FuncObject>("CLOSURE", localVarSize_, 
+      parameterList(), block(), env);
+  FuncObject::setCurrCompilingFunc(lambFunc);
+  block()->compile();
+  lambFunc->setCompiled();
+  return lambFunc;
 }
 
 /************************类************************************/
@@ -1200,6 +1244,14 @@ ObjectPtr ArrayLiteralAST::eval(EnvPtr env) {
   return array;
 }
 
+void ArrayLiteralAST::compile() {
+  size_t arraySize = size();
+  for (size_t i = 0; i < arraySize; ++i)
+    children_[i]->compile();
+  auto code = FuncObject::getCurrCompilingFunc()->getCodes();
+  code->arrayGenerate(arraySize);
+}
+
 /******************数组访问后缀****************************/
 
 ArrayRefAST::ArrayRefAST(): PostfixAST(ASTKind::LIST_ARRAY_REF, false) {}
@@ -1227,4 +1279,10 @@ ObjectPtr ArrayRefAST::eval(EnvPtr env, ObjectPtr caller) {
   else {
     throw ASTEvalException("bad type for array index calling");
   }
+}
+
+void ArrayRefAST::compile() {
+  index()->compile();
+  auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  codes->arrayAccess();
 }
