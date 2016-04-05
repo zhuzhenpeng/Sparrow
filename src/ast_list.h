@@ -440,6 +440,8 @@ public:
   //如果是对象的实例，访问某个对象的成员变量、方法
   //否则报错
   ObjectPtr eval(EnvPtr env, ObjectPtr caller) override;
+
+  void compile() override;
 };
 using DotPtr = std::shared_ptr<Dot>;
 
@@ -452,6 +454,8 @@ public:
   //caller是类元信息
   //函数返回一个新创建的实例
   ObjectPtr eval(EnvPtr env, ObjectPtr caller) override;
+
+  void compile() override;
 
 private:
   ArgumentsPtr getArguments() const;

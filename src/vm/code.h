@@ -58,6 +58,15 @@ enum Instruction {
   //LAMBDA表达式
   LAMB,
   
+  //域访问
+  DOT_ACCESS,
+
+  //元字符
+  RAW_STRING,
+
+  //创建对象
+  NEW_INSTANCE,
+
   //向操作数栈压入空对象
   NIL, 
   
@@ -133,6 +142,12 @@ public:
   unsigned arrayAccess();
 
   unsigned lamb(unsigned lambSrcIndex);
+
+  unsigned dotAccess();
+
+  unsigned rawString(unsigned index);
+
+  unsigned newInstance(unsigned paramsNum);
 
   unsigned nil();
 

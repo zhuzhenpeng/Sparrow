@@ -63,8 +63,9 @@ void FuncObject::setCompiled() {
 
 /***************************类元信息*********************************/
 ClassInfo::ClassInfo(std::shared_ptr<ClassStmntAST> stmnt, EnvPtr env):
-  Object(ObjKind::CLASS_INFO), definition_(stmnt), env_(env) {
+  Object(ObjKind::CLASS_INFO), definition_(stmnt), outerEnv_(env) {
 
+  //获取父类信息
   std::string superClassName = stmnt->superClassName();
   if (superClassName.empty())
     return;
@@ -79,6 +80,9 @@ ClassInfo::ClassInfo(std::shared_ptr<ClassStmntAST> stmnt, EnvPtr env):
   catch (EnvException e) {
     throw EnvException("not found super class: " + stmnt->superClassName());
   }
+
+  //初始化编译结果所放置的环境
+  compiledEnv_ = std::make_shared<MapEnv>(outerEnv_);
 }
 
 std::string ClassInfo::name() {
@@ -94,11 +98,24 @@ std::shared_ptr<ClassBodyAST> ClassInfo::body() {
 }
 
 EnvPtr ClassInfo::getEnvitonment() {
-  return env_;
+  return outerEnv_;
 }
 
 std::string ClassInfo::info() {
   return "<class: " + name() + ">";
+}
+
+void ClassInfo::compile() {
+  ClassBodyPtr body = definition_->body();
+  //函数定义的eval函数会自动编译
+  body->eval(compiledEnv_); 
+  //实现super的语义
+  if (superClass_ != nullptr)
+    compiledEnv_->put("super", superClass_->getComliedEnv());
+}
+
+EnvPtr ClassInfo::getComliedEnv() {
+  return compiledEnv_;
 }
 
 /**************************对象*************************************/

@@ -97,6 +97,9 @@ public:
 
   void complieAssign();
 
+  //仅当作一个字符处理，而不把它当作变量,
+  void compileAsRawString();
+
   IdKind kind_ = IdKind::UNKNOWN;
 };
 

@@ -236,13 +236,26 @@ public:
   //返回类定义体
   std::shared_ptr<ClassBodyAST> body();
 
+  //获取类定义时所处的外部环境
   EnvPtr getEnvitonment();
   
   std::string info() override;
+
+  //编译类中的每个函数
+  //生成一个包含已编译的函数对象、变量的环境
+  void compile();
+
+  //获取该类编译后的环境
+  EnvPtr getComliedEnv();
+
 private:  
   std::shared_ptr<ClassStmntAST> definition_;
-  EnvPtr env_;
+  EnvPtr outerEnv_;
   ClassInfoPtr superClass_ = nullptr;
+
+  //变量、函数编译后所放在的环境
+  //当类实例化时，把该环境拷贝给对象
+  EnvPtr compiledEnv_;
 };
 
 /*****************************对象***********************************/

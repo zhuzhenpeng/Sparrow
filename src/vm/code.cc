@@ -135,6 +135,20 @@ unsigned Code::lamb(unsigned lambSrcIndex) {
   return push(lambSrcIndex);
 }
 
+unsigned Code::dotAccess() {
+  return push(DOT_ACCESS);
+}
+
+unsigned Code::rawString(unsigned index) {
+  push(RAW_STRING);
+  return push(index);
+}
+
+unsigned Code::newInstance(unsigned paramsNum) {
+  push(NEW_INSTANCE);
+  return push(paramsNum);
+}
+
 unsigned Code::nil() {
   return push(NIL);
 }

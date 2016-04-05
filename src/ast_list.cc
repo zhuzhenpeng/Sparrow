@@ -1091,6 +1091,7 @@ void ClassStmntAST::preProcess(SymbolsPtr symbols) {
 
 ObjectPtr ClassStmntAST::eval(EnvPtr env) {
   ClassInfoPtr newClass = std::make_shared<ClassInfo>(shared_from_this(), env);
+  newClass->compile();
   env->put(name(), newClass);
   return newClass;
 }
@@ -1100,7 +1101,7 @@ std::string ClassStmntAST::info() {
   return "(class " + name() + ": " + parent + "| body: " + body()->info() + ")";
 }
 
-/***********************类的域访问(.xx)***********************/
+/**************************域访问(.xx)***********************/
 
 Dot::Dot(): PostfixAST(ASTKind::LIST_DOT, false) {}
 
@@ -1113,10 +1114,10 @@ std::string Dot::name() {
     return "new";
 
   //其它则认为访问某个域中的变量
-  auto nameLeaf = std::dynamic_pointer_cast<ASTLeaf>(children_[0]);
-  if (nameLeaf == nullptr)
+  auto target = std::dynamic_pointer_cast<IdTokenAST>(children_[0]);
+  if (target == nullptr)
     throw ASTException("get dot target name failed, unknown type for first child");
-  return nameLeaf->getToken()->getText();
+  return target->getId();
 }
 
 std::string Dot::info() {
@@ -1143,8 +1144,21 @@ ObjectPtr Dot::eval(__attribute__((unused))EnvPtr env, ObjectPtr caller) {
     return env->get(member);
   }
   else {
-    throw ASTEvalException("bad member access: " + member);
+    throw ASTEvalException("UNKNOW caller while doing DOT ACCESS: " + member);
   }
+}
+
+void Dot::compile() {
+  if (children_[0]->kind_ == ASTKind::LIST_NEW) {
+    children_[0]->compile();
+    return;
+  }
+  auto target = std::dynamic_pointer_cast<IdTokenAST>(children_[0]);
+  //这里的后缀在词法处理时当作ID看待，但是实际上并不是一个存在于当前环境的变量，
+  //交给虚拟机处理时，应该当作一个字符串，通过字符串在相应的另一个环境中找到相应的变量
+  target->compileAsRawString();
+  auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  codes->dotAccess();
 }
 
 /**********************类new创建实例***************************/
@@ -1158,6 +1172,14 @@ ObjectPtr NewAST::eval(__attribute__((unused))EnvPtr env, ObjectPtr caller) {
   //调用初始化函数，并返回新的对象
   arguments->eval(newObject->getEnvironment(), initFunc);
   return newObject;
+}
+
+void NewAST::compile() {
+  ArgumentsPtr arguments = getArguments();
+  arguments->compile();
+  unsigned argumentsNum = arguments->size();
+  auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  codes->newInstance(argumentsNum);
 }
 
 ArgumentsPtr NewAST::getArguments() const {
@@ -1198,6 +1220,7 @@ void NewAST::initInstance(ClassInfoPtr ci, EnvPtr env) {
     throw EnvException("class " + ci->name() + " not found init function");
   }
 }
+
 
 /*******************return表达式*****************************/
 

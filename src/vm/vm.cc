@@ -67,6 +67,12 @@ EnvPtr StackFrame::getEnv() const {
   return env_;
 }
 
+std::string StackFrame::getNames(unsigned index) {
+  if (index >= outerNames_.size())
+    throw VMException("index out of range while getting raw string");
+  return outerNames_[index];
+}
+
 /****************************调用栈*********************************/
 
 CallStack::CallStack() = default;
@@ -502,6 +508,75 @@ void ByteCodeInterpreter::run() {
         //需要把lamb函数的编译状态设为义编译
         lambFunc->setCompiled();
         operandStack_->push(lambFunc);
+        break;
+      }
+      case DOT_ACCESS:
+      {
+        ObjectPtr targetObj = operandStack_->getAndPop();
+        if (targetObj->kind_ != ObjKind::STRING)
+          throw VMException("Invalid dot access");
+        StrObjectPtr target = std::dynamic_pointer_cast<StrObject>(targetObj);
+
+        ObjectPtr callerObj = operandStack_->getAndPop();
+        if (callerObj->kind_ == ObjKind::CLASS_INSTANCE) {
+          auto instance = std::dynamic_pointer_cast<ClassInstance>(callerObj);
+          operandStack_->push(instance->read(target->str_));
+          break;
+        }
+        else if (callerObj->kind_ == ObjKind::ENV) {
+          auto env = std::dynamic_pointer_cast<CommonEnv>(callerObj);
+          operandStack_->push(env->get(target->str_));
+          break;
+        }
+        else {
+          throw VMException("UNKNOW caller while doing DOT ACCESS: " + target->str_);
+        }
+      }
+      case RAW_STRING:
+      {
+        unsigned index = stackFrame_->getCode();
+        StrObjectPtr str = std::make_shared<StrObject>(stackFrame_->getNames(index));
+        operandStack_->push(str);
+        break;
+      }
+      case NEW_INSTANCE:
+      {
+        unsigned paramsNum = stackFrame_->getCode();
+        std::vector<ObjectPtr> initParams;
+        for (size_t i = 0; i < paramsNum; ++i)
+          initParams.push_back(operandStack_->getAndPop());
+
+        //类元对象
+        ObjectPtr classInfoObj = operandStack_->getAndPop();
+        if (classInfoObj->kind_ != ObjKind::CLASS_INFO)
+          throw VMException("Invalid caller for creaing class instance");
+        ClassInfoPtr classInfo = std::dynamic_pointer_cast<ClassInfo>(classInfoObj);
+
+        //对象的本质是一个环境，把编译过的类环境复制给它，并调用初始化函数
+        EnvPtr instanceEnv = std::make_shared<MapEnv>();
+        *instanceEnv = *(classInfo->getComliedEnv());
+        instanceEnv->setOuterEnv(classInfo->getEnvitonment());
+        
+        //创建对象，并把对象压入操作数栈
+        //下一轮的栈帧是初始化对象的，结束了以后，这个新创建的对象，才会被当前栈帧所使用
+        InstancePtr newInstance = std::make_shared<ClassInstance>(instanceEnv);
+        operandStack_->push(newInstance);
+        
+        //如果未定义init函数，则抛出异常
+        try {
+          instanceEnv->get("init");
+        } catch (EnvException e) {
+          throw VMException("class " + classInfo->name() + " not found init function");
+        }
+        ObjectPtr initFuncObj = instanceEnv->get("init");
+        if (initFuncObj->kind_ != ObjKind::FUNCTION)
+          throw VMException("Invalid init member in class: " + classInfo->name());
+        FuncPtr initFunc = std::dynamic_pointer_cast<FuncObject>(initFuncObj);
+      
+        //参数赋值，压入栈
+        StackFramePtr initFrame = std::make_shared<StackFrame>(initFunc);
+        initFrame->initParams(initParams);
+        callStack_->push(initFrame);
         break;
       }
       case NIL:

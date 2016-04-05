@@ -59,6 +59,9 @@ public:
   //返回运行时的局部环境
   EnvPtr getEnv() const;
 
+  //获取名字字符
+  std::string getNames(unsigned index);
+
 private:
   //运行时局部环境
   EnvPtr env_;

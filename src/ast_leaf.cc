@@ -183,6 +183,11 @@ void IdTokenAST::complieAssign() {
   }
 }
 
+void IdTokenAST::compileAsRawString() {
+  auto codes_ = FuncObject::getCurrCompilingFunc()->getCodes();
+  codes_->rawString(index_);
+}
+
 /*********************StrToken对应的叶子节点*************************/
 
 StrTokenAST::StrTokenAST(TokenPtr token): ASTLeaf(ASTKind::LEAF_STR, token) {}
