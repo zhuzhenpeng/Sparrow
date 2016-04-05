@@ -80,9 +80,6 @@ ClassInfo::ClassInfo(std::shared_ptr<ClassStmntAST> stmnt, EnvPtr env):
   catch (EnvException e) {
     throw EnvException("not found super class: " + stmnt->superClassName());
   }
-
-  //初始化编译结果所放置的环境
-  compiledEnv_ = std::make_shared<MapEnv>(outerEnv_);
 }
 
 std::string ClassInfo::name() {
@@ -107,6 +104,8 @@ std::string ClassInfo::info() {
 
 void ClassInfo::compile() {
   ClassBodyPtr body = definition_->body();
+  //初始化编译结果所放置的环境
+  compiledEnv_ = std::make_shared<MapEnv>(outerEnv_);
   //函数定义的eval函数会自动编译
   body->eval(compiledEnv_); 
   //实现super的语义
