@@ -20,6 +20,7 @@ FuncObject::FuncObject(const std::string &functionName, size_t size,
   Object(ObjKind::FUNCTION), funcName_(functionName), localVarSize_(size), 
   env_(env), params_(params), block_(block){
   codes_ = std::make_shared<Code>();
+  outerNames_ = std::make_shared<std::vector<std::string>>();
 }
 
 std::shared_ptr<ParameterListAST> FuncObject::params() const {
@@ -30,20 +31,33 @@ std::shared_ptr<BlockStmntAST> FuncObject::block() const {
   return block_; 
 }
 
+void FuncObject::setOuterEnv(EnvPtr env) {
+  env_ = env;
+}
+
 EnvPtr FuncObject::runtimeEnv() {
   return std::make_shared<ArrayEnv>(env_, shared_from_this(), localVarSize_);
 }
 
-unsigned FuncObject::getRuntimeIndex(const std::string &name) {
-  for(size_t i = 0; i < outerNames_.size(); ++i) {
-    if (outerNames_[i] == name)
-      return i;
-  }
-  outerNames_.push_back(name);
-  return outerNames_.size() - 1;
+ObjectPtr FuncObject::copy() {
+  FuncPtr copyFunc = std::make_shared<FuncObject>(funcName_, localVarSize_, 
+      params_, block_, env_);
+  copyFunc->codes_ = codes_;
+  copyFunc->outerNames_ = outerNames_;
+  copyFunc->isCompile_ = isCompile_;
+  return copyFunc;
 }
 
-const std::vector<std::string> &FuncObject::getOuterNames() const {
+unsigned FuncObject::getRuntimeIndex(const std::string &name) {
+  for(size_t i = 0; i < outerNames_->size(); ++i) {
+    if ((*outerNames_)[i] == name)
+      return i;
+  }
+  outerNames_->push_back(name);
+  return outerNames_->size() - 1;
+}
+
+std::shared_ptr<std::vector<std::string>> FuncObject::getOuterNames() {
   return outerNames_;
 }
 
@@ -106,6 +120,7 @@ void ClassInfo::compile() {
   ClassBodyPtr body = definition_->body();
   //初始化编译结果所放置的环境
   compiledEnv_ = std::make_shared<MapEnv>(outerEnv_);
+
   //函数定义的eval函数会自动编译
   body->eval(compiledEnv_); 
   //实现super的语义
@@ -271,6 +286,23 @@ std::string MapEnv::info() {
   return "MAP ENVIRONMENT";
 }
 
+ObjectPtr MapEnv::copy() {
+  //外部环境和符号表
+  MapEnvPtr copyEnv = std::make_shared<MapEnv>(outerEnv_);
+  copyEnv->setUnitSymbols(getUnitSymbols());
+
+  //对环境内的对象进行深复制
+  for (auto pair = values_.begin(); pair != values_.end(); ++pair) {
+    ObjectPtr obj = pair->second->copy();
+    if (obj->kind_ == ObjKind::FUNCTION) {
+      FuncPtr func = std::dynamic_pointer_cast<FuncObject>(obj);
+      func->setOuterEnv(copyEnv);
+    }
+    copyEnv->put(pair->first, pair->second);
+  }
+  return copyEnv;
+}
+
 //---------------------函数运行时局部环境
 
 ArrayEnv::ArrayEnv(EnvPtr outer, FuncPtr function, size_t size): 
@@ -340,4 +372,8 @@ void ArrayEnv::putCurr(const std::string &__attribute__((unused))name,
 
 std::string ArrayEnv::info() {
   return "ARRAY ENVIRONMENT";
+}
+
+ObjectPtr ArrayEnv::copy() {
+  throw EnvException("FATAL ERROR, Array is not replicable");
 }

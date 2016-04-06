@@ -144,9 +144,8 @@ unsigned Code::rawString(unsigned index) {
   return push(index);
 }
 
-unsigned Code::newInstance(unsigned paramsNum) {
-  push(NEW_INSTANCE);
-  return push(paramsNum);
+unsigned Code::newInstance() {
+  return push(NEW_INSTANCE);
 }
 
 unsigned Code::nil() {

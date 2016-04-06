@@ -147,7 +147,7 @@ public:
 
   unsigned rawString(unsigned index);
 
-  unsigned newInstance(unsigned paramsNum);
+  unsigned newInstance();
 
   unsigned nil();
 

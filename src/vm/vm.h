@@ -76,7 +76,7 @@ private:
   unsigned codeSize_;
 
   //非局部变量的名称
-  const std::vector<std::string> &outerNames_;
+  std::shared_ptr<std::vector<std::string>> outerNames_;
 };
 using StackFramePtr = std::shared_ptr<StackFrame>;
 

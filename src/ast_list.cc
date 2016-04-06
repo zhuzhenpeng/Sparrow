@@ -1175,11 +1175,10 @@ ObjectPtr NewAST::eval(__attribute__((unused))EnvPtr env, ObjectPtr caller) {
 }
 
 void NewAST::compile() {
+  auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  codes->newInstance();
   ArgumentsPtr arguments = getArguments();
   arguments->compile();
-  unsigned argumentsNum = arguments->size();
-  auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
-  codes->newInstance(argumentsNum);
 }
 
 ArgumentsPtr NewAST::getArguments() const {

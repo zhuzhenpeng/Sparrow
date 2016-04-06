@@ -184,7 +184,9 @@ void IdTokenAST::complieAssign() {
 }
 
 void IdTokenAST::compileAsRawString() {
-  auto codes_ = FuncObject::getCurrCompilingFunc()->getCodes();
+  auto func = FuncObject::getCurrCompilingFunc();
+  index_ = func->getRuntimeIndex(getId());
+  auto codes_ = func->getCodes();
   codes_->rawString(index_);
 }
 

@@ -39,6 +39,10 @@ class Object {
 public:
   Object(ObjKind kind): kind_(kind) {}
   virtual std::string info() = 0;
+
+  //返回自己的一份拷贝,
+  virtual std::shared_ptr<Object> copy() = 0;
+
 public:
   ObjKind kind_;
 };
@@ -49,8 +53,13 @@ using ObjectPtr = std::shared_ptr<Object>;
 class NoneObject: public Object {
 public:
   NoneObject(): Object(ObjKind::NONE) {}
+
   std::string info() override {
     return "None";
+  }
+
+  ObjectPtr copy() override{
+    return std::make_shared<NoneObject>();
   }
 };
 using NoneObjectPtr = std::shared_ptr<NoneObject>;
@@ -59,9 +68,15 @@ using NoneObjectPtr = std::shared_ptr<NoneObject>;
 class IntObject: public Object {
 public:
   IntObject(int value): Object(ObjKind::INT), value_(value) {}
+
   std::string info() override {
     return "Int: " + std::to_string(value_);
   }
+
+  ObjectPtr copy() override {
+    return std::make_shared<IntObject>(value_);
+  }
+
 public:
   int value_;
 };
@@ -71,8 +86,13 @@ using IntObjectPtr = std::shared_ptr<IntObject>;
 class FloatObject: public Object {
 public:
   FloatObject(double value): Object(ObjKind::FLOAT), value_(value) {}
+
   std::string info() override {
     return "Float: " + std::to_string(value_);
+  }
+
+  ObjectPtr copy() override {
+    return std::make_shared<FloatObject>(value_);
   }
 public:
   double value_;
@@ -83,8 +103,13 @@ using FloatObjectPtr = std::shared_ptr<FloatObject>;
 class StrObject: public Object {
 public:
   StrObject(const std::string &str): Object(ObjKind::STRING), str_(str) {}
+
   std::string info() override {
     return "Str: " + str_; 
+  }
+
+  ObjectPtr copy() override {
+    return std::make_shared<StrObject>(str_);
   }
 public:
   std::string str_;
@@ -95,9 +120,14 @@ using StrObjectPtr = std::shared_ptr<StrObject>;
 class BoolObject: public Object {
 public:
   BoolObject(bool b): Object(ObjKind::BOOL), b_(b) {}
+
   BoolObject(int num): Object(ObjKind::BOOL), b_(num != 0) {}
   std::string info() override {
     return "Bool: " + std::to_string(b_);
+  }
+
+  ObjectPtr copy() override {
+    return std::make_shared<BoolObject>(b_);
   }
 public:
   bool b_;
@@ -132,12 +162,18 @@ public:
   //获得函数块AST
   std::shared_ptr<BlockStmntAST> block() const;
 
+  //设置上层环境
+  void setOuterEnv(EnvPtr env);
+
   //获取运行时环境
   EnvPtr runtimeEnv();
   
   std::string info() override {
     return "Func: " + funcName_;
   }
+
+  //对代码块、外部名字不进行深度复制
+  ObjectPtr copy() override;
 
   std::string funcName() const{
     return funcName_;
@@ -150,7 +186,7 @@ public:
   //对于函数运行时所需的非局部变量，记录下它的名字并分配一个下标
   unsigned getRuntimeIndex(const std::string &name);
 
-  const std::vector<std::string> &getOuterNames() const;
+  std::shared_ptr<std::vector<std::string>> getOuterNames();
 
   //函数是否已经已经编译
   bool isCompile();
@@ -180,7 +216,7 @@ private:
   CodePtr codes_;
 
   //非局部变量名称
-  std::vector<std::string> outerNames_;
+  std::shared_ptr<std::vector<std::string>> outerNames_;
 
   //是否已经编译（在虚拟机运行时）
   //1.def的函数都是已编译的
@@ -193,7 +229,7 @@ private:
 
 /****************************原生函数********************************/
 
-class NativeFunction: public Object {
+class NativeFunction: public Object, public std::enable_shared_from_this<NativeFunction> {
 public:
   NativeFunction(const std::string &name, size_t paramNum): 
     Object(ObjKind::NATIVE_FUNC), funcName_(name), paramNum_(paramNum) {}
@@ -210,6 +246,11 @@ public:
     return "native function: " + funcName_;
   }
 
+  //原生函数是没有副作用的，直接返回本身即可
+  ObjectPtr copy() override {
+    return shared_from_this();
+  }
+
   //所有的原生函数子类通过实现该接口实现其功能
   virtual ObjectPtr invoke(const std::vector<ObjectPtr> &params) = 0;
 
@@ -223,7 +264,7 @@ using NativeFuncPtr = std::shared_ptr<NativeFunction>;
 class ClassInfo;
 using ClassInfoPtr = std::shared_ptr<ClassInfo>;
 
-class ClassInfo: public Object {
+class ClassInfo: public Object, public std::enable_shared_from_this<ClassInfo> {
 public:
   ClassInfo(std::shared_ptr<ClassStmntAST> stmnt, EnvPtr env);
 
@@ -240,6 +281,11 @@ public:
   EnvPtr getEnvitonment();
   
   std::string info() override;
+
+  //语言运行时一个类定义只产生一个类元信息，复制函数直接返回本身
+  ObjectPtr copy() override {
+    return shared_from_this();
+  }
 
   //编译类中的每个函数
   //生成一个包含已编译的函数对象、变量的环境
@@ -260,7 +306,7 @@ private:
 
 /*****************************对象***********************************/
 
-class ClassInstance: public Object {
+class ClassInstance: public Object, public std::enable_shared_from_this<ClassInstance> {
 public:
   ClassInstance(EnvPtr env);
 
@@ -269,6 +315,11 @@ public:
   ObjectPtr read(const std::string &member);
 
   std::string info() override;
+
+  //对象复制的语义交给语言使用者实现，此处的复制返回自身
+  ObjectPtr copy() override {
+    return shared_from_this();
+  }
 
   EnvPtr getEnvironment() {
     return env_;
@@ -283,12 +334,20 @@ using InstancePtr = std::shared_ptr<ClassInstance>;
 
 /*************************定长数组***********************************/
 
-class Array: public Object {
+class Array: public Object, public std::enable_shared_from_this<Array> {
 public:
   Array(size_t i);
+
   void set(size_t i, ObjectPtr obj);
+
   ObjectPtr get(size_t i);
+
   std::string info() override;
+
+  //数组不能变更，直接返回自身
+  ObjectPtr copy() override {
+    return shared_from_this();
+  }
 private:
   std::vector<ObjectPtr> array_;
 };
@@ -382,6 +441,10 @@ public:
 
   std::string info() override;
 
+  //该复制只用在类元实例化出对象
+  //需要对环境内的各各对象进行深度赋值，且函数的外部环境更改为结果环境
+  ObjectPtr copy() override;
+
 private:
   std::map<std::string, ObjectPtr> values_;
 };
@@ -408,6 +471,10 @@ public:
   void putCurr(const std::string &name, ObjectPtr obj) override;
 
   std::string info() override;
+
+  //该环境没有复制的意义，抛出异常
+  ObjectPtr copy() override;
+
 private:
   std::weak_ptr<FuncObject> function_;
 

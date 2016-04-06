@@ -13,7 +13,7 @@ StackFrame::StackFrame(FuncPtr funcObj):outerNames_(funcObj->getOuterNames()) {
   env_ = funcObj->runtimeEnv();
   codes_ = funcObj->getCodes();
   if (codes_ == nullptr)
-    MyDebugger::print("null", __FILE__, __LINE__);
+    MyDebugger::print("null codes", __FILE__, __LINE__);
   else
     MyDebugger::print(codes_->getCodeSize(), __FILE__, __LINE__);
   codeSize_ = codes_->getCodeSize();
@@ -45,10 +45,10 @@ bool StackFrame::isEnd() {
 }
 
 ObjectPtr StackFrame::getOuterObj(unsigned nameIndex) {
-  if (outerNames_.empty()) {
+  if (outerNames_->empty()) {
     MyDebugger::print("empty outer names", __FILE__, __LINE__);
   }
-  return env_->get(outerNames_[nameIndex]);
+  return env_->get((*outerNames_)[nameIndex]);
 }
 
 ObjectPtr StackFrame::getLocalObj(unsigned index) {
@@ -56,7 +56,7 @@ ObjectPtr StackFrame::getLocalObj(unsigned index) {
 }
 
 void StackFrame::setOuterObj(unsigned nameIndex, ObjectPtr obj) {
-  env_->put(outerNames_[nameIndex], obj);
+  env_->put((*outerNames_)[nameIndex], obj);
 }
 
 void StackFrame::setLocalObj(unsigned index, ObjectPtr obj) {
@@ -68,9 +68,9 @@ EnvPtr StackFrame::getEnv() const {
 }
 
 std::string StackFrame::getNames(unsigned index) {
-  if (index >= outerNames_.size())
+  if (index >= outerNames_->size())
     throw VMException("index out of range while getting raw string");
-  return outerNames_[index];
+  return (*outerNames_)[index];
 }
 
 /****************************调用栈*********************************/
@@ -368,6 +368,7 @@ void ByteCodeInterpreter::run() {
           break;
         }
         else {
+          MyDebugger::print(static_cast<int>(funcObj->kind_), __FILE__, __LINE__);
           throw VMException("Invalid type for function call");
         }
       }
@@ -541,11 +542,6 @@ void ByteCodeInterpreter::run() {
       }
       case NEW_INSTANCE:
       {
-        unsigned paramsNum = stackFrame_->getCode();
-        std::vector<ObjectPtr> initParams;
-        for (size_t i = 0; i < paramsNum; ++i)
-          initParams.push_back(operandStack_->getAndPop());
-
         //类元对象
         ObjectPtr classInfoObj = operandStack_->getAndPop();
         if (classInfoObj->kind_ != ObjKind::CLASS_INFO)
@@ -553,9 +549,8 @@ void ByteCodeInterpreter::run() {
         ClassInfoPtr classInfo = std::dynamic_pointer_cast<ClassInfo>(classInfoObj);
 
         //对象的本质是一个环境，把编译过的类环境复制给它，并调用初始化函数
-        EnvPtr instanceEnv = std::make_shared<MapEnv>();
-        *instanceEnv = *(classInfo->getComliedEnv());
-        instanceEnv->setOuterEnv(classInfo->getEnvitonment());
+        EnvPtr instanceEnv = std::dynamic_pointer_cast<CommonEnv>(
+                              classInfo->getComliedEnv()->copy());
         
         //创建对象，并把对象压入操作数栈
         //下一轮的栈帧是初始化对象的，结束了以后，这个新创建的对象，才会被当前栈帧所使用
@@ -565,18 +560,16 @@ void ByteCodeInterpreter::run() {
         //如果未定义init函数，则抛出异常
         try {
           instanceEnv->get("init");
-        } catch (EnvException e) {
+        } catch (EnvException &e) {
           throw VMException("class " + classInfo->name() + " not found init function");
         }
-        ObjectPtr initFuncObj = instanceEnv->get("init");
+        ObjectPtr initFuncObj = newInstance->read("init");
         if (initFuncObj->kind_ != ObjKind::FUNCTION)
           throw VMException("Invalid init member in class: " + classInfo->name());
         FuncPtr initFunc = std::dynamic_pointer_cast<FuncObject>(initFuncObj);
-      
-        //参数赋值，压入栈
-        StackFramePtr initFrame = std::make_shared<StackFrame>(initFunc);
-        initFrame->initParams(initParams);
-        callStack_->push(initFrame);
+
+        //把初始函数压入栈，下一轮循环会执行CALL指令
+        operandStack_->push(initFunc);
         break;
       }
       case NIL:
