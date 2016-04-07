@@ -515,6 +515,8 @@ public:
   ObjectPtr eval(EnvPtr env, ObjectPtr caller) override;
 
   void compile() override;
+
+  void compileAssign();
 };
 using ArrayRefPtr = std::shared_ptr<ArrayRefAST>;
 

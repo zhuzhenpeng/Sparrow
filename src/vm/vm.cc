@@ -501,6 +501,19 @@ void ByteCodeInterpreter::run() {
         operandStack_->push(array->get(index->value_));
         break;
       }
+      case ARRAY_ASSIGN:
+      {
+        ObjectPtr indexObj = operandStack_->getAndPop();
+        if (indexObj->kind_ != ObjKind::INT)
+          throw VMException("Invalid index type for array assign");
+        IntObjectPtr index = std::dynamic_pointer_cast<IntObject>(indexObj);
+        ObjectPtr arrayObj = operandStack_->getAndPop();
+        if (arrayObj->kind_ != ObjKind::Array)
+          throw VMException("Invalid array type for array assign");
+        ArrayPtr array = std::dynamic_pointer_cast<Array>(arrayObj);
+        array->set(index->value_, operandStack_->getAndPop());
+        break;
+      }
       case LAMB:
       {
         unsigned lambSrcIndex = stackFrame_->getCode();

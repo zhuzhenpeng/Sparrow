@@ -251,10 +251,17 @@ void BinaryExprAST::compile() {
     }
     else if (leftTree->kind_ == ASTKind::LIST_PRIMARY_EXPR) {
       PrimaryExprPtr primary = std::dynamic_pointer_cast<PrimaryExprAST>(leftTree);     
+      //域访问
       if (primary->hasPostfix(0) && primary->postfix(0)->kind_ == ASTKind::LIST_DOT) {
         primary->compileSubExpr(1);
         auto dot = std::dynamic_pointer_cast<Dot>(primary->postfix(0));
         dot->compileAssign();
+      }
+      //数组访问
+      else if (primary->hasPostfix(0) && primary->postfix(0)->kind_ == ASTKind::LIST_ARRAY_REF) {
+        primary->compileSubExpr(1);
+        auto arrayRef= std::dynamic_pointer_cast<ArrayRefAST>(primary->postfix(0));
+        arrayRef->compileAssign();
       }
       else {
         throw ASTCompilingException("Invalid postfix Assign for compling");
@@ -1327,4 +1334,10 @@ void ArrayRefAST::compile() {
   index()->compile();
   auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
   codes->arrayAccess();
+}
+
+void ArrayRefAST::compileAssign() {
+  index()->compile();
+  auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  codes->arrayAssign();
 }

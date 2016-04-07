@@ -130,6 +130,11 @@ unsigned Code::arrayAccess() {
   return push(ARRAY_ACCCESS);
 }
 
+unsigned Code::arrayAssign() {
+  return push(ARRAY_ASSIGN);
+}
+
+
 unsigned Code::lamb(unsigned lambSrcIndex) {
   push(LAMB);
   return push(lambSrcIndex);

@@ -52,8 +52,8 @@ enum Instruction {
   //生成数组
   ARRAY_GENERATE,
 
-  //访问数组中的某个元素
-  ARRAY_ACCCESS,
+  //数组访问、数组赋值
+  ARRAY_ACCCESS, ARRAY_ASSIGN,
 
   //LAMBDA表达式
   LAMB,
@@ -138,6 +138,8 @@ public:
   unsigned arrayGenerate(unsigned size);
 
   unsigned arrayAccess();
+
+  unsigned arrayAssign();
 
   unsigned lamb(unsigned lambSrcIndex);
 
