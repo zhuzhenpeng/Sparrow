@@ -109,7 +109,6 @@ public:
 
   void compile() override;
 
-private:
   void compileSubExpr(size_t nest);
 };
 using PrimaryExprPtr = std::shared_ptr<PrimaryExprAST>;
@@ -442,6 +441,8 @@ public:
   ObjectPtr eval(EnvPtr env, ObjectPtr caller) override;
 
   void compile() override;
+
+  void compileAssign();
 };
 using DotPtr = std::shared_ptr<Dot>;
 

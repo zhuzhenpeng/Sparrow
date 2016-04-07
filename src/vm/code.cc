@@ -139,6 +139,10 @@ unsigned Code::dotAccess() {
   return push(DOT_ACCESS);
 }
 
+unsigned Code::dotAssign() {
+  return push(DOT_ASSIGN);
+}
+
 unsigned Code::rawString(unsigned index) {
   push(RAW_STRING);
   return push(index);
@@ -146,14 +150,6 @@ unsigned Code::rawString(unsigned index) {
 
 unsigned Code::newInstance() {
   return push(NEW_INSTANCE);
-}
-
-unsigned Code::nil() {
-  return push(NIL);
-}
-
-unsigned Code::pop() {
-  return push(POP);
 }
 
 unsigned Code::neg() {

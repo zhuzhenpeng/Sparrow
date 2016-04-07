@@ -239,19 +239,32 @@ ObjectPtr BinaryExprAST::eval(EnvPtr env) {
 }
 
 void BinaryExprAST::compile() {
+  //先编译右子树，再编译左子树
+  rightFactor()->compile();
+  
   std::string op = getOperator();
   if (op == "=") {
     auto leftTree = leftFactor();
-    if (leftTree->kind_ != ASTKind::LEAF_Id)
+    if (leftTree->kind_ == ASTKind::LEAF_Id) {
+      auto id = std::dynamic_pointer_cast<IdTokenAST>(leftTree);
+      id->complieAssign();
+    }
+    else if (leftTree->kind_ == ASTKind::LIST_PRIMARY_EXPR) {
+      PrimaryExprPtr primary = std::dynamic_pointer_cast<PrimaryExprAST>(leftTree);     
+      if (primary->hasPostfix(0) && primary->postfix(0)->kind_ == ASTKind::LIST_DOT) {
+        primary->compileSubExpr(1);
+        auto dot = std::dynamic_pointer_cast<Dot>(primary->postfix(0));
+        dot->compileAssign();
+      }
+      else {
+        throw ASTCompilingException("Invalid postfix Assign for compling");
+      }
+    }
+    else {
       throw ASTCompilingException("invalid left factor for assign");
-    auto id = std::dynamic_pointer_cast<IdTokenAST>(leftTree);
-    //先编译右子树，再编译左子树
-    rightFactor()->compile();
-    id->complieAssign();
+    }
   }
   else {
-    //先编译右子树，再编译左子树
-    rightFactor()->compile();
     leftFactor()->compile();
     compileOtherOp(op);
   }
@@ -1159,6 +1172,13 @@ void Dot::compile() {
   target->compileAsRawString();
   auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
   codes->dotAccess();
+}
+
+void Dot::compileAssign() {
+  auto target = std::dynamic_pointer_cast<IdTokenAST>(children_[0]);
+  target->compileAsRawString();
+  auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
+  codes->dotAssign();
 }
 
 /**********************类new创建实例***************************/

@@ -298,7 +298,7 @@ ObjectPtr MapEnv::copy() {
       FuncPtr func = std::dynamic_pointer_cast<FuncObject>(obj);
       func->setOuterEnv(copyEnv);
     }
-    copyEnv->put(pair->first, pair->second);
+    copyEnv->put(pair->first, obj);
   }
   return copyEnv;
 }

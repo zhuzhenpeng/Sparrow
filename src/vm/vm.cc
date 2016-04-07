@@ -530,7 +530,29 @@ void ByteCodeInterpreter::run() {
           break;
         }
         else {
-          throw VMException("UNKNOW caller while doing DOT ACCESS: " + target->str_);
+          throw VMException("UNKNOWN caller type while doing DOT ACCESS: " + target->str_);
+        }
+      }
+      case DOT_ASSIGN:
+      {
+        ObjectPtr targetObj = operandStack_->getAndPop();
+        if (targetObj->kind_ != ObjKind::STRING)
+          throw VMException("Invalid dot access");
+        StrObjectPtr target = std::dynamic_pointer_cast<StrObject>(targetObj);
+
+        ObjectPtr callerObj = operandStack_->getAndPop();
+        if (callerObj->kind_ == ObjKind::CLASS_INSTANCE) {
+          auto instance = std::dynamic_pointer_cast<ClassInstance>(callerObj);
+          instance->write(target->str_, operandStack_->getAndPop());
+          break;
+        }
+        else if (callerObj->kind_ == ObjKind::ENV) {
+          auto env = std::dynamic_pointer_cast<CommonEnv>(callerObj);
+          env->put(target->str_, operandStack_->getAndPop());
+          break;
+        }
+        else {
+          throw VMException("UNKNOWN caller type while doing DOT ASSIGN: " + target->str_);
         }
       }
       case RAW_STRING:
@@ -570,16 +592,6 @@ void ByteCodeInterpreter::run() {
 
         //把初始函数压入栈，下一轮循环会执行CALL指令
         operandStack_->push(initFunc);
-        break;
-      }
-      case NIL:
-      {
-        operandStack_->push(nullptr);
-        break;
-      }
-      case POP:
-      {
-        operandStack_->pop();
         break;
       }
       case NEG:

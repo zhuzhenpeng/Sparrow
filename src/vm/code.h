@@ -61,17 +61,15 @@ enum Instruction {
   //域访问
   DOT_ACCESS,
 
-  //元字符
+  //域赋值
+  DOT_ASSIGN,
+
+  //元字符指令，虚拟机从栈帧中获取相应的字符串，该串在语言中不是字符串，
+  //但其在被虚拟机处理时需要当作字符串，如域访问、域赋值的后缀(eg. a.b中的b)
   RAW_STRING,
 
   //创建对象
   NEW_INSTANCE,
-
-  //向操作数栈压入空对象
-  NIL, 
-  
-  //弹出栈顶元素的值
-  POP,
 
   //弹出栈顶元素，取其负值并压入栈
   NEG,
@@ -145,13 +143,11 @@ public:
 
   unsigned dotAccess();
 
+  unsigned dotAssign();
+
   unsigned rawString(unsigned index);
 
   unsigned newInstance();
-
-  unsigned nil();
-
-  unsigned pop();
 
   unsigned neg();
 
