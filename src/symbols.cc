@@ -45,6 +45,17 @@ int Symbols::getRuntimeIndex(const std::string &name) {
   }
 }
 
+int Symbols::forceGetLocalIndex(const std::string &name) {
+  if (symbolsIndex_.find(name) != symbolsIndex_.end()) {
+    return symbolsIndex_[name];
+  }
+  else {
+    size_t index = symbolsIndex_.size();
+    symbolsIndex_.insert({name, index});
+    return index;
+  }
+}
+
 size_t Symbols::getSymbolSize() const {
   return symbolsIndex_.size();
 }

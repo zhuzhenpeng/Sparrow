@@ -16,8 +16,16 @@
 std::unique_ptr<Lexer> lexer;
 std::unique_ptr<BasicParser> parser;
 
+//经过预处理环境中已有其它unit的信息，但是符号表没有，因此初始化符号表
 //初始化每个unit的符号表和环境，为环境添加上一些常见变量
 void init(EnvPtr env, SymbolsPtr symbols) {
+  //环境现在里面只有其它环境对象，直接遍历一遍全部元素即可
+  MapEnvPtr mEnv = std::dynamic_pointer_cast<MapEnv>(env);
+  const std::map<std::string, ObjectPtr> &elements = mEnv->getElements();
+  for (auto &e: elements) {
+    symbols->getRuntimeIndex(e.first);
+  }
+
   symbols->getRuntimeIndex("nil");
   env->put("nil", std::make_shared<NoneObject>());
 
@@ -58,10 +66,12 @@ void evalAndCompile(std::map<std::string, EnvPtr> &env, ParseOrderTreeNodePtr no
       //std::cout << tree->info() << std::endl;
     }
 
-    //遍历运行树
+    //遍历运行、编译树
     if (tree != nullptr) {
       //预处理生成符号表
       tree->preProcess(currSymbols);
+
+      //运行全局操作，对函数、类进行编译
       auto result = tree->eval(currEnv);
     }
   }
@@ -90,13 +100,22 @@ int main(int argc, char *argv[]) {
     Preprocessor p;
     auto parseOrderTree = p.generateParsingOrder(environments, entryFile);
 
-    //运行全局环境中的操作，对每个函数进行编译
+    //运行全局环境中的操作，对每个函数、类进行编译
     evalAndCompile(environments, parseOrderTree->getRoot());   
 
     //通过虚拟机，从main函数开始运行程序
     EnvPtr mainEnv = environments[parseOrderTree->getRoot()->absolutePath];
+    ObjectPtr mainFuncObj = nullptr;
     try {
-      ObjectPtr mainFuncObj = mainEnv->get("main");
+      mainFuncObj = mainEnv->get("main");
+    }
+    catch (EnvNotFoundException &e){
+      //没有main函数入口，正常退出程序
+      return 0;
+    }
+
+
+    try {
       if (mainFuncObj->kind_ != ObjKind::FUNCTION) {
         std::cerr << "Invalid main function entry" << std::endl;
         return -1;
@@ -106,14 +125,12 @@ int main(int argc, char *argv[]) {
       ByteCodeInterpreter interpreter(mainFunc);
       interpreter.run();
     }
-    catch (EnvNotFoundException &e){
-      //没有main函数入口，正常退出程序
-      return 0;
-    }
     catch (std::exception &e) {
       std::cerr << e.what() << std::endl;
       return -1;
     }
+
+
   }
   catch (std::exception &e) {
     std::cerr << e.what() << std::endl;

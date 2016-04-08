@@ -88,6 +88,11 @@ public:
   //如果该变量为闭包上层函数的临时变量，返回（-2 - 下标），结果值 + 2可反向逆推
   int getRuntimeIndex(const std::string &name);
 
+  //当前传入变量被强制当作临时变量处理
+  //用于函数形参预处理，防止形参和全局变量一致
+  //由于类的成员变量总是当作全局变量预处理，所以不需要调用该函数
+  int forceGetLocalIndex(const std::string &name);
+
   //获取符号表大小
   size_t getSymbolSize() const;
 

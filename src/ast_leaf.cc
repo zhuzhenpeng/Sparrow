@@ -159,12 +159,15 @@ void IdTokenAST::compile() {
   if (kind_ == IdKind::GLOBAL) {
     unsigned index = func->getRuntimeIndex(getId());
     codes->gload(index);
+    //MyDebugger::print(getId() + " " + std::to_string(index), __FILE__, __LINE__);
   } 
   else if (kind_ == IdKind::CLOSURE) {
     codes->cload(index_);
+    //MyDebugger::print(getId() + " " + std::to_string(index_), __FILE__, __LINE__);
   }
   else {
     codes->load(index_);
+    //MyDebugger::print(getId() + " " + std::to_string(index_), __FILE__, __LINE__);
   }
 }
 

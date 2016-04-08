@@ -124,8 +124,10 @@ void ClassInfo::compile() {
   //函数定义的eval函数会自动编译
   body->eval(compiledEnv_); 
   //实现super的语义
-  if (superClass_ != nullptr)
+  if (superClass_ != nullptr) {
     compiledEnv_->put("super", superClass_->getComliedEnv());
+    compiledEnv_->setOuterEnv(superClass_->getComliedEnv());
+  }
 }
 
 EnvPtr ClassInfo::getComliedEnv() {
@@ -298,9 +300,20 @@ ObjectPtr MapEnv::copy() {
       FuncPtr func = std::dynamic_pointer_cast<FuncObject>(obj);
       func->setOuterEnv(copyEnv);
     }
-    copyEnv->put(pair->first, obj);
+    else if (obj->kind_ == ObjKind::ENV && pair->first == "super") {
+      //把外部环境设置成复制产生的父类环境
+      copyEnv->setOuterEnv(std::dynamic_pointer_cast<CommonEnv>(obj)); 
+    }
+
+    //调用putCurr而不是put，否则会把属于该环境的变量的值赋值到父类同名变量中
+    copyEnv->putCurr(pair->first, obj);
   }
+
   return copyEnv;
+}
+
+const std::map<std::string, ObjectPtr> &MapEnv::getElements() {
+  return values_;
 }
 
 //---------------------函数运行时局部环境
@@ -352,7 +365,7 @@ void ArrayEnv::put(const std::string &name, ObjectPtr obj) {
 
 void ArrayEnv::put(size_t index, ObjectPtr obj) {
   if (index >= values_.size())
-    throw ASTEvalException("invalid index while putting obj");
+    throw ASTEvalException("invalid index while putting obj: " + std::to_string(index));
   values_[index] = obj;
 }
 

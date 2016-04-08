@@ -12,10 +12,10 @@
 StackFrame::StackFrame(FuncPtr funcObj):outerNames_(funcObj->getOuterNames()) {
   env_ = funcObj->runtimeEnv();
   codes_ = funcObj->getCodes();
-  if (codes_ == nullptr)
-    MyDebugger::print("null codes", __FILE__, __LINE__);
-  else
-    MyDebugger::print(codes_->getCodeSize(), __FILE__, __LINE__);
+  //if (codes_ == nullptr)
+    //MyDebugger::print("null codes", __FILE__, __LINE__);
+  //else
+    //MyDebugger::print(codes_->getCodeSize(), __FILE__, __LINE__);
   codeSize_ = codes_->getCodeSize();
   ip_ = 0;
 }
@@ -183,6 +183,8 @@ void ByteCodeInterpreter::arithmeticTypeCast(ObjectPtr a, ObjectPtr b, Instructi
     strArithmeticOp(aStr, bStr, op);
   }
   else {
+    MyDebugger::print(static_cast<int>(a->kind_), __FILE__, __LINE__);
+    MyDebugger::print(static_cast<int>(b->kind_), __FILE__, __LINE__);
     //类型不合法，抛出异常
     throw VMException("Invalid type of 2 params for arithmetic operation");
   }
@@ -532,6 +534,8 @@ void ByteCodeInterpreter::run() {
         StrObjectPtr target = std::dynamic_pointer_cast<StrObject>(targetObj);
 
         ObjectPtr callerObj = operandStack_->getAndPop();
+        if (callerObj == nullptr)
+          MyDebugger::print("shit", __FILE__, __LINE__);
         if (callerObj->kind_ == ObjKind::CLASS_INSTANCE) {
           auto instance = std::dynamic_pointer_cast<ClassInstance>(callerObj);
           operandStack_->push(instance->read(target->str_));

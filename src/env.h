@@ -445,6 +445,9 @@ public:
   //需要对环境内的各各对象进行深度赋值，且函数的外部环境更改为结果环境
   ObjectPtr copy() override;
 
+  //获取环境的元素
+  const std::map<std::string, ObjectPtr> &getElements();
+
 private:
   std::map<std::string, ObjectPtr> values_;
 };

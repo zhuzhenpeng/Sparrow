@@ -239,7 +239,7 @@ ObjectPtr BinaryExprAST::eval(EnvPtr env) {
 }
 
 void BinaryExprAST::compile() {
-  //先编译右子树，再编译左子树
+  //先编译右子树，再编译左子树，右子树的代码先执行，变量会置于栈底
   rightFactor()->compile();
   
   std::string op = getOperator();
@@ -885,7 +885,7 @@ size_t ParameterListAST::size() const {
 void ParameterListAST::preProcess(SymbolsPtr symbols) {
   paramsOffset_.clear();
   for(size_t i = 0; i < size(); ++i)
-    paramsOffset_.push_back(symbols->getRuntimeIndex(paramName(i)));
+    paramsOffset_.push_back(symbols->forceGetLocalIndex(paramName(i)));
 }
 
 void ParameterListAST::eval(EnvPtr funcEnv, EnvPtr callerEnv, 
@@ -997,7 +997,7 @@ ObjectPtr ArgumentsAST::invokeNative(EnvPtr env, NativeFuncPtr func) {
 }
 
 void ArgumentsAST::compile() {
-  for (auto iter = children_.rbegin(); iter != children_.rend(); ++iter)
+  for (auto iter = children_.begin(); iter != children_.end(); ++iter)
     (*iter)->compile();
   auto codes = FuncObject::getCurrCompilingFunc()->getCodes();
   codes->call(size());
