@@ -1,8 +1,5 @@
 //该文件用来测试语言的函数、闭包功能
 
-print("==========")
-print("【全局】测试函数和闭包")
-
 def fact(n) {
   f = 1
   while n > 0 {
@@ -10,13 +7,6 @@ def fact(n) {
     n = n - 1  
   }
   return f
-}
-result = fact(4)
-if result != 24 {
-  print("failed 1")
-  print(result)
-} else {
-  print("success 1")  
 }
 
 def fib(n) {
@@ -26,26 +16,12 @@ def fib(n) {
     return fib(n - 1) + fib(n - 2) 
   }
 }
-result = fib(10)
-if result != 55 {
-  print("failed 2")
-  print(result)
-} else {
-  print("success 2")  
-}
 
 //返回闭包
 def create_lamb(n) {
   return lamb (num) {
     return n + num 
   }
-}
-add_lamb = create_lamb(10)
-result = add_lamb(5)
-if result != 15 {
-  print("failed 3")  
-} else {
-  print("success 3")  
 }
 
 //入参是闭包
@@ -55,23 +31,11 @@ a_func = lamb(a, b) {
 def use_lamb(func, a, b) {
   return func(a, b)
 }
-result = use_lamb(a_func, 2, 3)
-if result != 6 {
-  print("failed 4")  
-} else {
-  print("success 4")  
-}
 
 //使用全局变量
 $g_var = 100
 def use_global(num) {
   return $g_var + num  
-}
-result = use_global(2)
-if result != 102 {
-  print("failed 5")  
-} else {
-  print("success 5")  
 }
 
 def use_global_lamb(num) {
@@ -81,6 +45,51 @@ def use_global_lamb(num) {
   return my_lamb
 }
 my_lamb = use_global_lamb(100)
+
+//----------------------------------------main函数
+def main() {
+
+print("==========")
+print("【虚拟机】测试函数和闭包")
+
+result = fact(4)
+if result != 24 {
+  print("failed 1")
+  print(result)
+} else {
+  print("success 1")  
+}
+
+result = fib(10)
+if result != 55 {
+  print("failed 2")
+  print(result)
+} else {
+  print("success 2")  
+}
+
+add_lamb = create_lamb(10)
+result = add_lamb(5)
+if result != 15 {
+  print("failed 3")  
+} else {
+  print("success 3")  
+}
+
+result = use_lamb(a_func, 2, 3)
+if result != 6 {
+  print("failed 4")  
+} else {
+  print("success 4")  
+}
+
+result = use_global(2)
+if result != 102 {
+  print("failed 5")  
+} else {
+  print("success 5")  
+}
+
 result = my_lamb(2)
 if result != 202 {
   print("failed 6")  
@@ -89,3 +98,5 @@ if result != 202 {
 }
 
 print("==========")
+
+}

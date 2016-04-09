@@ -1,8 +1,10 @@
 require foo as foo
 require bar as bar
 
+def main() {
+
 print("==========")
-print("【全局】测试require循环包含")
+print("【虚拟机】测试require循环包含")
 
 //先包含foo，而foo包含bar，bar比foo先解析
 //因此bar对foo变量的修改无效
@@ -37,3 +39,5 @@ if bar.$bar_str != "bar2" {
 }
 
 print("==========")
+
+}

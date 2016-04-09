@@ -1,8 +1,5 @@
 //该文件用来测试语言的类
 
-print("==========")
-print("【全局】测试类")
-
 class Foo {
   
   foo_ = nil  
@@ -63,6 +60,11 @@ class Student extends Person {
     sex_ = sex  
   }
 }
+
+def main() {
+
+print("==========")
+print("【虚拟机】测试类")
 
 z = Student.new("zzp", 22, "man", 123)
 
@@ -125,3 +127,5 @@ if z.otherInstance_.foo_ != "foo" {
 }
 
 print("==========")
+
+}

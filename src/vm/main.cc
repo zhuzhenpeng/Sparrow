@@ -120,7 +120,6 @@ int main(int argc, char *argv[]) {
         std::cerr << "Invalid main function entry" << std::endl;
         return -1;
       }
-      MyDebugger::print("MAIN RUN", __FILE__, __LINE__);
       FuncPtr mainFunc = std::dynamic_pointer_cast<FuncObject>(mainFuncObj);
       ByteCodeInterpreter interpreter(mainFunc);
       interpreter.run();

@@ -1,7 +1,9 @@
 //该文件用来测试语言的statement语法，如if，while
 
+def main() {
+
 print("==========")
-print("【全局】测试statement")
+print("【虚拟机】测试statement")
 
 if false {
   print("failed 1")
@@ -142,3 +144,5 @@ if or(result != 50, false) {
 }
 
 print("==========")
+
+}

@@ -3,8 +3,10 @@ require bar as bar
 
 require bar as bar
 
+def main() {
+
 print("==========")
-print("【全局】测试require重复包含")
+print("【虚拟机】测试require重复包含")
 
 //重复包含了bar模块
 //解释器应该只解析一遍，bar模块中的全局变量值在foo模块中的修改应该要生效
@@ -32,3 +34,4 @@ if bar.$foo != "new value" {
 
 print("==========")
 
+}
