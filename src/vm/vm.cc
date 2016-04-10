@@ -182,6 +182,14 @@ void ByteCodeInterpreter::arithmeticTypeCast(ObjectPtr a, ObjectPtr b, Instructi
     StrObjectPtr bStr = std::dynamic_pointer_cast<StrObject>(b);
     strArithmeticOp(aStr, bStr, op);
   }
+  else if (b->kind_ == ObjKind::NONE) {
+    if (op == NEQ) 
+      operandStack_->push(std::make_shared<BoolObject>(a->kind_ != ObjKind::NONE));
+    else if (op == EQ)
+      operandStack_->push(std::make_shared<BoolObject>(a->kind_ == ObjKind::NONE));
+    else
+      throw VMException("Invalid Operation with None Type");
+  }
   else {
     MyDebugger::print(static_cast<int>(a->kind_), __FILE__, __LINE__);
     MyDebugger::print(static_cast<int>(b->kind_), __FILE__, __LINE__);

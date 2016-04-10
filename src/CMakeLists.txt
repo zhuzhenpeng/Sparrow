@@ -7,8 +7,10 @@ enable_testing()
 aux_source_directory (./ "BASIC_SRC")
 add_library(basic STATIC ${BASIC_SRC})
 
+#测试暂时放下
 #file(COPY ./test/testing_files DESTINATION test)
 #add_subdirectory(./test)
 
 add_subdirectory(./vm)
 add_subdirectory(./pre_process)
+add_subdirectory(./lib)

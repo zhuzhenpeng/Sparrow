@@ -378,6 +378,12 @@ ObjectPtr BinaryExprAST::otherOp(ObjectPtr left, const std::string &op, ObjectPt
       throw ASTEvalException("bad type for str operation");
     }
   }
+  else if (op == "==" && right->kind_ == ObjKind::NONE) {
+    return std::make_shared<BoolObject>(left->kind_ == ObjKind::NONE);
+  }
+  else if (op == "!=" && right->kind_ == ObjKind::NONE) {
+    return std::make_shared<BoolObject>(left->kind_ != ObjKind::NONE);
+  }
   else {
     throw ASTEvalException("invalid type for binary operation");
   }

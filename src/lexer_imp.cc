@@ -123,8 +123,9 @@ void LexerImp::parseNextLine() {
       tokenQueue_.push_back(tp);
     }
     else if (results[7].matched) { // 匹配字符串
-      StrTokenPtr tp = std::make_shared<StrToken>(lineNumber_, 
-          fileName_, results[7].str());
+      //去掉头尾的双引号
+      std::string str(results[7].str(), 1, results[7].str().size() - 2);
+      StrTokenPtr tp = std::make_shared<StrToken>(lineNumber_, fileName_, str);
       tokenQueue_.push_back(tp);
     }
     else {  //匹配ID
