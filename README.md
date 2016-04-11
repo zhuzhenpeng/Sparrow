@@ -17,7 +17,7 @@ mkdir build && cd build
 cmake ../src  
 make  
 
-进入build/bm目录，把根目录里的testFiles文件全部拷贝过来
+进入build/vm目录，把根目录里的testFiles文件全部拷贝过来
 
 ./main xxx.spr就可以初步看到运行效果了
 
