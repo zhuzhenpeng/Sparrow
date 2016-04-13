@@ -1,72 +1,72 @@
 //该文件用来测试数组
 
-print("==========")
-print("【全局】测试数组")
+printLine("==========")
+printLine("【全局】测试数组")
 
 my_arr = [1, "str", [2, "str2"]]
 
 //--------------------普通数组访问
 if my_arr[0] != 1 {
-  print("failed 1")
-  print(my_arr[0])    
+  printLine("failed 1")
+  printLine(my_arr[0])    
 } else {
-  print("success 1")  
+  printLine("success 1")  
 }
 
 if my_arr[1] != "str" {
-  print("failed 2")
-  print(my_arr[1])  
+  printLine("failed 2")
+  printLine(my_arr[1])  
 } else {
-  print("success 2")  
+  printLine("success 2")  
 }
 
 //--------------------嵌套数组访问
 if my_arr[2][0] != 2 {
-  print("failed 3")  
-  print(my_arr[2][0])
+  printLine("failed 3")  
+  printLine(my_arr[2][0])
 } else {
-  print("success 3")  
+  printLine("success 3")  
 }
 
 if my_arr[2][1] != "str2" {
-  print("failed 4")
-  print(my_arr[2][1])  
+  printLine("failed 4")
+  printLine(my_arr[2][1])  
 } else {
-  print("success 4")  
+  printLine("success 4")  
 }
 
 //--------------------普通数组赋值
 my_arr[0] = "str"
 if (my_arr[0] != "str") {
-  print("failed 5")  
-  print(my_arry[0])
+  printLine("failed 5")  
+  printLine(my_arry[0])
 } else {
-  print("success 5")  
+  printLine("success 5")  
 }
 
 my_arr[1] = 100
 if (my_arr[1] != 100) {
-  print("failed 6")
-  print(my_arr[1])  
+  printLine("failed 6")
+  printLine(my_arr[1])  
 } else {
-  print("success 6")  
+  printLine("success 6")  
 }
 
 //--------------------嵌套数组赋值
 my_arr[2][0] = "str2"
 if my_arr[2][0] != "str2" {
-  print("failed 7")  
-  print(my_arr[2][0])
+  printLine("failed 7")  
+  printLine(my_arr[2][0])
 } else {
-  print("success 7")  
+  printLine("success 7")  
 }
 
 my_arr[2][1] = -300
 if my_arr[2][1] != -300 {
-  print("failed 8")
-  print(my_arr[2][1])  
+  printLine("failed 8")
+  printLine(my_arr[2][1])  
 } else {
-  print("success 8")  
+  printLine("success 8")  
 }
 
-print("==========")
+printLine("==========")

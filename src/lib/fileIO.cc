@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <iostream>
 
+#include "../debugger.h"
+
 
 /************************打开只读文件***************************/
 
@@ -24,16 +26,23 @@ ObjectPtr __OpenROFile::invoke(const std::vector<ObjectPtr> &params) {
 
 /***********************打开只写文件**************************/
 
-__OpenWOFile::__OpenWOFile(): NativeFunction("__OpenWOFile", 1) {}
+__OpenWOFile::__OpenWOFile(): NativeFunction("__OpenWOFile", 2) {}
 
 ObjectPtr __OpenWOFile::invoke(const std::vector<ObjectPtr> &params) {
-  if (params.empty() || params[0]->kind_ != ObjKind::STRING) {
+  if (params.empty() || params[0]->kind_ != ObjKind::STRING || 
+      params[1]->kind_ != ObjKind::INT) {
     std::cerr << "Invalid params for __OpenWOFile" << std::endl;
     return std::make_shared<IntObject>(-1);
   }
   
   StrObjectPtr fileName = std::dynamic_pointer_cast<StrObject>(params[0]);
-  int fd = open(fileName->str_.c_str(), O_WRONLY);
+  IntObjectPtr openFlag = std::dynamic_pointer_cast<IntObject>(params[1]);
+  int fd;
+  if (openFlag->value_ == 0)
+    fd = open(fileName->str_.c_str(), O_WRONLY|O_TRUNC);
+  else
+    fd = open(fileName->str_.c_str(), O_WRONLY|O_APPEND);
+
   return std::make_shared<IntObject>(fd);
 }
 
@@ -87,12 +96,16 @@ ObjectPtr __ReadWord::invoke(const std::vector<ObjectPtr> &params) {
 
   std::string word;
   char buffer[1];
+  buffer[0] = ' ';
+  ssize_t result = 0;
 
-  ssize_t result = read(fd->value_, buffer, 1);
-  if (result == -1 || result == 0)
-    return std::make_shared<NoneObject>();
+  while (buffer[0] == ' ') {
+    result = read(fd->value_, buffer, 1);
+    if (result == -1 || result == 0)
+      return std::make_shared<NoneObject>();
+  }
 
-  while (buffer[0] != ' ' || buffer[0] != '\n') {
+  while (buffer[0] != ' ' && buffer[0] != '\n') {
     word.push_back(buffer[0]);
     result = read(fd->value_, buffer, 1);
 
@@ -121,24 +134,28 @@ ObjectPtr __ReadLine::invoke(const std::vector<ObjectPtr> &params) {
   if (result == -1 || result == 0)
     return std::make_shared<NoneObject>();
 
-  while (buffer[0] != ' ' || buffer[0] != '\n') {
+  while (buffer[0] != '\n') {
     line.push_back(buffer[0]);
     result = read(fd->value_, buffer, 1);
 
-  if (result == -1 || result == 0)
+    if (result == -1 || result == 0)
       break;
   }
+
+  //MyDebugger::print(line, __FILE__, __LINE__);
 
   return std::make_shared<StrObject>(line);
 }
 
 /************************向文件写入**********************/
 
-__WriteFile::__WriteFile(): NativeFunction("__WriteFile", 1) {}
+__WriteFile::__WriteFile(): NativeFunction("__WriteFile", 2) {}
 
 ObjectPtr __WriteFile::invoke(const std::vector<ObjectPtr> &params) {
   if (params.size() < 2 || params[0]->kind_ != ObjKind::INT || 
       params[1]->kind_ != ObjKind::STRING) {
+    MyDebugger::print(static_cast<int>(params[0]->kind_), __FILE__, __LINE__);
+    MyDebugger::print(static_cast<int>(params[1]->kind_), __FILE__, __LINE__);
     std::cerr << "Invalid params for __WriteFile" << std::endl;
     return std::make_shared<IntObject>(-1);   
   }

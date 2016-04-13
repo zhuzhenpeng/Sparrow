@@ -56,7 +56,7 @@ public:
   ObjectPtr invoke(const std::vector<ObjectPtr> &params) override;
 
 private:
-  const size_t MAX_READ = 2;
+  const size_t MAX_READ = 1;
 };
 
 /*******************从文件中读取一个单词********************/

@@ -8,6 +8,7 @@
 #include "../lexer_imp.h"
 #include "../parser.h"
 #include "../native_func.h"
+#include "../lib/fileIO.h"
 #include "../pre_process/preprocess_exception.h"
 #include "../pre_process/preprocessor.h"
 #include "../pre_process/parse_order_tree.h"
@@ -16,7 +17,24 @@
 std::unique_ptr<Lexer> lexer;
 std::unique_ptr<BasicParser> parser;
 
-//经过预处理环境中已有其它unit的信息，但是符号表没有，因此初始化符号表
+//初始化原生函数
+void initNativeFunc() {
+  NativeFuncInitializer::addToInitList(std::make_shared<NativePrint>());
+  NativeFuncInitializer::addToInitList(std::make_shared<NativePrintLine>());
+  NativeFuncInitializer::addToInitList(std::make_shared<NativeReadInt>());
+  NativeFuncInitializer::addToInitList(std::make_shared<NativeReadFloat>());
+  NativeFuncInitializer::addToInitList(std::make_shared<NativeReadString>());
+
+  NativeFuncInitializer::addToInitList(std::make_shared<__OpenROFile>());
+  NativeFuncInitializer::addToInitList(std::make_shared<__OpenWOFile>());
+  NativeFuncInitializer::addToInitList(std::make_shared<__CloseFile>());
+  NativeFuncInitializer::addToInitList(std::make_shared<__ReadChar>());
+  NativeFuncInitializer::addToInitList(std::make_shared<__ReadWord>());
+  NativeFuncInitializer::addToInitList(std::make_shared<__ReadLine>());
+  NativeFuncInitializer::addToInitList(std::make_shared<__WriteFile>());
+}
+
+///经过预处理环境中已有其它unit的信息，但是符号表没有，因此初始化符号表
 //初始化每个unit的符号表和环境，为环境添加上一些常见变量
 void init(EnvPtr env, SymbolsPtr symbols) {
   //环境现在里面只有其它环境对象，直接遍历一遍全部元素即可
@@ -35,7 +53,7 @@ void init(EnvPtr env, SymbolsPtr symbols) {
   symbols->getRuntimeIndex("false");
   env->put("false", std::make_shared<BoolObject>(false));
 
-  NativeFuncInitializer::initialize(env, symbols);     //每个模块都初始化原生函数
+  NativeFuncInitializer::initialize(env, symbols);
 }
 
 //后序遍历树并解析
@@ -96,6 +114,9 @@ int main(int argc, char *argv[]) {
     parser.reset(new BasicParser());
     parser->init();
 
+    //初始化原生函数
+    initNativeFunc();
+
     //预处理，生成解析顺序树
     Preprocessor p;
     auto parseOrderTree = p.generateParsingOrder(environments, entryFile);
@@ -129,10 +150,11 @@ int main(int argc, char *argv[]) {
       return -1;
     }
 
-
   }
-  catch (std::exception &e) {
+  catch (std::exception e) {
     std::cerr << e.what() << std::endl;
     return -1;
   }
 }
+
+//经过预处理环境中已有其它unit的信息，但是符号表没有，因此初始化符号表

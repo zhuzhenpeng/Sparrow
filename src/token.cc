@@ -121,7 +121,3 @@ EOFTokenPtr EOFToken::getInstance() {
   }
   return eof_;
 }
-
-/*******************EOLToken***************************/
-
-IdTokenPtr g_EOLTokenPtr = std::make_shared<IdToken>(-1, "", "\\n");

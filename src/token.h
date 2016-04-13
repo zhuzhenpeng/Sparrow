@@ -92,9 +92,4 @@ private:
   static EOFTokenPtr eof_;
 };
 
-/*******************EOLToken***************************/
-
-//EOL是特殊的IdToken
-extern IdTokenPtr g_EOLTokenPtr;
-
 #endif

@@ -16,7 +16,7 @@
 #include "../env.h"
 
 /*****************************异常************************************/
-class VMException: std::exception {
+class VMException: public std::exception {
 public:
   VMException(const std::string &msg): errMsg_(msg) {}
   const char* what() const noexcept {

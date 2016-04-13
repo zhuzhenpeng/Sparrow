@@ -4,134 +4,134 @@
 def main() {
 
 //该文件正常的输出
-print("==========")
-print("【虚拟机】测试基本表达式")
+printLine("==========")
+printLine("【虚拟机】测试基本表达式")
 
 //整型
 int_value = 10
 if int_value != 10 {
-  print("failed 1")
-  print(int_value)
+  printLine("failed 1")
+  printLine(int_value)
 } else {
-  print("success 1")  
+  printLine("success 1")  
 }
 
 //浮点型
 float_value = 2.2
 if float_value != 2.2 {
-  print("failed 2")
-  print(float_value)
+  printLine("failed 2")
+  printLine(float_value)
 } else {
-  print("success 2")  
+  printLine("success 2")  
 }
 
 float_value2 = 22
 if float_value2 != 22 {
-  print("failed 3")
-  print(float_value2)
+  printLine("failed 3")
+  printLine(float_value2)
 } else {
-  print("success 3")  
+  printLine("success 3")  
 }
 
 
 //字符串
 str_value = ""
 if (str_value != "") {
-  print("failed 4")  
-  print(str_value)
+  printLine("failed 4")  
+  printLine(str_value)
 } else {
-  print("success 4")  
+  printLine("success 4")  
 }
 
 str_value2 = "z"
 if (str_value2 != "z") {
-  print("failed 5")  
-  print(str_value2)
+  printLine("failed 5")  
+  printLine(str_value2)
 } else {
-  print("success 5")  
+  printLine("success 5")  
 }
 
 str_value3 = "sparrow language"
 if (str_value3 != "sparrow language") {
-  print("failed 6")  
-  print(str_value3)
+  printLine("failed 6")  
+  printLine(str_value3)
 } else {
-  print("success 6")  
+  printLine("success 6")  
 }
 
 //运算符
 add = int_value + 2
 if add != 12 {
-  print("failed 7")
-  print(add)
+  printLine("failed 7")
+  printLine(add)
 } else {
-  print("success 7")  
+  printLine("success 7")  
 }
 
 add = float_value + 1.1
 if add != 3.3 {
-  print("failed 8")
-  print(add)
+  printLine("failed 8")
+  printLine(add)
 } else {
-  print("success 8")  
+  printLine("success 8")  
 }
 
 add = int_value + float_value
 if add != 12.2 {
-  print("failed 9")
-  print(add)
+  printLine("failed 9")
+  printLine(add)
 } else {
-  print("success 9")  
+  printLine("success 9")  
 }
 
 minus = int_value - 2
 if minus != 8 {
-  print("failed 10")
-  print(minus)
+  printLine("failed 10")
+  printLine(minus)
 } else {
-  print("success 10")  
+  printLine("success 10")  
 }
 
 minus = float_value - 1.1
 if minus != 1.1 {
-  print("failed 11")
-  print(minus)
+  printLine("failed 11")
+  printLine(minus)
 } else {
-  print("success 11")  
+  printLine("success 11")  
 }
 
 minus = int_value - float_value
 if minus != 7.8 {
-  print("failed 12")
-  print(minus)
+  printLine("failed 12")
+  printLine(minus)
 } else {
-  print("success 12")  
+  printLine("success 12")  
 }
 
 multi = int_value * 3
 if multi != 30 {
-  print("failed 13")
-  print(multi)
+  printLine("failed 13")
+  printLine(multi)
 } else {
-  print("success 13")  
+  printLine("success 13")  
 }
 
 multi = float_value * 3
 if multi != 6.6 {
-  print("failed 14")
-  print(multi)
+  printLine("failed 14")
+  printLine(multi)
 } else {
-  print("success 14")  
+  printLine("success 14")  
 }
 
 multi = int_value * float_value
 if multi != 22 {
-  print("failed 15")
-  print(multi)
+  printLine("failed 15")
+  printLine(multi)
 } else {
-  print("success 15")  
+  printLine("success 15")  
 }
 
-print("==========")
+printLine("==========")
 
 }

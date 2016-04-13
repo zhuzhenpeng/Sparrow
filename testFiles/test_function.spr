@@ -1,7 +1,7 @@
 //该文件用来测试语言的函数、闭包功能
 
-print("==========")
-print("【全局】测试函数和闭包")
+printLine("==========")
+printLine("【全局】测试函数和闭包")
 
 def fact(n) {
   f = 1
@@ -13,10 +13,10 @@ def fact(n) {
 }
 result = fact(4)
 if result != 24 {
-  print("failed 1")
-  print(result)
+  printLine("failed 1")
+  printLine(result)
 } else {
-  print("success 1")  
+  printLine("success 1")  
 }
 
 def fib(n) {
@@ -28,10 +28,10 @@ def fib(n) {
 }
 result = fib(10)
 if result != 55 {
-  print("failed 2")
-  print(result)
+  printLine("failed 2")
+  printLine(result)
 } else {
-  print("success 2")  
+  printLine("success 2")  
 }
 
 //返回闭包
@@ -43,9 +43,9 @@ def create_lamb(n) {
 add_lamb = create_lamb(10)
 result = add_lamb(5)
 if result != 15 {
-  print("failed 3")  
+  printLine("failed 3")  
 } else {
-  print("success 3")  
+  printLine("success 3")  
 }
 
 //入参是闭包
@@ -57,9 +57,9 @@ def use_lamb(func, a, b) {
 }
 result = use_lamb(a_func, 2, 3)
 if result != 6 {
-  print("failed 4")  
+  printLine("failed 4")  
 } else {
-  print("success 4")  
+  printLine("success 4")  
 }
 
 //使用全局变量
@@ -69,9 +69,9 @@ def use_global(num) {
 }
 result = use_global(2)
 if result != 102 {
-  print("failed 5")  
+  printLine("failed 5")  
 } else {
-  print("success 5")  
+  printLine("success 5")  
 }
 
 def use_global_lamb(num) {
@@ -83,9 +83,9 @@ def use_global_lamb(num) {
 my_lamb = use_global_lamb(100)
 result = my_lamb(2)
 if result != 202 {
-  print("failed 6")  
+  printLine("failed 6")  
 } else {
-  print("success 6")  
+  printLine("success 6")  
 }
 
-print("==========")
+printLine("==========")

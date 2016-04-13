@@ -125,7 +125,7 @@ void LexerImp::parseNextLine() {
     else if (results[7].matched) { // 匹配字符串
       //去掉头尾的双引号
       std::string str(results[7].str(), 1, results[7].str().size() - 2);
-      StrTokenPtr tp = std::make_shared<StrToken>(lineNumber_, fileName_, str);
+      StrTokenPtr tp = std::make_shared<StrToken>(lineNumber_, fileName_, parseESC(str));
       tokenQueue_.push_back(tp);
     }
     else {  //匹配ID
@@ -137,7 +137,7 @@ void LexerImp::parseNextLine() {
 
   //如果不是以分号分割，那么每一行后面添加一个换行token
   if (!tokenQueue_.empty() && tokenQueue_.back()->getText() != ";")
-    tokenQueue_.push_back(g_EOLTokenPtr);
+    tokenQueue_.push_back(std::make_shared<IdToken>(lineNumber_, fileName_, "\\n"));
 
   ++lineNumber_;
 }
@@ -154,4 +154,46 @@ void LexerImp::resetStatus() {
   }
   is_ = nullptr;
   srcText_.clear();
+}
+
+std::string LexerImp::parseESC(const std::string &src) {
+  std::string result;
+  size_t index = 0;
+  while (index < src.size()) {
+    if (src[index] != '\\') {
+      result.push_back(src[index]);
+    }
+    else {
+      size_t nextIndex = index + 1;
+      //原串的最后一个字符是反斜杠
+      if (nextIndex >= src.size()) {
+        result.push_back('\\');
+      }
+      else {
+        switch (src[nextIndex]) {
+          case '0':
+            result.push_back('\0');
+            ++index;
+            break;
+          case 'n':
+            result.push_back('\n');
+            ++index;
+            break;
+          case 't':
+            result.push_back('\t');
+            ++index;
+            break;
+          case '\\':
+            result.push_back('\\');
+            ++index;
+            break;
+          default:
+            result.push_back('\\');
+            break;
+        }
+      }
+    }
+    ++index;
+  }
+  return result;
 }

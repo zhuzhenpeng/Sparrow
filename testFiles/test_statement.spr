@@ -1,54 +1,54 @@
 //该文件用来测试语言的statement语法，如if，while
 
-print("==========")
-print("【全局】测试statement")
+printLine("==========")
+printLine("【全局】测试statement")
 
 if false {
-  print("failed 1")
+  printLine("failed 1")
 } else {
-  print("success 1")  
+  printLine("success 1")  
 }
 
 if 1 > 2 {
-  print("failed 2")
+  printLine("failed 2")
 } else {
-  print("success 2")  
+  printLine("success 2")  
 }
 
 if and(true, false) {
-  print("failed 3")
+  printLine("failed 3")
 } else {
-  print("success 3")  
+  printLine("success 3")  
 }
 
 if or(false, false) {
-  print("failed 4")
+  printLine("failed 4")
 } else {
-  print("success 4")  
+  printLine("success 4")  
 }
 
 if and(and(true, true), false) {
-  print("failed 5")
+  printLine("failed 5")
 } else {
-  print("success 5")  
+  printLine("success 5")  
 }
 
 if or(and(true, false), false) {
-  print("failed 6")
+  printLine("failed 6")
 } else {
-  print("success 6")  
+  printLine("success 6")  
 }
 
 if and(2 > 1, false) {
-  print("failed 7")
+  printLine("failed 7")
 } else {
-  print("success 7")  
+  printLine("success 7")  
 }
 
 if or(1 > 2, 2 > 3) {
-  print("failed 8")
+  printLine("failed 8")
 } else {
-  print("success 8")  
+  printLine("success 8")  
 }
 
 num = 10
@@ -56,40 +56,40 @@ if true {
   num = num + 1  
 }
 if num != 11 {
-  print("failed 9")
+  printLine("failed 9")
 } else {
-  print("success 9")  
+  printLine("success 9")  
 }
 
 num = 10
 if false {
-  print("failed 10")
+  printLine("failed 10")
 } elif num > 11 {
-  print("failed 11")
+  printLine("failed 11")
 } elif and(num > 11, num == 10) {
-  print("failed 12")
+  printLine("failed 12")
 } elif or(num == 10, num > 11){
   num = 100  
 }
 if (num != 100) {
-  print("failed 12")
+  printLine("failed 12")
 } else {
-  print("success 10")  
-  print("success 11")  
-  print("success 12")  
+  printLine("success 10")  
+  printLine("success 11")  
+  printLine("success 12")  
 }
 
 num = 10
 if num != 10 {
-  print("failed 13")
+  printLine("failed 13")
 } else {
-  print("success 13")
+  printLine("success 13")
   num = 11  
 }
 if (num != 11) {
-  print("failed 14")
+  printLine("failed 14")
 } else {
-  print("success 14")  
+  printLine("success 14")  
 }
 
 num = 10
@@ -97,21 +97,21 @@ while num < 20 {
   num = num + 2  
 }
 if num != 20 {
-  print("failed 15")
+  printLine("failed 15")
 } else {
-  print("success 15")  
+  printLine("success 15")  
 }
 
 num = 10
 while and(num < 20, false) {
-  print("failed 16")
+  printLine("failed 16")
 }
 if num != 10 {
-  print("failed 17")
-  print(num)
+  printLine("failed 17")
+  printLine(num)
 } else {
-  print("success 16")  
-  print("success 17")  
+  printLine("success 16")  
+  printLine("success 17")  
 }
 
 num = 10
@@ -119,9 +119,9 @@ while or(num <= 20, false) {
   num = num + 1  
 }
 if num != 21 {
-  print("failed 18")
+  printLine("failed 18")
 } else {
-  print("success 18")  
+  printLine("success 18")  
 }
 
 result = 0
@@ -135,10 +135,10 @@ while i < 5 {
   i = i + 1
 }
 if or(result != 50, false) {
-  print("failed 19")
-  print(result)
+  printLine("failed 19")
+  printLine(result)
 } else {
-  print("success 19")  
+  printLine("success 19")  
 }
 
-print("==========")
+printLine("==========")

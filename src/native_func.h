@@ -3,14 +3,21 @@
 
 #include "env.h"
 #include "symbols.h"
+#include <vector>
+#include <memory>
 
 //初始化
 //将函数放入环境和符号表中
 class NativeFuncInitializer {
 public:
   static void initialize(EnvPtr unit, SymbolsPtr symbols);
+
+  //将原生函数放入初始化列表
+  static void addToInitList(NativeFuncPtr func);
+
 private:
-  static void putToEnvAndSymbol(NativeFuncPtr func, EnvPtr unit, SymbolsPtr symbols);
+  //初始化列表
+  static std::vector<NativeFuncPtr> nativeFuncs_;
 };
 
 /***************************普通打印函数*******************************/

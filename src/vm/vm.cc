@@ -1,6 +1,7 @@
 #include "vm.h"
 
 #include <cmath>
+#include <algorithm>
 #include "code.h"
 #include "../symbols.h"
 #include "../ast_list.h"
@@ -22,7 +23,8 @@ StackFrame::StackFrame(FuncPtr funcObj):outerNames_(funcObj->getOuterNames()) {
 
 void StackFrame::initParams(const std::vector<ObjectPtr> &arguments) {
   //局部环境中的头几个对象是参数
-  //和入参的顺序相反
+  
+  //如果不是原生函数，由于编译顺序和出栈顺序相反，所以需要反顺序初始化
   unsigned localIndex = 0;
   for (auto iter = arguments.rbegin(); iter != arguments.rend(); ++iter) {
     env_->put(localIndex, *iter);
@@ -370,8 +372,9 @@ void ByteCodeInterpreter::run() {
           break;
         }
         else if (funcObj->kind_ == ObjKind::NATIVE_FUNC) {
-          //MyDebugger::print("Native Func Call", __FILE__, __LINE__);
           NativeFuncPtr func = std::dynamic_pointer_cast<NativeFunction>(funcObj);
+          //需要把参数倒序
+          std::reverse(params.begin(), params.end());
           ObjectPtr result = func->invoke(params);
           if (result != nullptr)
             operandStack_->push(result);
@@ -543,7 +546,8 @@ void ByteCodeInterpreter::run() {
 
         ObjectPtr callerObj = operandStack_->getAndPop();
         if (callerObj == nullptr)
-          MyDebugger::print("shit", __FILE__, __LINE__);
+          throw VMException("Not found the source object while doing dot access of: " 
+              + target->str_);
         if (callerObj->kind_ == ObjKind::CLASS_INSTANCE) {
           auto instance = std::dynamic_pointer_cast<ClassInstance>(callerObj);
           operandStack_->push(instance->read(target->str_));

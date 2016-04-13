@@ -3,45 +3,45 @@ require bar as bar
 
 def main() {
 
-print("==========")
-print("【虚拟机】测试require")
+printLine("==========")
+printLine("【虚拟机】测试require")
 
 if foo.$foo_value != 20 {
-  print("failed 1")  
-  print(foo.$foo_value)
+  printLine("failed 1")  
+  printLine(foo.$foo_value)
 } else {
-  print("success 1")  
+  printLine("success 1")  
 }
 
 if foo.$foo_str != "foo" {
-  print("failed 2")  
-  print(foo.$foo_str)
+  printLine("failed 2")  
+  printLine(foo.$foo_str)
 } else {
-  print("success 2")  
+  printLine("success 2")  
 }
 
 if bar.$bar_value != 10 {
-  print("failed 3")  
-  print(bar.$bar_value)
+  printLine("failed 3")  
+  printLine(bar.$bar_value)
 } else {
-  print("success 3")  
+  printLine("success 3")  
 }
 
 if bar.$bar_str != "bar" {
-  print("failed 4")  
-  print(bar.$bar_str)
+  printLine("failed 4")  
+  printLine(bar.$bar_str)
 } else {
-  print("success 4")  
+  printLine("success 4")  
 }
 
 instance = foo.Foo.new(4)
 if instance.value() != 24 {
-  print("failed 5")  
-  print(instance.value())
+  printLine("failed 5")  
+  printLine(instance.value())
 } else {
-  print("success 5")  
+  printLine("success 5")  
 }
 
-print("==========")
+printLine("==========")
 
 }

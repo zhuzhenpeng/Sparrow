@@ -3,32 +3,17 @@
 #include <iostream>
 #include "env.h"
 
+std::vector<NativeFuncPtr> NativeFuncInitializer::nativeFuncs_;
+
 void NativeFuncInitializer::initialize(EnvPtr unit, SymbolsPtr symbols) {
-  //print
-  auto print = std::make_shared<NativePrint>();
-  putToEnvAndSymbol(print, unit, symbols);
-
-  //printLine
-  auto printLine = std::make_shared<NativePrintLine>();
-  putToEnvAndSymbol(printLine, unit, symbols);
-
-  //readInt
-  auto readInt = std::make_shared<NativeReadInt>();
-  putToEnvAndSymbol(readInt, unit, symbols);
-
-  //readFloat
-  auto readFloat = std::make_shared<NativeReadFloat>();
-  putToEnvAndSymbol(readFloat, unit, symbols);
-
-  //readStr
-  auto readStr = std::make_shared<NativeReadString>();
-  putToEnvAndSymbol(readStr, unit, symbols);
+  for (auto func: nativeFuncs_) {
+    unit->put(func->name(), func);
+    symbols->getRuntimeIndex(func->name());
+  }
 }
 
-void NativeFuncInitializer::putToEnvAndSymbol(NativeFuncPtr func, EnvPtr unit, 
-    SymbolsPtr symbols) {
-  unit->put(func->name(), func);
-  symbols->getRuntimeIndex(func->name());
+void NativeFuncInitializer::addToInitList(NativeFuncPtr func) {
+  nativeFuncs_.push_back(func);
 }
 
 /***************************普通打印函数*******************************/
@@ -112,5 +97,4 @@ ObjectPtr NativeReadString::invoke(const std::vector<ObjectPtr> &__attribute__((
   std::cin >> str;
   return std::make_shared<StrObject>(str);
 }
-
 

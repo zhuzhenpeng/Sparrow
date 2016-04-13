@@ -63,69 +63,69 @@ class Student extends Person {
 
 def main() {
 
-print("==========")
-print("【虚拟机】测试类")
+printLine("==========")
+printLine("【虚拟机】测试类")
 
 z = Student.new("zzp", 22, "man", 123)
 
 //访问成员
 if z.name_ != "Student" {
-  print("failed 1")  
-  print(z.name_)
+  printLine("failed 1")  
+  printLine(z.name_)
 } else {
-  print("success 1")  
+  printLine("success 1")  
 }
 
 if z.age_ != 22 {
-  print("failed 2")  
+  printLine("failed 2")  
 } else {
-  print("success 2")  
+  printLine("success 2")  
 }
 
 if z.sex_ != "man" {
-  print("failed 3")  
+  printLine("failed 3")  
 } else {
-  print("success 3")
+  printLine("success 3")
 }
 
 if z.student_id_ != 123 {
-  print("failed 4")  
+  printLine("failed 4")  
 } else {
-  print("success 4")  
+  printLine("success 4")  
 }
 
 //调用父类方法
 if z.get_age() != 22 {
-  print("failed 5")  
+  printLine("failed 5")  
 } else {
-  print("success 5")  
+  printLine("success 5")  
 }
 
 //访问同名方法
 z.set_age(100)
 if z.get_age() != 22 {
-  print("failed 6")  
+  printLine("failed 6")  
 } else {
-  print("success 6")  
+  printLine("success 6")  
 }
 
 //使用父类成员
 z.set_sex("boy")
 if z.sex_ != "boy" {
-  print("failed 7")  
-  print(z.sex_)
+  printLine("failed 7")  
+  printLine(z.sex_)
 } else {
-  print("success 7")
+  printLine("success 7")
 }
 
 //测试类中的类实例成员
 if z.otherInstance_.foo_ != "foo" {
-  print("failed 8")  
-  print(z.otherInstance_.foo_)
+  printLine("failed 8")  
+  printLine(z.otherInstance_.foo_)
 } else {
-  print("success 8")
+  printLine("success 8")
 }
 
-print("==========")
+printLine("==========")
 
 }

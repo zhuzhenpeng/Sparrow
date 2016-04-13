@@ -33,6 +33,9 @@ private:
   //重置内部状态
   void resetStatus();
 
+  //解析字符中的转移字符
+  std::string parseESC(const std::string &src);
+
 private:
   //存储解析出来的Token的队列
   std::deque<TokenPtr> tokenQueue_;
