@@ -1,0 +1,23 @@
+//文件读写的demo
+
+require lib.file as file
+use ROFile = file.ROFile
+use WOFile = file.WOFile
+
+
+def main() {
+  outputFile = WOFile.new("text.txt", file.OPEN_WITH_TRUNC)
+  outputFile.write("hello world \nhello Sparrow")
+  outputFile.close()
+
+  inFile = ROFile.new("text.txt")
+  line = inFile.readLine()
+  printLine(line)
+  
+  word = inFile.readWord()
+  while word != nil {
+    print(word + " ")
+    word = inFile.readWord()  
+  }
+  inFile.close()
+}

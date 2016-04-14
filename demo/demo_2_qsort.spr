@@ -1,0 +1,67 @@
+//快速排序的demo
+
+def printArray(arr, size) {
+  index = 0
+  while index < size {
+    print(arr[index])
+    print(" ")  
+    index = index + 1
+  }  
+  printLine("")
+}
+
+def qsort(arr, left, right) {
+  if left >= right {
+    return nil
+  }
+
+  key = arr[left]
+  i = left + 1
+  j = right
+
+  while i < j {
+    while and(arr[i] <= key, i < j) {
+      i = i + 1  
+    }  
+    while and(arr[j] > key, i < j) {
+      j = j - 1  
+    }
+    tmp = arr[i]
+    arr[i] = arr[j]
+    arr[j] = tmp
+  }
+  
+  if arr[i] < key {
+    arr[left] = arr[i]
+    arr[i] = key
+    qsort(arr, left, i - 1)
+    qsort(arr, i + 1, right)
+  } else {
+    arr[left] = arr[i - 1]  
+    arr[i - 1] = key
+    qsort(arr, left, i - 2)
+    qsort(arr, i, right)
+  }
+}
+
+def main() {
+  a1 = [5, 7, 3, 10, 2, 21, 1]
+  qsort(a1, 0, 6)
+  printArray(a1, 7)
+
+  a2 = [1]
+  qsort(a2, 0, 0)
+  printArray(a2, 1)
+
+  a3 = [2, 1]
+  qsort(a3, 0, 1)
+  printArray(a3, 2)
+
+  a4 = [2, 2, 1, 1]
+  qsort(a4, 0, 3)
+  printArray(a4, 4)
+
+  a5 = [5, 4, 3, 2, 1]
+  qsort(a5, 0, 4)
+  printArray(a5, 5)
+}

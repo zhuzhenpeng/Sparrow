@@ -1,0 +1,78 @@
+class ROFile {
+
+  //文件描述符号
+  fd_ = nil
+  
+  def init(path) {
+    fd_ = __OpenROFile(path)
+    if fd_ == -1 {
+      printLine("Failed to open file: " + path)  
+    } 
+  }
+
+  def readChar() {
+    if or(fd_ == nil, fd_ == -1) {
+      printLine("Invalid file status, need to reopen file")
+      return nil
+    }
+    char = __ReadChar(fd_)
+    return char  
+  }
+
+  def readWord() {
+    if or(fd_ == nil, fd_ == -1) {
+      printLine("Invalid file status, need to reopen file")
+      return nil
+    }
+    word = __ReadWord(fd_)
+    return word  
+  }
+
+  def readLine() {
+    if or(fd_ == nil, fd_ == -1) {
+      printLine("Invalid file status, need to reopen file")
+      return nil
+    }
+    line = __ReadLine(fd_)
+    return line
+  }
+  
+  def close() {
+    __CloseFile(fd_)
+    fd_ = nil  
+  }
+}
+
+//打开的方式：截断和追加
+OPEN_WITH_TRUNC = 0
+OPEN_WITH_APPEND = 1
+
+class WOFile {
+  
+  //文件描述符
+  fd_ = nil
+  
+  def init(path, flag) {
+    fd_ = __OpenWOFile(path, flag)
+    if fd_ == -1 {
+      printLine("Failed to open file: " + path)  
+    }
+  }  
+
+  def write(content) {
+    if or(fd_ == nil, fd_ == -1) {
+      printLine("Invalid file status, need to reopen file")
+      return -1
+    }
+    result = __WriteFile(fd_, content)
+    if result == -1 {
+      printLine("Failed to write to file: " + path)  
+    }  
+    return result
+  }
+
+  def close() {
+    __CloseFile(fd_)
+    fd_ = nil  
+  }
+}

@@ -1,0 +1,21 @@
+//斐波那契数列的demo
+
+def fib(n) {
+  if n < 2 {
+    return n  
+  } else {
+    return fib(n - 1) + fib(n - 2) 
+  }  
+}
+
+def main() {
+  print("输入任意整型数:")    
+  num = readInt()
+
+  printLine("")
+  print("fib(")
+  print(num)
+  print(") = ")
+  print(fib(num))
+  printLine("")
+}
