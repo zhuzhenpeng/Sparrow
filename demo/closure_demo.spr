@@ -1,0 +1,34 @@
+def bold(wrapped) {
+  tmp_lamb = nil
+  if wrapped == nil {
+    tmp_lamb = lamb (word) {
+      return "<b>" + word + "</b>"  
+    }
+  } else {
+    tmp_lamb = lamb (word) {
+      return "<b>" + wrapped(word) + "</b>"  
+    }
+  }
+  return tmp_lamb
+}
+
+def italic(wrapped) {
+  tmp_lamb = nil
+  if wrapped == nil {
+    tmp_lamb = lamb (word) {
+      return "<i>" + word + "</i>"  
+    }
+  } else {
+    tmp_lamb = lamb (word) {
+      return "<i>" + wrapped(word) + "</i>"  
+    }
+  }
+  return tmp_lamb
+}
+
+def main() {
+  bold_and_italic = bold(italic(nil))
+  print("Please input a word: ")
+  word = readStr()
+  printLine(bold_and_italic(word)) 
+}
