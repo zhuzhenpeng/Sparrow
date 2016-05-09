@@ -22,6 +22,8 @@ NativePrint::NativePrint(): NativeFunction("print", 1) {}
 
 ObjectPtr NativePrint::invoke(const std::vector<ObjectPtr> &params) {
   ObjectPtr param = params[0];
+  if (param == nullptr)
+    throw NativeFuncException("ERROR! Invalid for null variable for print");
   switch (param->kind_) {
     case ObjKind::INT:
       std::cout << std::dynamic_pointer_cast<IntObject>(param)->value_;
@@ -48,6 +50,8 @@ NativePrintLine::NativePrintLine(): NativeFunction("printLine", 1) {}
 
 ObjectPtr NativePrintLine::invoke(const std::vector<ObjectPtr> &params) {
   ObjectPtr param = params[0];
+  if (param == nullptr)
+    throw NativeFuncException("ERROR! Invalid for null variable for print");
   switch (param->kind_) {
     case ObjKind::INT:
       std::cout << std::dynamic_pointer_cast<IntObject>(param)->value_ << std::endl;

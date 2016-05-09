@@ -5,6 +5,7 @@
 #include "symbols.h"
 #include <vector>
 #include <memory>
+#include <exception>
 
 //初始化
 //将函数放入环境和符号表中
@@ -18,6 +19,19 @@ public:
 private:
   //初始化列表
   static std::vector<NativeFuncPtr> nativeFuncs_;
+};
+
+/***************************原生函数异常类*****************************/
+
+class NativeFuncException: public std::exception {
+public:
+  NativeFuncException(const std::string &errMsg): errMsg_(errMsg) {}
+
+  const char* what() const noexcept override {
+    return errMsg_.c_str();
+  }
+private:
+  std::string errMsg_;
 };
 
 /***************************普通打印函数*******************************/
