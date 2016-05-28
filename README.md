@@ -1,19 +1,26 @@
 #Sparrow
 ###A toy-like programming language
 
----
+## 项目简介
 
-##项目简介
+### 1.1 语言简介
 
 Sparrow语言是一门通用型的脚本语言，除了有完善的控制流、基础数据类型、函数，还支持引用其它模块、类、闭包等功能。该语言是出于作者兴趣而诞生的，它只是对编译原理基础知识的一些实践，**并不具备实用价值**，对于想自制编程语言玩玩的朋友或许稍有帮助。
 
+### 1.2 开发过程
+
 实现这个项目主要借鉴了两本书。第一本，《两周自制脚本语言》，Sparrow语言前期受它的影响很大，我词法分析器和语法分析器都采用了该作者的实现方法，区别于传统的递归下降实现，这本书的作者分别使用了正则匹配和构造库的方式来实现，我觉得十分新颖。第二本，《编程语言实现模式》，正如书名所言，书中给出了很多实用的方法，这本书里还有一句话“大多数语言应用在架构上都是类似的，创造新的语言其实并不需要深厚的理论知识做铺垫”，从我的过程来看确实如此。在看两本书前我花了一段时间来补编译原理的基础知识，因为两本书对理论的知识的介绍都十分实用性，并不易于理解。
 
-下文章节**运行示例**展示了语言的运行效果，感兴趣的朋友可以先浏览那部分以获取语言的整体印象。
+### 1.3 开发环境
 
-##语法规则
+* Linux（Ubuntu 14.04）
+* G++ >=4.9
 
-###文法
+---
+
+## 2 语法规则
+
+### 2.1 文法
 
 Sparrow的文法是LL(1)类型的，下文将用EBNF描述它。在所有的终结符中，**IDENTIFIER**表示id，所有的id由字母或下划线开头，其它位置可以是字母、数字或下划线；**NULL**表示空；**INT**表示整型数；**FLOAT**表示浮点型数，数字串中如果带有“.”则会被解析为浮点型；**STRING**表示字符串型，语言中的字符串必须由双引号括起来；**OP**表示运算符；**EOL**表示换行符
 ```EBNF
@@ -45,7 +52,9 @@ def_class   ::= "class" IDENTIFIER ["extends" <IDENTIFIER>] class_body;
 program ::= [def_class | def | use | statement ] (";" | <EOL>);
 ```
 
-###关键字
+--- 
+
+### 2.2 关键字
 
 语言一共定义了18个关键字，它们分别是
 * 用于导入和引用其它模块的：require, as, use
@@ -54,7 +63,9 @@ program ::= [def_class | def | use | statement ] (";" | <EOL>);
 * 用于类相关的：class, extends, super, self;
 * 用于程序表示表示空值的：nil.
 
-###控制流
+---
+
+### 2.3 控制流
 
 ```
 //if、elif、else组成选择控制流
@@ -75,7 +86,9 @@ while <谓语>{
 }
 ```
 
-###函数与闭包
+---
+
+### 2.4 函数与闭包
 
 Sparrow语言提供两种方式创建函数，一种是在全局环境声明定义函数，以def关键字开始，后接函数名以及用括号括起来的参数列表；另外用户还可以在局部环境创建匿名函数，使用lamb关键字，后接用括号括起来的参数列表。通过该方式，语言执行创建后将返回一个函数对象，用户可以把该对象赋予某个id。当函数有返回值，或者需要运行到某处退出时，可以使用return语句。
 
@@ -100,7 +113,9 @@ def create_lamb() {
 }
 ```
 
-###类与对象
+---
+
+### 2.5 类与对象
 
 在Sparrow中，源程序的域访问是在运行时做检查的，当访问一个对象中不存在的成员时，语言会报错，但如果对一个对象中不存在的成员赋值，语言会把它添加进该对象的作用域中。这符合许多脚本语言的灵活性，每个对象即使是从一个类实例化出来，它们也可能后期的扩展而具备不同的方法、特性。  
 
@@ -147,9 +162,11 @@ aInstance = <类名>.new(...)
 aInstance.<成员名/方法名>
 ```
 
-##实现细节
+---
 
-###预处理
+## 3 实现细节
+
+### 3.1 预处理
 
 Sparrow的编译器对源程序进行预处理的主要目的是生成解析顺序树。
 
@@ -167,7 +184,9 @@ pre-process_require (module):
 
 **本节详细参见pre_process目录中的代码。**
 
-###词法分析器
+---
+
+### 3.2 词法分析器
 
 Sparrow语言的内部实现有五种类型的Token，它们是IntToken, FloatToken, StrToken, IdToken, EOFToken，分别表示整型、浮点型、字符串型、标识型、文件终结标识。
 
@@ -188,7 +207,9 @@ std::string patternStr = \
 
 **本节详细参见lexer.h,lexer.cc,lexer_imp.h,lexer_imp.cc。**
 
-###语法分析器
+---
+
+### 3.3 语法分析器
 
 Sparrow语言的语法分析器通过一个构造库来构造，这个库的实现用了一种名为“组合子”的编程思想，语法分析的规则是通过通过组合各种元规则来实现的。
 
@@ -242,7 +263,9 @@ auto params = Parser::rule()->orPR({
 
 **本节详细参见parser_constructor.h,parser_constructor.cc,parser.h，parser.cc,ast相关的文件。**
 
-###内部对象类型与环境
+---
+
+### 3.4 内部对象类型与环境
 
 Sparrow语言运行时内部的数据对象有以下几类：
 
@@ -281,7 +304,9 @@ Sparrow语言中的环境分为局部环境和非局部环境。局部环境指�
 
 **本节详细代码见env.h和env.cc。**
 
-###基于树遍历执行语言
+---
+
+### 3.5 基于树遍历执行语言
 
 基于树遍历执行语言，是指通过语法分析得到的抽象语法树来执行程序。解释器只需要从抽象语法树的根节点往下遍历，计算各个节点的内容即可。
 
@@ -301,7 +326,9 @@ public:
 
 **本节详细参见各ast文件中，各叶子、中间节点的eval实现。**
 
-###基于字节码执行语言
+---
+
+### 3.6 基于字节码执行语言
 
 基于树遍历的解释器最大的局限性是它的执行开销较大，如果语言处理器能够事先计算遍历的顺序，把抽象语法树线性化，那么解释器运行的开销就有可能可以降低。线性化是指把每个节点的执行逻辑编译为连续的字节码，解释器执行这些字节码就可以达到和遍历抽象语树一致的效果。
 
@@ -377,19 +404,22 @@ CPU-simulate():
 
 **本节详细参见vm目录中的代码。**
 
-##运行示例
+
+## 4 运行示例
 
 所有的例子源代码都位于demo文件夹中。
 
-###Hello World
+### 4.1 Hello World
 ```
 def main() {
   printLine("Hello World")  
 }
 ```
-![image_demo1]()
+![image_demo1](https://raw.githubusercontent.com/zhuzhenpeng/Sparrow/master/demo/demo_img/demo1.png)
 
-###求斐波那契通项
+---
+
+### 4.2 求斐波那契通项
 ```
 def fib(n) {
   if n < 2 {
@@ -410,9 +440,11 @@ def main() {
 }
 ```
 
-![image_demo2]()
+![image_demo2](https://raw.githubusercontent.com/zhuzhenpeng/Sparrow/master/demo/demo_img/demo2.png)
 
-###快速排序算法实现
+---
+
+### 4.3 快速排序算法实现
 ```
 //快速排序，已省略(详见项目源代码)
 def qsort(arr, left, right) {
@@ -455,9 +487,11 @@ def printArray(arr, size) {...}
 def main() {...}
 ```
 
-![image_demo3]()
+![image_demo3](https://raw.githubusercontent.com/zhuzhenpeng/Sparrow/master/demo/demo_img/demo3.png)
 
-###闭包的应用
+---
+
+### 4.4 闭包的应用
 
 该例子通过模拟对文字进行HTML格式处理来展示Sparrow语言闭包功能。bold函数和italic函数模拟对文字进行处理，前者是加粗，后者是斜体。下面中通过组合两个函数，构造出加粗、斜体的混合格式处理函数。
 
@@ -503,9 +537,11 @@ def main() {
 }
 ```
 
-![image_demo4]()
+![image_demo4](https://raw.githubusercontent.com/zhuzhenpeng/Sparrow/master/demo/demo_img/demo4.png)
 
-###类的应用
+---
+
+### 4.5 类的应用
 
 ```
 //父类
@@ -578,9 +614,11 @@ def main() {
 
 ```
 
-![image_demo5]()
+![image_demo5](https://raw.githubusercontent.com/zhuzhenpeng/Sparrow/master/demo/demo_img/demo5.png)
 
-###文件IO
+---
+
+### 4.6 文件IO
 
 我使用Sparrow语言简单地实现了一个只读文件类ROFile和只写文件类WOFile。实现代码中用到了Sparrow语言内置的函数，这些函数以双下划线开头，它们对外是透明的。ROFile和WOFile所在的file.spr文件位于lib目录中，当语言的使用者需要用到文件IO功能时，只需要通过导入相应的库即可。
 
@@ -626,4 +664,7 @@ def main() {
 }
 ```
 
-![image_demo6]()
+![image_demo6](https://raw.githubusercontent.com/zhuzhenpeng/Sparrow/master/demo/demo_img/demo6.png)
+
+
+---
