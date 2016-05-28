@@ -155,5 +155,3 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 }
-
-//经过预处理环境中已有其它unit的信息，但是符号表没有，因此初始化符号表

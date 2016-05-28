@@ -1,11 +1,8 @@
+//父类
 class Person {
-  
-  id_ = nil
-
   name_ = nil
   
-  def init(id, name) {
-    id_ = id
+  def init(name) {
     name_ = name
   }
 
@@ -17,22 +14,18 @@ class Person {
     name_ = new_name  
   }
 
-  def get_id() {
-    return id_
-  }
-
-  def set_id(new_id) {
-    id_ = new_id  
+  def info() {
+    print("name: ")
+    printLine(name_)  
   }
 }
 
+//子类，继承Person类
 class Student extends Person {
-  
   stu_id_ = nil 
 
-  def init(id, name, stu_id) {
-    id_ = id
-    name_ = name
+  def init(name, stu_id) {
+    super.init(name)
     stu_id_ = stu_id  
   }
 
@@ -43,30 +36,32 @@ class Student extends Person {
   def set_stu_id(new_id) {
     stu_id_ = new_id  
   }
+
+  def info() {
+    //调用父类同名方法要用super关键字  
+    super.info()
+    print("student id: ")
+    printLine(stu_id_)
+  }
 }
 
 def main() {
-  zhu = Student.new(1000, "Sparrow", 9991)  
-  print("zhu id: ")
-  printLine(zhu.get_id())
+  //初始化一个Student实例并打印它的信息
+  zhu = Student.new("Sparrow", 9991)  
+  zhu.info()
 
-  print("zhu name: ")
-  printLine(zhu.get_name())
-
-  print("zhu student id: ")
-  printLine(zhu.get_stu_id())
-
-  printLine("modify id to 2000, name to SparrowX, student id to 9992")
-  zhu.set_id(2000)
+  //修改刚才初始化的对象的值，并打印它的信息
+  printLine("modify name to SparrowX, student id to 9992")
   zhu.set_name("SparrowX")
   zhu.set_stu_id(9992)
+  zhu.info()
 
-  print("new id: ")
-  printLine(zhu.get_id())
-
-  print("new name: ")
-  printLine(zhu.get_name())
-
-  print("new student id: ")
-  printLine(zhu.get_stu_id())
+  //当为对象一个不存在的成员赋值时，会为对象创建新的成员
+  //甚至是函数
+  zhu.id_ = 110
+  printLine(zhu.id_)
+  zhu.add_one = lamb(num) {
+      printLine(num + 1)
+    }
+  zhu.add_one(2)
 }
